@@ -1,0 +1,2551 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>RainDogs App</title>
+<style>
+:root{
+  --bg:#000;--app:#050505;--card:rgba(255,255,255,.055);--card2:rgba(255,255,255,.085);
+  --line:rgba(255,255,255,.12);--text:#fff;--muted:rgba(255,255,255,.58);--soft:rgba(255,255,255,.36);
+  --button:#fff;--buttonText:#000;--danger:#ff4040;--ok:#9cff9c;--warn:#ffd36e;
+}
+body.light{
+  --bg:#f2f2f2;--app:#fbfbfb;--card:rgba(0,0,0,.045);--card2:rgba(0,0,0,.075);
+  --line:rgba(0,0,0,.13);--text:#080808;--muted:rgba(0,0,0,.60);--soft:rgba(0,0,0,.40);
+  --button:#080808;--buttonText:#fff;--danger:#cf2020;--ok:#126b12;--warn:#966500;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit}
+button:focus,input:focus,select:focus,textarea:focus{outline:none}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Segoe UI",Arial,sans-serif}
+.app{max-width:430px;min-height:100vh;margin:0 auto;background:radial-gradient(circle at 88% 5%,var(--card2),transparent 30%),radial-gradient(circle at 18% 0%,var(--card),transparent 24%),linear-gradient(180deg,var(--app),var(--bg) 70%);border-left:1px solid var(--line);border-right:1px solid var(--line)}
+.loginWrap{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:32px 28px}
+.brandMark{width:74px;height:74px;border-radius:28px;border:1px solid var(--line);background:linear-gradient(145deg,var(--card2),var(--card));display:grid;place-items:center;margin-bottom:30px;overflow:hidden}
+.logoPlaceholder{font-weight:950;font-size:28px;letter-spacing:-0.04em}
+.loginTitle{font-size:48px;line-height:1.08;letter-spacing:-0.055em;font-weight:950;margin:0;max-width:340px}
+.loginSub{color:var(--muted);line-height:1.55;margin:18px 0 26px;font-size:15px;font-weight:650}
+.authTabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;padding:6px;border:1px solid var(--line);border-radius:24px;background:var(--card)}
+.authTab{border:0;border-radius:18px;padding:14px;background:transparent;color:var(--muted);font-weight:900;font-size:15px}
+.authTab.active{background:var(--button);color:var(--buttonText)}
+.fieldGroup{display:flex;flex-direction:column;gap:14px}
+.input,select,textarea{width:100%;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:22px;padding:16px;outline:none;font-size:15px;font-weight:750;appearance:none}
+textarea{min-height:96px;resize:vertical;line-height:1.45}
+.input::placeholder,textarea::placeholder{color:var(--soft)}
+.passwordWrap{position:relative}.passwordWrap .input{padding-right:58px}
+.eyeBtn{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:16px;border:1px solid var(--line);background:var(--card2);color:var(--text);font-size:18px}
+.checkboxRow{display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;border:1px solid var(--line);background:var(--card);border-radius:22px;padding:14px;color:var(--muted);font-size:12px;line-height:1.45;font-weight:700}
+.checkboxRow input{width:18px;height:18px;margin-top:2px;accent-color:#fff}
+.btn{border:0;border-radius:24px;padding:16px 14px;font-weight:950;font-size:15px}
+.btn.primary{background:var(--button);color:var(--buttonText)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn.danger{background:rgba(255,60,60,.12);color:var(--danger);border:1px solid rgba(255,60,60,.25)}
+.result{margin-top:12px;border-radius:22px;padding:14px;border:1px solid var(--line);background:var(--card2);color:var(--muted);line-height:1.5;font-size:13px;font-weight:700}
+.result.good{color:var(--text)}.result.bad{border-color:rgba(255,80,80,.35);background:rgba(255,70,70,.08);color:#ff8c8c}
+.header{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:18px;background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.header h1{margin:0;font-size:22px;letter-spacing:-.025em;font-weight:920;line-height:1.12}
+.header p{margin:4px 0 0;color:var(--soft);font-size:12px;font-weight:700}
+.headerActions{display:flex;align-items:center;gap:12px}.iconBtn{width:45px;height:45px;border-radius:18px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:20px}
+main{padding:18px 18px 98px}
+.homeCenter{min-height:calc(100vh - 168px);display:flex;flex-direction:column;justify-content:center}
+.hero{border:1px solid var(--line);border-radius:34px;padding:22px;background:linear-gradient(145deg,var(--card2),var(--card));box-shadow:0 30px 70px rgba(0,0,0,.18)}
+.pill{display:inline-flex;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:999px;padding:7px 10px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;font-weight:850}
+.hero h2{margin:18px 0 0;font-size:40px;line-height:1.08;letter-spacing:-.055em;font-weight:950}
+.hero p,.card p{color:var(--muted);line-height:1.62;font-size:14px;font-weight:620;letter-spacing:-.01em}
+.btnRow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.section{margin:24px 0 12px;color:var(--soft);font-size:12px;letter-spacing:.22em;text-transform:uppercase;font-weight:950}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.statCard,.card{border:1px solid var(--line);background:var(--card);border-radius:28px;padding:17px}
+.statCard small{display:block;color:var(--soft);font-size:10px;letter-spacing:.18em;text-transform:uppercase;font-weight:850}
+.statCard b{display:block;font-size:24px;margin-top:7px;letter-spacing:-.04em}
+.card h3{margin:14px 0 0;font-size:22px;letter-spacing:-.025em;line-height:1.22}
+.card+.card{margin-top:12px}.meta{display:flex;justify-content:space-between;align-items:center;gap:10px}.meta span:last-child{color:var(--soft);font-size:12px}
+.eventScroller{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 18px 8px;margin:0 -18px;-webkit-overflow-scrolling:touch}.eventScroller::-webkit-scrollbar{display:none}.eventSlide{min-width:84%;scroll-snap-align:center}
+.bottomNav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:10px 10px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(18px);border-top:1px solid var(--line);z-index:20}
+.navItem{border:0;background:transparent;color:var(--soft);border-radius:18px;padding:8px 4px;font-weight:900;font-size:10px}.navItem.active{background:var(--button);color:var(--buttonText)}.navIcon{font-size:20px;display:block;margin-bottom:2px}
+.drawer{position:fixed;inset:0;background:rgba(0,0,0,.64);backdrop-filter:blur(8px);z-index:50;display:none}.drawer.open{display:block}.drawerPanel{position:absolute;right:0;top:0;height:100%;width:82%;max-width:350px;background:var(--app);border-left:1px solid var(--line);padding:18px;overflow:auto}
+.drawerHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.drawerHead h2{margin:0;font-size:28px;letter-spacing:-.05em}
+.drawerItem{width:100%;text-align:left;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:25px;padding:16px;margin-bottom:10px;font-weight:900}.menuGroupTitle{margin:22px 0 10px;color:var(--soft);font-size:11px;letter-spacing:.22em;text-transform:uppercase;font-weight:950}.adminOnly{display:none}
+.progress{height:8px;border-radius:999px;background:var(--card2);overflow:hidden;margin-top:10px}.progress div{height:100%;background:var(--button);border-radius:999px}
+.rank{display:flex;align-items:center;gap:13px}.rankNo{width:48px;height:48px;border-radius:18px;display:grid;place-items:center;background:var(--card2);font-weight:1000;font-size:20px}.rankNo.first{background:var(--button);color:var(--buttonText)}
+.kmLine{display:flex;justify-content:space-between;align-items:center;gap:12px}.kmLine b{font-size:20px}
+.profileBox{display:flex;align-items:center;gap:14px;border:1px solid var(--line);background:var(--card);border-radius:28px;padding:16px}
+.avatar{width:58px;height:58px;border-radius:22px;background:var(--button);color:var(--buttonText);display:grid;place-items:center;font-weight:1000;font-size:22px;flex:0 0 auto}
+.helpText{margin-top:8px;color:var(--soft);font-size:12px;line-height:1.5;font-weight:700}
+.pendingWrap{min-height:calc(100vh - 95px);display:flex;align-items:center}.pendingCard{width:100%;border:1px solid var(--line);background:linear-gradient(145deg,var(--card2),var(--card));border-radius:34px;padding:26px}.pendingCard h2{font-size:42px;line-height:1.12;letter-spacing:-.035em;margin:16px 0 0}.pendingCard p{font-size:17px;line-height:1.45;letter-spacing:-.015em;font-weight:700}.pendingCard .result{font-size:15px;line-height:1.55;letter-spacing:-.01em}
+.badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card2);border-radius:999px;padding:6px 10px;font-size:11px;font-weight:900;color:var(--muted)}
+.roleBadge{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:5px 9px;font-size:10px;text-transform:uppercase;letter-spacing:.14em;font-weight:950;color:var(--text);margin-top:8px}
+.smallNote{font-size:12px;color:var(--soft);line-height:1.5;font-weight:700}
+.segment{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;border:1px solid var(--line);background:var(--card);border-radius:22px;padding:5px;margin-bottom:14px}.segment button{border:0;border-radius:17px;padding:11px 7px;background:transparent;color:var(--muted);font-weight:900;font-size:12px}.segment button.active{background:var(--button);color:var(--buttonText)}
+
+.scopeSwitch{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  border:1px solid var(--line);
+  background:var(--card);
+  border-radius:22px;
+  padding:5px;
+  margin-bottom:16px;
+}
+.scopeSwitch button{
+  border:0;
+  border-radius:17px;
+  padding:12px 8px;
+  background:transparent;
+  color:var(--muted);
+  font-weight:950;
+  font-size:13px;
+}
+.scopeSwitch button.active{
+  background:var(--button);
+  color:var(--buttonText);
+}
+.chapterHero{
+  border:1px solid var(--line);
+  background:linear-gradient(145deg,var(--card2),var(--card));
+  border-radius:30px;
+  padding:20px;
+}
+.chapterHero h3{
+  font-size:28px;
+  line-height:1.1;
+  letter-spacing:-.035em;
+  margin:14px 0 0;
+}
+.chapterStats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:16px;
+}
+.chapterStat{
+  border:1px solid var(--line);
+  background:var(--card);
+  border-radius:20px;
+  padding:12px;
+}
+.chapterStat small{
+  display:block;
+  color:var(--soft);
+  font-size:9px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  font-weight:900;
+}
+.chapterStat b{
+  display:block;
+  margin-top:6px;
+  font-size:18px;
+}
+.compactList{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.compactItem{
+  border:1px solid var(--line);
+  background:var(--card);
+  border-radius:22px;
+  padding:14px;
+}
+
+
+.noticeDot{
+  display:inline-flex;
+  width:9px;
+  height:9px;
+  border-radius:999px;
+  background:var(--danger);
+  margin-left:8px;
+}
+.noticeRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.badgeGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.achievement{
+  border:1px solid var(--line);
+  background:var(--card);
+  border-radius:22px;
+  padding:14px;
+}
+.achievement b{
+  display:block;
+  font-size:14px;
+  letter-spacing:-.01em;
+}
+.achievement span{
+  display:block;
+  margin-top:6px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.4;
+  font-weight:700;
+}
+.logItem{
+  border-left:2px solid var(--button);
+  padding-left:12px;
+}
+.requiredBanner{
+  border:1px solid rgba(255,211,110,.35);
+  background:rgba(255,211,110,.08);
+  color:var(--warn);
+  border-radius:20px;
+  padding:12px;
+  margin-top:12px;
+  font-size:12px;
+  line-height:1.45;
+  font-weight:800;
+}
+.memberNote{
+  border:1px solid var(--line);
+  background:var(--card2);
+  border-radius:20px;
+  padding:12px;
+  margin-top:12px;
+}
+
+
+.menuCluster{
+  border:1px solid var(--line);
+  background:var(--card);
+  border-radius:26px;
+  padding:10px;
+  margin-bottom:14px;
+}
+.menuCluster .drawerItem{
+  margin-bottom:8px;
+}
+.menuCluster .drawerItem:last-child{
+  margin-bottom:0;
+}
+.lockScreen{
+  min-height:calc(100vh - 95px);
+  display:flex;
+  align-items:center;
+}
+.lockCard{
+  width:100%;
+  border:1px solid rgba(255,211,110,.35);
+  background:rgba(255,211,110,.08);
+  border-radius:34px;
+  padding:26px;
+}
+.lockCard h2{
+  font-size:38px;
+  line-height:1.12;
+  letter-spacing:-.035em;
+  margin:16px 0 0;
+}
+.onboarding{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:32px 28px;
+}
+.onboardingCard{
+  border:1px solid var(--line);
+  background:linear-gradient(145deg,var(--card2),var(--card));
+  border-radius:34px;
+  padding:26px;
+}
+.onboardingCard h2{
+  font-size:42px;
+  line-height:1.08;
+  letter-spacing:-.045em;
+  margin:18px 0 0;
+}
+.memberCardTop{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+.statusPill{
+  display:inline-flex;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:5px 9px;
+  font-size:10px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  font-weight:950;
+  color:var(--muted);
+}
+.actionGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:14px;
+}
+.filterBar{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding:2px 0 12px;
+}
+.filterBar::-webkit-scrollbar{display:none}
+.filterBar button{
+  white-space:nowrap;
+  border:1px solid var(--line);
+  background:var(--card);
+  color:var(--muted);
+  border-radius:999px;
+  padding:10px 13px;
+  font-size:12px;
+  font-weight:900;
+}
+.filterBar button.active{
+  background:var(--button);
+  color:var(--buttonText);
+}
+.reportTable{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+
+.splash{
+  position:fixed;
+  inset:0;
+  z-index:999;
+  display:grid;
+  place-items:center;
+  background:#000;
+  color:#fff;
+  transition:opacity .35s ease, visibility .35s ease;
+}
+.splash.hide{opacity:0;visibility:hidden}
+.splashInner{text-align:center}
+.splashLogo{
+  width:92px;height:92px;border-radius:32px;
+  border:1px solid rgba(255,255,255,.18);
+  display:grid;place-items:center;margin:0 auto 18px;
+  background:linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.04));
+  font-size:34px;font-weight:1000;letter-spacing:-.05em;
+}
+.splashTitle{font-size:34px;font-weight:1000;letter-spacing:-.06em}
+.splashSub{margin-top:8px;color:rgba(255,255,255,.55);font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.toast{
+  position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);
+  width:calc(100% - 36px);max-width:394px;
+  z-index:888;
+  border:1px solid var(--line);background:color-mix(in srgb,var(--bg) 88%,transparent);
+  color:var(--text);backdrop-filter:blur(18px);
+  border-radius:24px;padding:14px 16px;
+  font-size:13px;font-weight:850;line-height:1.4;
+  opacity:0;pointer-events:none;transition:.25s ease;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.visualCard{
+  min-height:126px;border:1px solid var(--line);border-radius:26px;padding:16px;
+  background:
+    radial-gradient(circle at 82% 18%,var(--card2),transparent 34%),
+    linear-gradient(145deg,var(--card2),var(--card));
+  position:relative;overflow:hidden;
+}
+.visualIcon{
+  position:absolute;right:16px;bottom:8px;font-size:54px;opacity:.2;
+}
+.emptyState{
+  border:1px dashed var(--line);border-radius:28px;padding:24px;text-align:center;background:var(--card);
+}
+.emptyState h3{margin:0;font-size:22px;letter-spacing:-.025em}
+.emptyState p{margin:10px 0 0;color:var(--muted);line-height:1.55;font-size:14px;font-weight:700}
+.searchHeader{position:sticky;top:83px;z-index:8;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(16px);padding-bottom:12px}
+.searchResultType{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--soft);font-weight:950}
+.detailOverlay{position:fixed;inset:0;background:rgba(0,0,0,.64);backdrop-filter:blur(8px);z-index:80;display:none}
+.detailOverlay.open{display:block}
+.detailPanel{
+  position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+  width:100%;max-width:430px;max-height:86vh;overflow:auto;
+  border:1px solid var(--line);border-bottom:0;
+  border-radius:34px 34px 0 0;background:var(--app);
+  padding:20px 18px calc(28px + env(safe-area-inset-bottom));
+}
+.quickGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quickBtn{
+  border:1px solid var(--line);background:var(--card);color:var(--text);
+  border-radius:24px;padding:18px;text-align:left;font-weight:950;
+}
+.quickBtn span{display:block;font-size:26px;margin-bottom:8px}
+.exportBox{
+  border:1px solid var(--line);background:var(--card);border-radius:24px;padding:15px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;white-space:pre-wrap;color:var(--muted);max-height:220px;overflow:auto;
+}
+.versionLine{display:flex;gap:12px;align-items:flex-start}
+.versionDot{width:12px;height:12px;border-radius:999px;background:var(--button);margin-top:5px;flex:0 0 auto}
+
+
+.bellIcon{
+  position:relative;
+  width:20px;
+  height:20px;
+  display:inline-block;
+}
+.bellIcon:before{
+  content:"";
+  position:absolute;
+  left:4px;
+  top:3px;
+  width:12px;
+  height:12px;
+  border:2px solid currentColor;
+  border-bottom:0;
+  border-radius:12px 12px 4px 4px;
+}
+.bellIcon:after{
+  content:"";
+  position:absolute;
+  left:8px;
+  bottom:1px;
+  width:4px;
+  height:4px;
+  border-radius:999px;
+  background:currentColor;
+}
+.notifDot{
+  position:absolute;
+  right:9px;
+  top:9px;
+  width:8px;
+  height:8px;
+  border-radius:999px;
+  background:var(--danger);
+  box-shadow:0 0 0 3px var(--app);
+}
+.navItem,.drawerItem,.btn,.iconBtn,.card,.quickBtn{
+  transition:transform .16s ease, background .16s ease, border-color .16s ease, opacity .16s ease;
+}
+.navItem:active,.drawerItem:active,.btn:active,.iconBtn:active,.quickBtn:active{
+  transform:scale(.96);
+}
+.card:active{
+  transform:scale(.985);
+}
+main{
+  animation:screenIn .2s ease;
+}
+@keyframes screenIn{
+  from{opacity:.72;transform:translateY(8px)}
+  to{opacity:1;transform:none}
+}
+.detailOverlay.open .detailPanel{
+  animation:sheetUp .22s ease;
+}
+@keyframes sheetUp{
+  from{transform:translateX(-50%) translateY(28px);opacity:.7}
+  to{transform:translateX(-50%) translateY(0);opacity:1}
+}
+.bottomNav{
+  grid-template-columns:repeat(5,1fr);
+}
+.navItem.centerMain{
+  transform:translateY(-18px);
+  border:1px solid var(--line);
+  box-shadow:0 18px 38px rgba(0,0,0,.32);
+  min-height:74px;
+}
+.navItem.centerMain:active{
+  transform:translateY(-18px) scale(.96);
+}
+
+
+/* v18 polish */
+.header{
+  margin:12px 12px 0;
+  border:1px solid var(--line);
+  border-radius:0 0 28px 28px;
+  box-shadow:0 16px 40px rgba(0,0,0,.22);
+}
+.headerActions{display:flex;align-items:center;gap:14px}
+.iconBtn{
+  display:grid;
+  place-items:center;
+  position:relative;
+}
+.trophyIcon{
+  position:relative;
+  width:22px;
+  height:22px;
+  display:inline-block;
+}
+.trophyIcon:before{
+  content:"";
+  position:absolute;
+  left:5px;
+  top:3px;
+  width:12px;
+  height:9px;
+  border:2px solid currentColor;
+  border-top-width:3px;
+  border-radius:3px 3px 7px 7px;
+}
+.trophyIcon:after{
+  content:"";
+  position:absolute;
+  left:9px;
+  top:13px;
+  width:4px;
+  height:5px;
+  background:currentColor;
+  box-shadow:-4px 6px 0 -1px currentColor, 4px 6px 0 -1px currentColor;
+  border-radius:2px;
+}
+.trophyIcon i:before,
+.trophyIcon i:after{
+  content:"";
+  position:absolute;
+  top:5px;
+  width:6px;
+  height:7px;
+  border:2px solid currentColor;
+  border-radius:8px;
+}
+.trophyIcon i:before{left:0;border-right:0}
+.trophyIcon i:after{right:0;border-left:0}
+main{
+  padding:18px 18px 116px;
+  overflow:hidden;
+}
+.homeCenter{
+  min-height:auto;
+  display:block;
+  padding-top:8px;
+}
+.hero{
+  border-radius:30px;
+}
+.hero h2{
+  font-size:38px;
+  line-height:1.12;
+  letter-spacing:-.045em;
+}
+.visualCard{
+  min-height:112px;
+}
+.bottomNav{
+  bottom:12px;
+  width:calc(100% - 24px);
+  max-width:406px;
+  border:1px solid var(--line);
+  border-radius:30px;
+  padding:8px;
+  box-shadow:0 18px 55px rgba(0,0,0,.45);
+}
+.navItem{
+  min-height:58px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+.navItem.centerMain{
+  transform:none;
+  min-height:62px;
+  border-radius:23px;
+  box-shadow:none;
+}
+.navItem.centerMain:active{
+  transform:scale(.96);
+}
+.navItem.active{
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--buttonText) 12%, transparent);
+}
+.badgeInfo{
+  cursor:pointer;
+  user-select:none;
+}
+.badgeInfo:active{
+  transform:scale(.98);
+}
+
+
+/* v20 unified icon system */
+.rdIcon{
+  width:22px;height:22px;display:inline-block;position:relative;color:currentColor;flex:0 0 auto;
+}
+.rdIcon.user:before{content:"";position:absolute;left:7px;top:3px;width:8px;height:8px;border:2px solid currentColor;border-radius:999px}
+.rdIcon.user:after{content:"";position:absolute;left:3px;bottom:2px;width:16px;height:9px;border:2px solid currentColor;border-radius:12px 12px 5px 5px}
+.rdIcon.bell:before{content:"";position:absolute;left:5px;top:3px;width:12px;height:12px;border:2px solid currentColor;border-bottom:0;border-radius:12px 12px 4px 4px}.rdIcon.bell:after{content:"";position:absolute;left:9px;bottom:1px;width:4px;height:4px;border-radius:999px;background:currentColor}
+.rdIcon.badge:before{content:"";position:absolute;left:5px;top:2px;width:12px;height:14px;border:2px solid currentColor;border-radius:8px 8px 4px 4px}.rdIcon.badge:after{content:"";position:absolute;left:8px;top:6px;width:6px;height:6px;border-radius:999px;background:currentColor}
+.rdIcon.settings:before{content:"";position:absolute;inset:4px;border:2px solid currentColor;border-radius:999px}.rdIcon.settings:after{content:"";position:absolute;left:9px;top:0;width:4px;height:22px;background:currentColor;box-shadow:0 0 0 0 currentColor;transform:rotate(45deg);border-radius:4px}
+.rdIcon.news:before{content:"";position:absolute;left:4px;top:3px;width:14px;height:16px;border:2px solid currentColor;border-radius:2px}.rdIcon.news:after{content:"";position:absolute;left:7px;top:8px;width:8px;height:2px;background:currentColor;box-shadow:0 4px 0 currentColor,0 8px 0 currentColor}
+.rdIcon.event:before{content:"";position:absolute;left:4px;top:4px;width:14px;height:14px;border:2px solid currentColor;border-radius:999px}.rdIcon.event:after{content:"";position:absolute;left:10px;top:7px;width:2px;height:6px;background:currentColor;box-shadow:3px 5px 0 currentColor;transform-origin:bottom}
+.rdIcon.route:before{content:"";position:absolute;left:5px;top:5px;width:12px;height:12px;border:2px solid currentColor;transform:rotate(45deg);border-radius:2px}
+.rdIcon.home:before{content:"";position:absolute;left:4px;top:9px;width:14px;height:10px;border:2px solid currentColor;border-top:0;border-radius:2px}.rdIcon.home:after{content:"";position:absolute;left:5px;top:3px;width:12px;height:12px;border-left:2px solid currentColor;border-top:2px solid currentColor;transform:rotate(45deg);border-radius:2px}
+.rdIcon.chapter:before{content:"";position:absolute;left:4px;top:3px;width:3px;height:17px;background:currentColor}.rdIcon.chapter:after{content:"";position:absolute;left:7px;top:4px;width:12px;height:9px;border:2px solid currentColor;border-left:0;border-radius:0 6px 6px 0}
+.rdIcon.archive:before{content:"";position:absolute;left:3px;top:6px;width:16px;height:12px;border:2px solid currentColor;border-radius:3px}.rdIcon.archive:after{content:"";position:absolute;left:6px;top:3px;width:10px;height:5px;border:2px solid currentColor;border-bottom:0;border-radius:3px 3px 0 0}
+.rdIcon.media:before{content:"";position:absolute;left:3px;top:5px;width:16px;height:12px;border:2px solid currentColor;border-radius:3px}.rdIcon.media:after{content:"";position:absolute;left:8px;top:8px;border-left:7px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent}
+.rdIcon.lock:before{content:"";position:absolute;left:5px;top:9px;width:12px;height:10px;border:2px solid currentColor;border-radius:3px}.rdIcon.lock:after{content:"";position:absolute;left:7px;top:3px;width:8px;height:9px;border:2px solid currentColor;border-bottom:0;border-radius:8px 8px 0 0}
+.rdIcon.logout:before{content:"";position:absolute;left:3px;top:5px;width:10px;height:12px;border:2px solid currentColor;border-right:0;border-radius:3px}.rdIcon.logout:after{content:"";position:absolute;right:2px;top:10px;width:12px;height:2px;background:currentColor;box-shadow:4px -4px 0 -1px currentColor,4px 4px 0 -1px currentColor}
+.rdIcon.check:before{content:"";position:absolute;left:3px;top:5px;width:16px;height:12px;border:2px solid currentColor;border-radius:4px}.rdIcon.check:after{content:"";position:absolute;left:7px;top:10px;width:8px;height:4px;border-left:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg)}
+.rdIcon.km:before{content:"";position:absolute;left:2px;top:9px;width:18px;height:9px;border:2px solid currentColor;border-radius:12px 12px 4px 4px}.rdIcon.km:after{content:"";position:absolute;left:9px;top:12px;width:4px;height:4px;border-radius:999px;background:currentColor;box-shadow:-7px 4px 0 -1px currentColor,7px 4px 0 -1px currentColor}
+.rdIcon.pen:before{content:"";position:absolute;left:4px;top:12px;width:14px;height:4px;background:currentColor;transform:rotate(-45deg);border-radius:4px}.rdIcon.pen:after{content:"";position:absolute;left:3px;bottom:3px;width:7px;height:2px;background:currentColor}
+.rdIcon.log:before{content:"";position:absolute;left:4px;top:3px;width:14px;height:16px;border:2px solid currentColor;border-radius:3px}.rdIcon.log:after{content:"";position:absolute;left:8px;top:7px;width:7px;height:2px;background:currentColor;box-shadow:0 4px 0 currentColor,0 8px 0 currentColor}
+.rdIcon.note:before{content:"";position:absolute;left:4px;top:3px;width:14px;height:16px;border:2px solid currentColor;border-radius:3px}.rdIcon.note:after{content:"";position:absolute;left:8px;top:8px;width:7px;height:2px;background:currentColor;transform:rotate(-12deg)}
+.rdIcon.search:before{content:"";position:absolute;left:3px;top:3px;width:11px;height:11px;border:2px solid currentColor;border-radius:999px}.rdIcon.search:after{content:"";position:absolute;right:3px;bottom:4px;width:8px;height:2px;background:currentColor;transform:rotate(45deg);border-radius:2px}
+.rdIcon.export:before{content:"";position:absolute;left:4px;top:10px;width:14px;height:8px;border:2px solid currentColor;border-radius:3px}.rdIcon.export:after{content:"";position:absolute;left:10px;top:2px;width:2px;height:12px;background:currentColor;box-shadow:-4px 4px 0 -1px currentColor,4px 4px 0 -1px currentColor}
+.drawerItem{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.navIcon .rdIcon{width:21px;height:21px}
+.lbStatsGrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:16px;
+}
+.lbStat{
+  border:1px solid var(--line);
+  background:var(--card);
+  border-radius:22px;
+  padding:13px;
+}
+.lbStat small{
+  display:block;
+  color:var(--soft);
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  font-weight:950;
+}
+.lbStat b{
+  display:block;
+  margin-top:6px;
+  font-size:18px;
+}
+.badgeStrip{
+  display:flex;
+  gap:9px;
+  overflow-x:auto;
+  padding:2px 0 14px;
+  margin-bottom:6px;
+}
+.badgeStrip::-webkit-scrollbar{display:none}
+.badgeChip{
+  white-space:nowrap;
+  border:1px solid var(--line);
+  background:var(--card);
+  color:var(--muted);
+  border-radius:999px;
+  padding:10px 13px;
+  font-size:12px;
+  font-weight:950;
+}
+.badgeChip.active{
+  background:var(--button);
+  color:var(--buttonText);
+}
+
+
+/* v23 stable hotfix */
+body{overflow-x:hidden}
+.app{overflow-x:hidden}
+main{
+  padding-bottom:124px;
+  overflow-x:hidden;
+}
+.headerActions{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.bottomNav{
+  bottom:12px;
+  width:calc(100% - 24px);
+  max-width:406px;
+  border:1px solid var(--line);
+  border-radius:30px;
+  padding:8px;
+}
+.navItem{
+  min-width:0;
+  min-height:58px;
+}
+.navItem.centerMain{
+  transform:none !important;
+  min-height:62px;
+  border-radius:23px;
+  box-shadow:none;
+}
+.navItem.centerMain:active{
+  transform:scale(.96) !important;
+}
+.homeCenter{
+  min-height:auto !important;
+  display:block !important;
+  padding-top:8px;
+}
+.card,
+.statCard,
+.profileBox,
+.visualCard,
+.result{
+  max-width:100%;
+  overflow:hidden;
+}
+.card h3,
+.hero h2,
+.result,
+.card p,
+.hero p{
+  overflow-wrap:anywhere;
+}
+.grid2,
+.btnRow,
+.actionGrid,
+quickGrid,
+.chapterStats,
+.lbStatsGrid,
+.badgeGrid{
+  gap:12px;
+}
+.drawerPanel{
+  overflow:auto;
+  padding-bottom:34px;
+}
+.eventSlide{
+  min-width:min(84%, 330px);
+}
+@media (max-width:380px){
+  .hero h2{font-size:34px}
+  .loginTitle{font-size:42px}
+  .grid2,.lbStatsGrid,.badgeGrid{grid-template-columns:1fr}
+  .chapterStats{grid-template-columns:1fr 1fr}
+  .navItem{font-size:9px}
+}
+
+
+/* v25 safe targeted fixes */
+body{overflow-x:hidden}
+.app{overflow-x:hidden}
+main{padding:18px 18px 126px;overflow-x:hidden}
+.header{margin:10px 10px 0;border-radius:0 0 26px 26px}
+.headerActions{display:flex;align-items:center;gap:14px}
+.bottomNav{bottom:12px;width:calc(100% - 24px);max-width:406px;border:1px solid var(--line);border-radius:30px;padding:8px}
+.navItem.centerMain{transform:none!important;min-height:62px;border-radius:23px;box-shadow:none}
+.navItem.centerMain:active{transform:scale(.96)!important}
+.card,.profileBox,.statCard,.result,.chapterHero,.pendingCard,.lockCard{max-width:100%;overflow:hidden}
+.card h3,.card p,.result,.hero h2,.hero p{overflow-wrap:anywhere}
+.profileBox{display:grid;grid-template-columns:72px 1fr;align-items:center;gap:18px}
+.avatar{width:72px!important;height:72px!important;border-radius:24px!important;overflow:hidden;cursor:pointer}
+.avatar img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.08)}
+.profileInfoCard{border:1px solid var(--line);background:var(--card);border-radius:28px;padding:18px}
+.profileInfoGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.profileInfoItem{border:1px solid var(--line);background:var(--card2);border-radius:20px;padding:12px}
+.profileInfoItem small{display:block;color:var(--soft);font-size:9px;letter-spacing:.14em;text-transform:uppercase;font-weight:950}
+.profileInfoItem b{display:block;margin-top:6px;font-size:14px;line-height:1.25}
+.profileLogout{margin-top:24px}
+.badgeStrip{scroll-margin-top:0;display:flex;gap:9px;overflow-x:auto;padding:2px 0 14px;margin-bottom:6px;-webkit-overflow-scrolling:touch}
+.badgeStrip::-webkit-scrollbar{display:none}
+.badgeChip{white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:999px;padding:10px 13px;font-size:12px;font-weight:950}
+.badgeChip.active{background:var(--button);color:var(--buttonText)}
+.lbStatsGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.lbStat{border:1px solid var(--line);background:var(--card);border-radius:22px;padding:13px}
+.lbStat small{display:block;color:var(--soft);font-size:9px;text-transform:uppercase;letter-spacing:.14em;font-weight:950}
+.lbStat b{display:block;margin-top:6px;font-size:18px}
+.adminQuickGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.adminQuickGrid .quickBtn{min-height:96px}
+.drawerPanel{overflow:auto;padding-bottom:34px}
+.drawerItem{display:flex;align-items:center;gap:12px;line-height:1.25}
+.formCardTitle{margin:0 0 14px;font-size:26px!important;line-height:1.15!important}
+.formSectionCard .fieldGroup{gap:14px}
+.deleteBtn{background:rgba(255,60,60,.12)!important;color:var(--danger)!important;border:1px solid rgba(255,60,60,.25)!important}
+.rdIcon{vertical-align:middle}
+@media(max-width:380px){
+  .profileBox{grid-template-columns:62px 1fr;gap:14px}
+  .avatar{width:62px!important;height:62px!important}
+  .profileInfoGrid,.lbStatsGrid,.adminQuickGrid{grid-template-columns:1fr}
+}
+
+
+/* v26 layout corrections */
+.checkboxRow{
+  grid-template-columns:26px 1fr !important;
+  align-items:start !important;
+  gap:14px !important;
+  padding:15px 16px !important;
+  min-height:auto !important;
+  margin-top:10px !important;
+}
+.checkboxRow input{
+  width:20px !important;
+  height:20px !important;
+  min-width:20px !important;
+  margin:1px 0 0 !important;
+}
+.checkboxRow span{
+  display:block;
+  min-width:0;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+.card .checkboxRow:first-of-type{
+  margin-top:14px !important;
+}
+.adminQuickGrid{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:12px !important;
+  margin-bottom:18px !important;
+}
+.adminQuickGrid .quickBtn{
+  min-height:108px !important;
+  padding:20px 18px !important;
+  border-radius:26px !important;
+}
+.adminQuickGrid .quickBtn span{
+  font-size:30px !important;
+  line-height:1 !important;
+  margin-bottom:12px !important;
+}
+.adminPanelCard{
+  margin-top:18px !important;
+}
+.card h3.formCardTitle,
+.formCardTitle{
+  margin:0 0 20px !important;
+  padding:0 !important;
+  font-size:30px !important;
+  line-height:1.12 !important;
+  letter-spacing:-.035em !important;
+}
+.formSectionCard{
+  padding-top:26px !important;
+}
+.formSectionCard .fieldGroup{
+  gap:14px !important;
+}
+.formSectionCard select,
+.formSectionCard input,
+.formSectionCard textarea{
+  margin-top:0 !important;
+}
+@media(max-width:380px){
+  .adminQuickGrid{
+    grid-template-columns:1fr !important;
+  }
+}
+
+
+/* v27 swipe back + content form alignment */
+.backHint{
+  position:fixed;
+  left:14px;
+  top:50%;
+  transform:translateY(-50%) translateX(-18px);
+  width:42px;
+  height:42px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:color-mix(in srgb,var(--bg) 86%,transparent);
+  color:var(--text);
+  display:grid;
+  place-items:center;
+  z-index:90;
+  opacity:0;
+  pointer-events:none;
+  backdrop-filter:blur(14px);
+  transition:.16s ease;
+  font-size:22px;
+  font-weight:950;
+}
+.backHint.show{
+  opacity:1;
+  transform:translateY(-50%) translateX(0);
+}
+.contentCreateCard{
+  padding-top:28px !important;
+}
+.contentCreateCard h3,
+.contentCreateTitle{
+  margin:0 0 18px !important;
+  padding:0 !important;
+  font-size:30px !important;
+  line-height:1.12 !important;
+  letter-spacing:-.035em !important;
+}
+.contentCreateCard .fieldGroup{
+  gap:14px !important;
+}
+.contentCreateCard input,
+.contentCreateCard select,
+.contentCreateCard textarea{
+  margin-top:0 !important;
+}
+
+
+/* v28 member search / chapter filter */
+.memberTools{
+  position:sticky;
+  top:96px;
+  z-index:7;
+  background:color-mix(in srgb,var(--bg) 86%,transparent);
+  backdrop-filter:blur(16px);
+  padding:0 0 14px;
+}
+.memberToolsGrid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+}
+.memberToolsRow{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.memberCountPill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid var(--line);
+  background:var(--card);
+  color:var(--muted);
+  border-radius:999px;
+  padding:9px 12px;
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:10px;
+}
+@media(max-width:380px){
+  .memberToolsRow{grid-template-columns:1fr}
+}
+
+
+/* v29 member search focus + spacing fix */
+main{
+  padding-top:12px !important;
+}
+.memberTools{
+  position:relative !important;
+  top:auto !important;
+  z-index:1 !important;
+  background:transparent !important;
+  backdrop-filter:none !important;
+  padding:0 0 12px !important;
+  margin-top:0 !important;
+}
+.memberToolsGrid{
+  gap:10px !important;
+}
+.memberResults{
+  display:block;
+}
+.memberSearchInput{
+  caret-color:var(--text);
+}
+
+</style>
+</head>
+<body>
+<div id="splash" class="splash"><div class="splashInner"><div class="splashLogo">RD</div><div class="splashTitle">RainDogs</div><div class="splashSub">Temiz. Sert. Disiplinli.</div></div></div>
+<div id="toast" class="toast"></div>
+<div id="backHint" class="backHint">‹</div>
+<div class="app">
+
+  <div id="login" class="loginWrap">
+    <div class="brandMark"><div class="logoPlaceholder">RD</div></div>
+    <h1 class="loginTitle">RainDogs<br>App</h1>
+    <p class="loginSub">RainDogs üyeleri için haber, etkinlik, rota, kilometre günlüğü, leaderboard ve kulüp içi iletişim merkezi.</p>
+
+    <div class="authTabs">
+      <button id="loginTab" class="authTab active" onclick="setAuthMode('login')">Gir</button>
+      <button id="registerTab" class="authTab" onclick="setAuthMode('register')">Kaydol</button>
+    </div>
+
+    <div id="loginForm">
+      <div class="fieldGroup">
+        <select id="loginType" onchange="syncLoginType()">
+          <option value="nick">Onaylı Nick ile giriş yap</option>
+          <option value="account">İsim soyisim ile giriş yap</option>
+        </select>
+        <input id="loginNick" class="input" placeholder="Onaylı nickini gir">
+        <div id="loginNickPasswordWrap" class="passwordWrap">
+          <input id="loginNickPassword" class="input" type="password" placeholder="Şifre">
+          <button type="button" class="eyeBtn" onclick="togglePassword('loginNickPassword', this)">👁</button>
+        </div>
+        <input id="loginName" class="input" placeholder="İsim soyisim" style="display:none">
+        <div id="loginPasswordWrap" class="passwordWrap" style="display:none">
+          <input id="loginPassword" class="input" type="password" placeholder="Şifre">
+          <button type="button" class="eyeBtn" onclick="togglePassword('loginPassword', this)">👁</button>
+        </div>
+        <button class="btn primary" style="width:100%" onclick="loginUser()">Gir</button>
+      </div>
+      <div class="helpText">Onaylı nicki olan üyeler nick ve şifre ile giriş yapar. Nicki olmayan üyeler kayıt olurken belirledikleri isim soyisim ve şifre ile giriş yapar.</div>
+    </div>
+
+    <div id="registerForm" style="display:none">
+      <div class="fieldGroup">
+        <input id="regName" class="input" placeholder="İsim soyisim">
+        <div class="passwordWrap">
+          <input id="regPassword" class="input" type="password" placeholder="Şifre belirle">
+          <button type="button" class="eyeBtn" onclick="togglePassword('regPassword', this)">👁</button>
+        </div>
+        <select id="regNickMode" onchange="syncRegisterNickMode()">
+          <option value="hasNick">Mevcut nickim var</option>
+          <option value="noNick">Henüz nickim yok</option>
+        </select>
+        <input id="regNick" class="input" placeholder="Mevcut nickini gir" oninput="checkRegisterNick()">
+        <div id="regNickResult"></div>
+        <select id="regChapter">
+          <option value="">Chapter / şehir seç</option>
+          <option>Ankara</option>
+          <option>Denizli</option><option>Eskişehir</option><option>İstanbul/Kadıköy</option><option>İzmir</option><option>Sakarya/Hendek</option><option>Uşak</option>
+        </select>
+        <input id="regPhone" class="input" placeholder="Telefon">
+        <select id="regRole">
+          <option value="Hangaround">Hangaround</option><option value="Prospect">Prospect</option><option value="Member">Member</option><option value="Kurul Üyesi">Kurul Üyesi</option>
+        </select>
+        <label class="checkboxRow"><input id="kvkkCheck" type="checkbox"><span>Kişisel verilerimin, üyelik başvurusunun değerlendirilmesi ve kulüp içi iletişim süreçleri kapsamında işlenmesine ilişkin KVKK Aydınlatma Metni’ni okudum ve kabul ediyorum.</span></label>
+        <label class="checkboxRow"><input id="termsCheck" type="checkbox"><span>RainDogs uygulama kullanım kurallarını, kulüp içi veri paylaşım esaslarını ve başvurumun admin onayına tabi olduğunu kabul ediyorum.</span></label>
+        <label class="checkboxRow"><input id="contactCheck" type="checkbox"><span>Etkinlik, duyuru ve üyelik süreciyle ilgili bildirimlerin tarafıma iletilmesini kabul ediyorum.</span></label>
+        <div class="result">Kaydolan herkes admin onayına gider. Onay verilene kadar uygulama içinde sadece “Onay Bekliyor” ekranı görünür.</div>
+        <button class="btn primary" style="width:100%" onclick="registerUser()">Gönder</button>
+      </div>
+    </div>
+
+    <button class="btn ghost" style="width:100%;margin-top:10px" onclick="toggleTheme()">Gece / Gündüz Modu</button>
+  </div>
+
+  <div id="appShell" style="display:none">
+    <header class="header">
+      <div><h1 id="title">RainDogs</h1><p id="subtitle">Kulüp merkezi</p></div>
+      <div class="headerActions"><button class="iconBtn" onclick="openNotificationsSheet()" title="Bildirimler"><span class="bellIcon"></span><span id="headerNotifDot" class="notifDot"></span></button><button class="iconBtn" onclick="openDrawer()" title="Menü">☰</button></div>
+    </header>
+
+    <main id="content"></main>
+
+    <nav id="bottomNav" class="bottomNav">
+      <button class="navItem" data-screen="events" onclick="go('events')"><span class="navIcon"><span class="rdIcon event"></span></span>Etkinlik</button>
+      <button class="navItem" data-screen="news" onclick="go('news')"><span class="navIcon"><span class="rdIcon news"></span></span>Haber</button>
+      <button class="navItem centerMain active" data-screen="home" onclick="go('home')"><span class="navIcon"><span class="rdIcon home"></span></span>Ana</button>
+      <button class="navItem" data-screen="routes" onclick="go('routes')"><span class="navIcon"><span class="rdIcon route"></span></span>Rota</button>
+      <button class="navItem" data-screen="leaderboard" onclick="go('leaderboard')"><span class="navIcon"><span class="trophyIcon"><i></i></span></span>Leader</button>
+    </nav>
+
+    <div id="drawer" class="drawer" onclick="closeDrawer()">
+      <div class="drawerPanel" onclick="event.stopPropagation()">
+        <div class="drawerHead"><div><h2>Menü</h2><p style="color:var(--soft);margin:4px 0 0;font-size:12px">Ek modüller</p></div><button class="iconBtn" onclick="closeDrawer()">×</button></div>
+        <div class="menuGroupTitle">Hesap</div>
+        <button class="drawerItem" onclick="go('profile');closeDrawer()">👤 Profil / Üyelik</button>
+          <button class="drawerItem" onclick="go('appSettings');closeDrawer()"><span class="rdIcon settings"></span> Uygulama Ayarları</button>
+        <div class="menuGroupTitle">Kulüp</div>
+        <button class="drawerItem" onclick="go('leaderboard');closeDrawer()"><span class="trophyIcon"><i></i></span> Leaderboard</button>
+        <button class="drawerItem" onclick="go('chapters');closeDrawer()">🏴 Chapter Sayfaları</button>
+        <button class="drawerItem" onclick="go('archive');closeDrawer()">🗄 Arşiv</button>
+        <button class="drawerItem" onclick="go('media');closeDrawer()">🎞 Medya / Galeri</button>
+        <button class="drawerItem" onclick="go('security');closeDrawer()"><span class="rdIcon lock"></span> Güvenlik / Gizlilik</button>
+        <button class="drawerItem" onclick="go('culture');closeDrawer()"><span class="rdIcon badge"></span> Kültür</button>
+        <div id="adminMenuGroup" class="adminOnly">
+          <div class="menuGroupTitle">Yönetim Paneli</div>
+          <button class="drawerItem" onclick="go('adminPanel');closeDrawer()"><span class="rdIcon settings"></span> Yönetim Ana Ekranı</button>
+          <button class="drawerItem" onclick="go('adminLogs');closeDrawer()">📋 Admin Logları</button>
+          <button class="drawerItem" onclick="go('chapterReports');closeDrawer()">🏴 Chapter Raporları</button>
+          <button class="drawerItem" onclick="go('memberNotes');closeDrawer()"><span class="rdIcon note"></span> Üye Notları</button>
+          <button class="drawerItem" onclick="go('nick');closeDrawer()"><span class="rdIcon search"></span> Nick Sorgu</button>
+          <button class="drawerItem" onclick="go('members');closeDrawer()">👥 Üye Bilgi Erişimi</button>
+        </div>
+        <div class="menuGroupTitle">Oturum</div>
+        <button class="drawerItem" onclick="logout()"><span class="rdIcon logout"></span> Çıkış</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+if((localStorage.getItem("rdTheme") || "dark") === "light") document.body.classList.add("light");
+let currentUser = JSON.parse(localStorage.getItem("rdUser") || "null");
+let accounts = JSON.parse(localStorage.getItem("rdAccounts") || "[]");
+let applications = JSON.parse(localStorage.getItem("rdApplications") || "[]");
+let kmEntries = JSON.parse(localStorage.getItem("rdKmEntries") || "null") || [
+  {id:1,date:"03 Mayıs", route:"Denizli → Uşak", km:184, type:"Uzun Yol", status:"Onaylandı", memberNick:"Cerit", proof:"Odometre fotoğrafı"},
+  {id:2,date:"Bugün", route:"Şehir İçi", km:42, type:"Solo", status:"Onay Bekliyor", memberNick:"Cerit", proof:"Rota ekran görüntüsü"}
+];
+let customNews = JSON.parse(localStorage.getItem("rdNews") || "[]");
+let customEvents = JSON.parse(localStorage.getItem("rdEvents") || "[]");
+let chapters = JSON.parse(localStorage.getItem("rdChapters") || "null") || ["Ankara","Denizli","Eskişehir","İstanbul/Kadıköy","İzmir","Sakarya/Hendek","Uşak"];
+let readNewsIds = JSON.parse(localStorage.getItem("rdReadNewsIds") || "[]");
+let notifications = JSON.parse(localStorage.getItem("rdNotifications") || "[]");
+let adminLogs = JSON.parse(localStorage.getItem("rdAdminLogs") || "[]");
+let chapterReports = JSON.parse(localStorage.getItem("rdChapterReports") || "[]");
+let memberNotes = JSON.parse(localStorage.getItem("rdMemberNotes") || "[]");
+let onboardingDone = localStorage.getItem("rdOnboardingDone") === "true";
+let memberStatusFilter = "Tümü";
+let chapterLeaderboardScope = "Türkiye";
+
+const builtInMembers = [
+  {name:"Işık Ayberk Cerit", nick:"Sexist Dog", password:"admin", chapter:"Denizli", role:"Admin", km:9999, events:99, status:"Aktif", isAdmin:true, lastSeen:"Şimdi"},
+  {name:"Işık Ayberk Cerit", nick:"Cerit", password:"admin", chapter:"Denizli", role:"Kurul Üyesi", age:"-", motorcycle:"Harley-Davidson", license:"A", blood:"-", phone:"", km:980, events:12, status:"Aktif", isAdmin:true},
+  {name:"Ghost Rider", nick:"Ghost", password:"1234", chapter:"Uşak", role:"Member", km:1240, events:10, status:"Aktif", lastSeen:"Bugün"},
+  {name:"Veli Baldan", nick:"Baldan", password:"1234", chapter:"Denizli", role:"Member", km:760, events:9, status:"Aktif", lastSeen:"Dün"},
+  {name:"Road Wolf", nick:"Wolf", password:"1234", chapter:"İzmir", role:"Prospect", km:520, events:7, status:"Aktif", lastSeen:"3 gün önce"}
+];
+
+const baseNews = [
+  {id:"n_001", title:"Uşak Chapter Açılışı Tamamlandı", tag:"Chapter", importance:"Normal", required:false, date:"03 Mayıs 2026", body:"RainDogs Uşak yapılanması resmi olarak aktif edildi. Açılış sürüşü ve club house buluşması yüksek katılımla tamamlandı."},
+  {id:"n_002", title:"Mayıs Sürüş Planı Yayında", tag:"Duyuru", importance:"Önemli", required:false, date:"01 Mayıs 2026", body:"Mayıs ayı sürüş takvimi güncellendi. Katılım durumunuzu etkinlik ekranından işaretleyin."},
+  {id:"n_003", title:"Dijital Disiplin Hatırlatması", tag:"Yönetim", importance:"Zorunlu Okuma", required:true, date:"29 Nisan 2026", body:"Resmi içerikler onay zincirinden geçmeden paylaşılmaz. Kulüp dışına taşan her içerik kulübün imajını etkiler."}
+];
+
+let events = [
+  {title:"Mayıs Sürüşü", date:"27 Mayıs 2026", time:"20:00", location:"Club House", route:"Denizli → Uşak", type:"Uzun Yol", attending:18, status:false, order:1, options:{}},
+  {title:"Başkanlar Kurulu Toplantısı", date:"02 Haziran 2026", time:"21:00", location:"Online", route:"Toplantı", type:"Kurul", attending:7, status:false, order:2, options:{}},
+  {title:"Sığacık Kıyı Buluşması", date:"09 Haziran 2026", time:"18:30", location:"Sığacık Kaleiçi", route:"Sığacık → Urla", type:"Kısa Rota", attending:11, status:false, order:3, options:{}},
+  ...customEvents
+];
+
+const routes = [
+  {name:"Denizli — Uşak Club Ride", km:184, duration:"2s 35dk", difficulty:"Orta", surface:"Asfalt", character:"Uzun düz tempo", notes:"Grup düzeni bozulmazsa temiz akan rota. Mola planı önceden netleştirilmeli."},
+  {name:"Sığacık — Urla Kıyı Rotası", km:76, duration:"1s 40dk", difficulty:"Kolay", surface:"Kıyı yolu", character:"Rahat manzara rotası", notes:"Yeni sürücüler için uygun. Grup temposu sabit tutulmalı."},
+  {name:"Denizli — Babadağ Viraj Etabı", km:58, duration:"1s 15dk", difficulty:"Zor", surface:"Virajlı asfalt", character:"Virajlı teknik etap", notes:"Yeni sürücüler için önerilmez. Disiplinli takip gerekir."}
+];
+
+const culture = [
+  {title:"Kulüp Dili", body:"Az konuş. Net ol. Gerekeni zamanında yap."},
+  {title:"Yelek Disiplini", body:"Yelek sadece kıyafet değildir. Temsil, sorumluluk ve duruş taşır."},
+  {title:"Grup Sürüş Düzeni", body:"Grup sürüşünde ego yoktur. Tempo, güvenlik ve disiplin önceliklidir."},
+  {title:"Chapter Disiplini", body:"Her chapter kulüp kimliğini temsil eder. Yerel kararlar genel duruşla çelişmez."},
+  {title:"Sosyal Medya Kuralları", body:"İç yazışmalar, karar süreçleri ve kulüp içi tartışmalar dışarı taşınmaz."},
+  {title:"Prospect Süreci", body:"Prospect süreci görünmek için değil, yapıya uyum sağlamak için yaşanır."},
+  {title:"Toplantı Adabı", body:"Toplantı zamanı net, söz sırası net, karar metni nettir."}
+];
+
+const titles = {
+  home:["RainDogs","Kulüp merkezi"],news:["Haberler","Duyurular ve yönetim mesajları"],events:["Etkinlikler","Katılım ve sürüş planı"],routes:["Rotalar","Sürüş notları ve mesafeler"],km:["Kilometre Günlüğü","Yolda olan görünür"],leaderboard:["Leaderboard","Km ve aktiflik sıralaması"],nick:["Nick Sorgu","Müsaitlik ve talep"],culture:["Kültür","Disiplin, temsil ve yapı"],members:["Üyeler","Chapter ve roller"],profile:["Profil","Üyelik bilgileri ve hesap"],pending:["Onay Bekliyor","Başvuru durumu"],settings:["Bildirim Ayarları","Sadece önemli olan"],
+  appSettings:["Uygulama Ayarları","Tema, bildirim ve görünüm"],
+  search:["Arama Motoru","Üye, rota, haber ve arşiv"],
+  versions:["Sürüm Notları","Uygulama gelişim kayıtları"],
+  adminExport:["Dışa Aktar","Yönetim çıktıları"],adminPanel:["Yönetim Paneli","Operasyon Merkezi"],adminApplications:["Onayları","Bekleyen üyelik talepleri"],adminKm:["Onayları","Bekleyen kilometre kayıtları"],adminCreate:["İçerik Oluştur","Haber, etkinlik ve chapter yönetimi"],
+  chapters:["Chapter Sayfaları","Türkiye ve chapter bazlı görünüm"],
+  archive:["Arşiv","Kurallar, kararlar ve dokümanlar"],
+  media:["Medya / Galeri","Etkinlik fotoğraf ve video arşivi"],
+  security:["Güvenlik / Gizlilik","Paylaşım ve veri kuralları"],
+  notifications:["Bildirim Merkezi","Kaçırılan önemli hareketler"],
+  badges:["Rozetler","Aktiflik ve katkı işaretleri"],
+  readReport:["Okuma Raporu","Duyuru takip oranları"],
+  adminLogs:["Admin Logları","Yönetim işlem kayıtları"],
+  chapterReports:["Chapter Raporları","Haftalık ve aylık özetler"],
+  memberNotes:["Üye Notları","Yönetim içi disiplin ve katkı kayıtları"]
+};
+
+let leaderboardMode = "km";
+let chapterScope = "turkiye";
+let selectedChapter = "Denizli";
+
+function isApproved(u){return u && u.status==="Aktif"}
+function isAdminIdentity(user){if(!user)return false;const name=(user.name||"").trim().toLowerCase();const nick=(user.nick||"").trim().toLowerCase();return name==="ışık ayberk cerit" || nick==="sexist dog" || nick==="cerit"}
+function allMembers(){return [...builtInMembers,...accounts.filter(a=>a.status==="Aktif")]}
+function allNickKeys(){return [...builtInMembers.map(u=>(u.nick||"").toLowerCase()),...accounts.map(u=>(u.nick||"").toLowerCase()).filter(Boolean),...applications.map(u=>(u.nick||"").toLowerCase()).filter(Boolean)]}
+function allNameKeys(){return accounts.map(u=>(u.name||"").trim().toLowerCase()).filter(Boolean)}
+function pill(t){return `<span class="pill">${t}</span>`} function section(t){return `<div class="section">${t}</div>`} function card(h){return `<div class="card">${h}</div>`}
+
+function boot(){
+  if(currentUser){
+    login.style.display="none"; appShell.style.display="block";
+    if(!isApproved(currentUser)){ bottomNav.style.display="none"; title.innerText="Onay Bekliyor"; subtitle.innerText="Başvuru durumu"; content.innerHTML=pendingScreen(); }
+    else {
+      bottomNav.style.display="grid";
+      if(!onboardingDone){ showOnboarding(); }
+      else { render("home"); }
+    }
+  }
+}
+function toggleTheme(){document.body.classList.toggle("light");localStorage.setItem("rdTheme",document.body.classList.contains("light")?"light":"dark")}
+function togglePassword(id,btn){const input=document.getElementById(id);const open=input.type==="password";input.type=open?"text":"password";btn.textContent=open?"🙈":"👁"}
+function setAuthMode(mode){const isLogin=mode==="login";loginForm.style.display=isLogin?"block":"none";registerForm.style.display=isLogin?"none":"block";loginTab.classList.toggle("active",isLogin);registerTab.classList.toggle("active",!isLogin)}
+function syncLoginType(){const account=loginType.value==="account";loginNick.style.display=account?"none":"block";loginNickPasswordWrap.style.display=account?"none":"block";loginName.style.display=account?"block":"none";loginPasswordWrap.style.display=account?"block":"none"}
+function syncRegisterNickMode(){const noNick=regNickMode.value==="noNick";regNick.style.display=noNick?"none":"block";regNickResult.innerHTML=noNick?`<div class="result">Nicksiz kayıt oluşturulacak. Onay sonrası admin tarafından nick atanabilir.</div>`:""}
+function loginUser(){
+  if(loginType.value==="nick"){
+    const nick=loginNick.value.trim(); const password=loginNickPassword.value;
+    if(!nick||!password){alert("Nick ve şifre gir.");return}
+    const member=allMembers().find(u=>(u.nick||"").toLowerCase()===nick.toLowerCase() && (u.password||"")===password);
+    if(!member){alert("Nick veya şifre hatalı ya da üyelik onaylı değil.");return}
+    currentUser={...member};
+  } else {
+    const name=loginName.value.trim().toLowerCase(); const password=loginPassword.value;
+    if(!name||!password){alert("İsim soyisim ve şifre gir.");return}
+    const account=accounts.find(a=>(a.name||"").trim().toLowerCase()===name && a.password===password);
+    if(!account){alert("İsim soyisim veya şifre hatalı.");return}
+    currentUser={...account};
+  }
+  localStorage.setItem("rdUser",JSON.stringify(currentUser)); boot();
+}
+function checkRegisterNick(){const nick=regNick.value.trim().toLowerCase(); if(nick.length<2){regNickResult.innerHTML="";return} regNickResult.innerHTML=allNickKeys().includes(nick)?`<div class="result bad">Bu nick alınmış veya başvuru bekliyor.</div>`:`<div class="result good">Bu nick kullanılabilir. Kayıt yine admin onayına gider.</div>`}
+function registerUser(){
+  const name=regName.value.trim(), password=regPassword.value, chapter=regChapter.value, phone=regPhone.value.trim(), role=regRole.value, noNick=regNickMode.value==="noNick", nick=noNick?"Atanmadı":regNick.value.trim();
+  if(!name||!password||!chapter||!phone){alert("İsim soyisim, şifre, chapter/şehir ve telefon alanlarını doldur.");return}
+  if(password.length<4){alert("Şifre en az 4 karakter olmalı.");return}
+  if(!noNick&&!nick){alert("Mevcut nickini gir ya da Henüz nickim yok seç.");return}
+  if(allNameKeys().includes(name.toLowerCase())){alert("Bu isim soyisim ile başvuru/kayıt var.");return}
+  if(!noNick&&allNickKeys().includes(nick.toLowerCase())){alert("Bu nick alınmış veya başvuru bekliyor.");return}
+  if(!kvkkCheck.checked||!termsCheck.checked||!contactCheck.checked){alert("Kayıt için KVKK, kullanım kuralları ve iletişim onay kutularını işaretlemelisin.");return}
+  const account={name,password,nick,nickType:noNick?"Nick Yok":"Mevcut Nick",chapter,phone,role,status:"Onay Bekliyor",km:0,events:0,joined:new Date().toLocaleDateString("tr-TR")};
+  if(isAdminIdentity(account)){account.status="Aktif";account.isAdmin=true;account.role="Admin";account.nick=account.nick&&account.nick!=="Atanmadı"?account.nick:"Sexist Dog";account.km=9999;account.events=99}
+  accounts.push(account); if(account.status!=="Aktif")applications.push(account);
+  localStorage.setItem("rdAccounts",JSON.stringify(accounts)); localStorage.setItem("rdApplications",JSON.stringify(applications));
+  currentUser=account; localStorage.setItem("rdUser",JSON.stringify(currentUser)); boot();
+}
+function logout(){localStorage.removeItem("rdUser");location.reload()}
+function openDrawer(){const g=document.getElementById("adminMenuGroup"); if(g)g.style.display=currentUser&&currentUser.isAdmin?"block":"none"; drawer.classList.add("open")}
+function closeDrawer(){drawer.classList.remove("open")}
+function go(screen){const adminScreens=["nick","members","adminApplications","adminKm","adminCreate","adminPanel","adminLogs","chapterReports","memberNotes","readReport","adminExport"]; if(adminScreens.includes(screen)&&(!currentUser||!currentUser.isAdmin))screen="profile"; if(!isApproved(currentUser)){title.innerText="Onay Bekliyor";subtitle.innerText="Başvuru durumu";content.innerHTML=pendingScreen();return} const locked = getUnreadRequiredNews();
+  if(locked.length && !["news","profile","notifications","settings"].includes(screen) && !currentUser.isAdmin){
+    title.innerText = "Zorunlu Duyuru";
+    subtitle.innerText = "Okuma onayı gerekli";
+    content.innerHTML = requiredLockScreen(locked[0]);
+    return;
+  }
+  document.querySelectorAll(".navItem").forEach(b=>b.classList.toggle("active",b.dataset.screen===screen)); title.innerText=titles[screen][0]; subtitle.innerText=titles[screen][1]; render(screen)}
+function render(screen){
+  if(screen==="home")content.innerHTML=homeScreen(); if(screen==="news")content.innerHTML=newsScreen(); if(screen==="events")content.innerHTML=eventsScreen(); if(screen==="routes")content.innerHTML=routesScreen(); if(screen==="km")content.innerHTML=kmScreen(); if(screen==="leaderboard")content.innerHTML=leaderboardScreen(); if(screen==="nick")content.innerHTML=nickScreen(); if(screen==="culture")content.innerHTML=cultureScreen(); if(screen==="members")content.innerHTML=membersScreen(); if(screen==="profile")content.innerHTML=profileScreen(); if(screen==="appSettings")content.innerHTML=appSettingsScreen(); if(screen==="badges")content.innerHTML=badgesScreen(); if(screen==="readReport")content.innerHTML=readReportScreen(); if(screen==="search")content.innerHTML=searchScreen(); if(screen==="versions")content.innerHTML=versionsScreen(); if(screen==="adminExport")content.innerHTML=adminExportScreen(); if(screen==="settings")content.innerHTML=settingsScreen(); if(screen==="notifications")content.innerHTML=notificationsScreen(); if(screen==="chapters")content.innerHTML=chaptersScreen(); if(screen==="archive")content.innerHTML=archiveScreen(); if(screen==="media")content.innerHTML=mediaScreen(); if(screen==="security")content.innerHTML=securityScreen(); if(screen==="adminPanel")content.innerHTML=adminPanelScreen(); if(screen==="adminApplications")content.innerHTML=adminApplicationsScreen(); if(screen==="adminKm")content.innerHTML=adminKmScreen(); if(screen==="adminCreate")content.innerHTML=adminCreateScreen(); if(screen==="adminLogs")content.innerHTML=adminLogsScreen(); if(screen==="chapterReports")content.innerHTML=chapterReportsScreen(); if(screen==="memberNotes")content.innerHTML=memberNotesScreen();
+}
+function pendingScreen(){return `<div class="pendingWrap"><div class="pendingCard">${pill("Başvuru Alındı")}<h2>Onay<br>Bekliyor</h2><p>Başvurun admin onayına düştü. Onay verilene kadar uygulama içeriği kapalı kalır.</p><div class="result"><b>${currentUser.name}</b><br>${currentUser.nick} · ${currentUser.nickType||"Nick"}<br>${currentUser.chapter} · ${currentUser.role}</div>${isAdminIdentity(currentUser)?`<button class="btn primary" style="width:100%;margin-top:14px" onclick="activateSelfAdmin()">Admin Olarak Aktifleştir</button>`:``}<button class="btn ghost" style="width:100%;margin-top:10px" onclick="toggleTheme()">Gece / Gündüz Modu</button><button class="btn danger" style="width:100%;margin-top:10px" onclick="logout()">Çıkış</button></div></div>`}
+function activateSelfAdmin(){if(!isAdminIdentity(currentUser))return;currentUser.status="Aktif";currentUser.isAdmin=true;currentUser.role="Admin";currentUser.nick=currentUser.nick&&currentUser.nick!=="Atanmadı"?currentUser.nick:"Sexist Dog";currentUser.chapter=currentUser.chapter||"Denizli";currentUser.km=currentUser.km||9999;currentUser.events=currentUser.events||99;accounts=accounts.map(a=>(a.name||"").trim().toLowerCase()===(currentUser.name||"").trim().toLowerCase()?{...a,...currentUser}:a);applications=applications.filter(a=>(a.name||"").trim().toLowerCase()!==(currentUser.name||"").trim().toLowerCase());localStorage.setItem("rdUser",JSON.stringify(currentUser));localStorage.setItem("rdAccounts",JSON.stringify(accounts));localStorage.setItem("rdApplications",JSON.stringify(applications));boot()}
+function roleBadge(role){return `<span class="roleBadge">${role==="Admin"?"⚡ Admin":role==="Kurul Üyesi"?"◆ Kurul":role==="Member"?"● Member":role==="Prospect"?"◐ Prospect":"○ Hangaround"}</span>`}
+function homeScreen(){
+  const members=allMembers(); const leader=members.slice().sort((a,b)=>(b.km||0)-(a.km||0))[0]||{nick:"-",km:0}; const sortedEvents=events.slice().sort((a,b)=>(a.order||0)-(b.order||0)); const lastNews=[...customNews,...baseNews][0];
+  return `<div class="homeCenter"><div class="hero">${pill("RainDogs App")}<h2>Temiz.<br>Sert.<br>Disiplinli.</h2><p>Haberler, etkinlikler, rotalar, kilometre günlüğü ve kulüp kültürü tek merkezde.</p><div class="btnRow"><button class="btn primary" onclick="go('events')">Etkinlikler</button><button class="btn ghost" onclick="go('profile')">Km Gir</button></div></div>
+  <div style="height:12px"></div>
+  <div class="visualCard">${pill("Visual Layer")}<h3>Yol, düzen ve disiplin.</h3><p>Logo alanı ve görsel kimlik gerçek RainDogs materyalleriyle değiştirilecek.</p><div class="visualIcon">🏍</div></div>
+  ${section("Benim Durumum")}<div class="profileBox"><div class="avatar">${(currentUser.nick||"RD").slice(0,2).toUpperCase()}</div><div><b>${currentUser.nick}</b><p>${currentUser.name||""}<br>${currentUser.chapter} · ${currentUser.role}${currentUser.isAdmin?" · Sınırsız Yetki":""}</p>${roleBadge(currentUser.role)}</div></div>
+  ${section("Bugünün Özeti")}<div class="grid2"><div class="statCard"><small>Bu Ay Lider</small><b>${leader.nick}</b></div><div class="statCard"><small>Benim Km</small><b>${currentUser.km||0}</b></div></div>
+  ${section("Yaklaşan Etkinlikler")}<div class="eventScroller">${sortedEvents.map(e=>`<div class="eventSlide">${card(`${pill(e.type)}<h3>${e.title}</h3><p>${e.date} · ${e.time}<br>${e.route}</p>`)}</div>`).join("")}</div>
+  ${section("Son Duyuru")}${card(`${pill(lastNews.tag)}<h3>${lastNews.title}</h3><p>${lastNews.body}</p>`)}</div>`;
+}
+function profileScreen(){return section("Profil / Üyelik")+`<div class="profileBox"><div class="avatar">${(currentUser.nick||"RD").slice(0,2).toUpperCase()}</div><div><b>${currentUser.nick}</b><p>${currentUser.name||""}<br>${currentUser.chapter} · ${currentUser.role}</p>${roleBadge(currentUser.role)}</div></div>${card(`${pill(currentUser.nickType||"Onaylı Nick")}<h3>Üyelik Bilgileri</h3><p>İsim soyisim: ${currentUser.name||"-"}<br>Katılım: ${currentUser.joined||"-"}<br>Yetki: ${currentUser.isAdmin?"Sınırsız Admin Yetkisi":"Tam Erişim"}</p><button class="btn danger" style="width:100%;margin-top:12px" onclick="logout()">Çıkış</button>`)}`}
+function newsScreen(){return section("Haberler")+[...customNews,...baseNews].map(n=>card(`<div class="meta">${pill(n.tag)}<span>${n.date}</span></div><h3>${n.title}</h3><p>${n.body}</p>`)).join("")}
+function eventsScreen(){return section("Etkinlikler")+events.map((e,i)=>card(`<div class="meta">${pill(e.type)}<span>${e.attending} kişi</span></div><h3>${e.title}</h3><p>${e.date} · ${e.time}<br>Toplanma: ${e.location}<br>Rota: ${e.route}</p><div class="fieldGroup" style="margin-top:14px"><select onchange="setEventOption(${i},this.value)"><option>Katılım durumunu seç</option><option>Katılıyorum</option><option>Belki</option><option>Katılamıyorum</option><option>Artçı ile geliyorum</option><option>Konumda buluşacağım</option><option>Club house’tan çıkacağım</option></select><button class="btn ${e.status?'primary':'ghost'}" onclick="toggleEvent(${i})">${e.status?'Katılım İşaretlendi':'Katılıyorum'}</button></div>${e.options?.[currentUser.nick]?`<div class="result">Durumun: ${e.options[currentUser.nick]}</div>`:""}`)).join("")}
+function setEventOption(i,val){if(!events[i].options)events[i].options={};events[i].options[currentUser.nick]=val;render("events")}
+function toggleEvent(i){events[i].status=!events[i].status;events[i].attending+=events[i].status?1:-1;render("events")}
+function routesScreen(){return section("Rotalar")+routes.map(r=>card(`<div class="meta">${pill(r.difficulty)}<span><b>${r.km} km</b></span></div><h3>${r.name}</h3><p>Süre: ${r.duration}<br>Zemin: ${r.surface}<br>Karakter: ${r.character}</p><div class="result">${r.notes}</div>`)).join("")}
+function kmScreen(){const my=kmEntries.filter(e=>e.memberNick===currentUser.nick);const total=my.filter(e=>e.status==="Onaylandı").reduce((s,e)=>s+Number(e.km||0),0);return `${section("Kilometre Günlüğü")}${card(`${pill("Bu Ay")}<div style="font-size:52px;font-weight:950;letter-spacing:-.055em;margin-top:14px">${total} km</div><p>Kayıtlar admin onayına gider. Kanıt alanına odometre fotoğrafı, rota ekran görüntüsü veya etkinlik bağlantısı yazılabilir.</p><div class="fieldGroup"><input id="routeInput" class="input" placeholder="Rota / açıklama"><input id="kmInput" class="input" type="number" placeholder="Kilometre"><input id="proofInput" class="input" placeholder="Kanıt / not"><button class="btn primary" onclick="addKm()">Kayıt Ekle</button></div>`)}${section("Kayıtlar")}${my.map(e=>`<div class="card kmLine"><div><b>${e.route}</b><p>${e.date} · ${e.type} · ${e.status}<br>Kanıt: ${e.proof||"-"}</p></div><b>${e.km} km</b></div>`).join("")||card("<h3>Kayıt yok</h3><p>İlk kilometre kaydını ekle.</p>")}`}
+function addKm(){const route=routeInput.value.trim(),km=Number(kmInput.value),proof=proofInput.value.trim();if(!route||!km){alert("Rota ve kilometre gir.");return}kmEntries.unshift({id:Date.now(),date:"Bugün",route,km,type:"Manuel",status:"Onay Bekliyor",memberNick:currentUser.nick,proof});localStorage.setItem("rdKmEntries",JSON.stringify(kmEntries));render("km")}
+function leaderboardScreen(){const list=allMembers().slice(); if(leaderboardMode==="km")list.sort((a,b)=>(b.km||0)-(a.km||0)); if(leaderboardMode==="event")list.sort((a,b)=>(b.events||0)-(a.events||0)); if(leaderboardMode==="rookie")list.sort((a,b)=>((["Hangaround","Prospect"].includes(b.role)?b.km:0))-((["Hangaround","Prospect"].includes(a.role)?a.km:0))); const max=Math.max(1,...list.map(m=>leaderboardMode==="event"?(m.events||0):(m.km||0)));return `<div class="segment"><button class="${leaderboardMode==="km"?"active":""}" onclick="leaderboardMode='km';render('leaderboard')">Road King</button><button class="${leaderboardMode==="event"?"active":""}" onclick="leaderboardMode='event';render('leaderboard')">Event Loyal</button><button class="${leaderboardMode==="rookie"?"active":""}" onclick="leaderboardMode='rookie';render('leaderboard')">Rookie Flame</button></div>${section("Leaderboard")}${list.map((m,i)=>{const val=leaderboardMode==="event"?(m.events||0):(m.km||0);return card(`<div class="rank"><div class="rankNo ${i===0?'first':''}">${i+1}</div><div style="flex:1"><b>${m.nick}${i===0?' 👑':''}</b><p>${m.name||""}<br>${m.chapter} · ${m.role}</p>${roleBadge(m.role)}<div class="progress"><div style="width:${val/max*100}%"></div></div></div><div style="text-align:right"><b>${val}</b><p>${leaderboardMode==="event"?"etkinlik":"km"}</p></div></div>`) }).join("")}`}
+function nickScreen(){return section("Nick Sorgu")+card(`<input id="nickInput" class="input" placeholder="Nick yaz" oninput="checkNick()"><div id="nickResult"></div>`)}
+function checkNick(){const v=nickInput.value.trim().toLowerCase();if(v.length<2){nickResult.innerHTML="";return}nickResult.innerHTML=allNickKeys().includes(v)?`<div class="result bad">Bu nick alınmış veya başvuru bekliyor.</div>`:`<div class="result good">Bu nick kullanılabilir. Talep admin onayına gönderilebilir.</div>`}
+function cultureScreen(){return section("Kültür")+culture.map(x=>card(`<h3>${x.title}</h3><p>${x.body}</p>`)).join("")}
+function membersScreen(){return section("Üyeler")+allMembers().map((m,i)=>card(`<div class="kmLine"><div><b>${m.nick}</b><p>${m.name||""}<br>${m.chapter} · ${m.role}</p>${roleBadge(m.role)}</div><div style="text-align:right;color:var(--muted);font-size:12px">${m.events||0} etkinlik<br>${m.km||0} km</div></div>${currentUser.isAdmin?`<div class="btnRow"><button class="btn ghost" onclick="assignNick(${i})">Ata</button><button class="btn ghost" onclick="editMember(${i})">Üye Düzenle</button></div>`:""}`)).join("")}
+function assignNick(i){const list=allMembers();const n=prompt("Yeni nick:",list[i].nick);if(!n)return;if(allNickKeys().includes(n.toLowerCase())&&n.toLowerCase()!==list[i].nick.toLowerCase()){alert("Bu nick alınmış.");return}list[i].nick=n;alert("Prototipte yerleşik üyeler kalıcı düzenlenmez. Backend aşamasında bu işlem kalıcı olacak.")}
+function editMember(i){alert("Üye düzenleme ekranı prototipte gösterim amaçlı. Backend aşamasında rol, chapter ve erişim güncellenebilir olacak.")}
+function settingsScreen(){return section("Bildirim Ayarları")+card(`<h3>Sadece Önemli Olan</h3><p>Bildirimler gereksiz kalabalık yaratmamalı. Önerilen ayar: sadece etkinlik, saat değişikliği, acil duyuru, başvuru onayı, km onayı ve yönetim mesajı.</p><label class="checkboxRow"><input type="checkbox" checked><span>Yeni etkinlik ve saat değişikliği</span></label><label class="checkboxRow"><input type="checkbox" checked><span>Başvuru / km onay bildirimleri</span></label><label class="checkboxRow"><input type="checkbox"><span>Tüm haberler için bildirim gönder</span></label>`)}
+function adminPanelScreen(){return section("Yönetim Paneli")+`<div class="grid2"><div class="statCard"><small>Başvuru</small><b>${applications.length}</b></div><div class="statCard"><small>Km Onayı</small><b>${kmEntries.filter(k=>k.status==="Onay Bekliyor").length}</b></div></div>`+card(`<h3>Operasyon Merkezi</h3><p>Onayları, km onayları, içerik oluşturma, nick sorgu ve üye bilgi erişimi bu panelden yönetilir.</p><div class="fieldGroup"><button class="btn primary" onclick="go('adminApplications')">Başvurular</button><button class="btn ghost" onclick="go('adminKm')">Onayları</button><button class="btn ghost" onclick="go('adminCreate')">İçerik Oluştur</button></div>`)}
+function adminApplicationsScreen(){if(!currentUser.isAdmin)return card("<h3>Yetkisiz</h3>");return section("Onayları")+(applications.map((a,i)=>card(`<div class="meta">${pill(a.status)}<span>${a.joined}</span></div><h3>${a.nick}</h3><p>${a.name}<br>${a.chapter} · ${a.role}<br>${a.phone}<br>${a.nickType}</p><div class="btnRow"><button class="btn primary" onclick="approveApplication(${i})">Onayla</button><button class="btn danger" onclick="rejectApplication(${i})">Reddet</button></div>`)).join("")||card("<h3>Bekleyen başvuru yok</h3><p>Yeni kayıt başvuruları burada görünür.</p>"))}
+function approveApplication(i){const app=applications[i];app.status="Aktif";const idx=accounts.findIndex(a=>a.name===app.name&&a.password===app.password);if(idx>=0)accounts[idx].status="Aktif";applications.splice(i,1);localStorage.setItem("rdAccounts",JSON.stringify(accounts));localStorage.setItem("rdApplications",JSON.stringify(applications));render("adminApplications")}
+function rejectApplication(i){const app=applications[i];applications.splice(i,1);accounts=accounts.filter(a=>!(a.name===app.name&&a.password===app.password));localStorage.setItem("rdAccounts",JSON.stringify(accounts));localStorage.setItem("rdApplications",JSON.stringify(applications));render("adminApplications")}
+function adminKmScreen(){const pending=kmEntries.filter(k=>k.status==="Onay Bekliyor");return section("Onayları")+(pending.map(k=>card(`<div class="meta">${pill(k.status)}<span>${k.date}</span></div><h3>${k.memberNick}</h3><p>${k.route}<br>${k.km} km · ${k.type}<br>Kanıt: ${k.proof||"-"}</p><button class="btn primary" style="width:100%;margin-top:12px" onclick="approveKm(${k.id})">Onayla</button>`)).join("")||card("<h3>Bekleyen km kaydı yok</h3><p>Yeni kilometre kayıtları burada görünür.</p>"))}
+function approveKm(id){const k=kmEntries.find(x=>x.id==id);if(k){k.status="Onaylandı";const m=accounts.find(a=>a.nick===k.memberNick);if(m)m.km=(m.km||0)+Number(k.km||0);localStorage.setItem("rdKmEntries",JSON.stringify(kmEntries));localStorage.setItem("rdAccounts",JSON.stringify(accounts));render("adminKm")}}
+function adminCreateScreen(){return section("İçerik Oluştur")+card(`<h3>Haber Oluştur</h3><div class="fieldGroup"><input id="newsTitle" class="input" placeholder="Başlık"><input id="newsTag" class="input" placeholder="Kategori"><textarea id="newsBody" placeholder="Duyuru metni"></textarea><button class="btn primary" onclick="createNews()">Yayınla</button></div>`)+card(`<h3>Oluştur</h3><div class="fieldGroup"><input id="eventTitle" class="input" placeholder="Etkinlik adı"><input id="eventDate" class="input" placeholder="Tarih"><input id="eventTime" class="input" placeholder="Saat"><input id="eventRoute" class="input" placeholder="Rota"><button class="btn primary" onclick="createEvent()">Ekle</button></div>`)+card(`<h3>Chapter Yönetimi</h3><p>Mevcut chapterlar: ${chapters.join(", ")}</p><div class="fieldGroup"><input id="chapterName" class="input" placeholder="Yeni chapter / şehir"><button class="btn ghost" onclick="addChapter()">Ekle</button></div>`)}
+function createNews(){if(!newsTitle.value||!newsBody.value){alert("Başlık ve metin gir.");return}customNews.unshift({title:newsTitle.value,tag:newsTag.value||"Duyuru",date:"Bugün",body:newsBody.value});localStorage.setItem("rdNews",JSON.stringify(customNews));alert("Haber yayına alındı.");go("news")}
+function createEvent(){if(!eventTitle.value||!eventDate.value){alert("Etkinlik adı ve tarih gir.");return}const e={title:eventTitle.value,date:eventDate.value,time:eventTime.value||"-",location:"Belirlenecek",route:eventRoute.value||"Rota belirlenecek",type:"Etkinlik",attending:0,status:false,order:events.length+1,options:{}};customEvents.push(e);events.push(e);localStorage.setItem("rdEvents",JSON.stringify(customEvents));alert("Eklendi.");go("events")}
+function addChapter(){const c=chapterName.value.trim();if(!c)return;chapters.push(c);chapters.sort();localStorage.setItem("rdChapters",JSON.stringify(chapters));alert("Eklendi. Backend aşamasında kayıt formuna otomatik bağlanacak.")}
+
+function getChapterData(){
+  const members = allMembers();
+  const data = chapters.map(ch => {
+    const chMembers = members.filter(m => m.chapter === ch);
+    const chEvents = events.filter(e => (e.route || "").includes(ch) || (e.location || "").includes(ch) || (e.title || "").includes(ch));
+    const totalKm = chMembers.reduce((s,m)=>s+Number(m.km||0),0);
+    const admins = chMembers.filter(m => m.isAdmin || m.role === "Admin" || m.role === "Kurul Üyesi");
+    return {
+      name: ch,
+      members: chMembers,
+      admins,
+      events: chEvents.length ? chEvents : events.slice(0,2),
+      totalKm,
+      news: [...customNews,...baseNews].slice(0,2)
+    };
+  });
+  return data;
+}
+function setChapterScope(scope){
+  chapterScope = scope;
+  render("chapters");
+}
+function setSelectedChapter(ch){
+  selectedChapter = ch;
+  chapterScope = "chapter";
+  render("chapters");
+}
+function chaptersScreen(){
+  const data = getChapterData();
+  const totalMembers = allMembers().length;
+  const totalKm = allMembers().reduce((s,m)=>s+Number(m.km||0),0);
+  const activeChapters = data.filter(c=>c.members.length || chapters.includes(c.name));
+
+  const switcher = `<div class="scopeSwitch">
+    <button class="${chapterScope==="turkiye"?"active":""}" onclick="setChapterScope('turkiye')">Türkiye Geneli</button>
+    <button class="${chapterScope==="chapter"?"active":""}" onclick="setChapterScope('chapter')">Chapter Bazlı</button>
+  </div>`;
+
+  if(chapterScope === "turkiye"){
+    return switcher + section("Türkiye Özeti") + `
+      <div class="chapterHero">
+        ${pill("National View")}
+        <h3>RainDogs Türkiye</h3>
+        <p>Türkiye genelindeki chapter yapısı, toplam kilometre, aktif üyeler ve yaklaşan etkinlikler tek merkezde.</p>
+        <div class="chapterStats">
+          <div class="chapterStat"><small>Chapter</small><b>${chapters.length}</b></div>
+          <div class="chapterStat"><small>Üye</small><b>${totalMembers}</b></div>
+          <div class="chapterStat"><small>Km</small><b>${totalKm}</b></div>
+        </div>
+      </div>
+      ${section("Chapterlar")}
+      <div class="compactList">
+        ${activeChapters.map(c=>`
+          <div class="compactItem" onclick="setSelectedChapter('${c.name}')">
+            <div class="meta">${pill(c.name)}<span>${c.members.length} üye</span></div>
+            <h3 style="margin:10px 0 0">${c.name}</h3>
+            <p>Toplam km: ${c.totalKm}<br>Adminler: ${c.admins.map(a=>a.nick).join(", ") || "Atanmadı"}</p>
+          </div>
+        `).join("")}
+      </div>
+      ${section("Türkiye Yaklaşan Etkinlikleri")}
+      <div class="eventScroller">${events.slice().sort((a,b)=>(a.order||0)-(b.order||0)).map(e=>`<div class="eventSlide">${card(`${pill(e.type)}<h3>${e.title}</h3><p>${e.date} · ${e.time}<br>${e.route}</p>`)}</div>`).join("")}</div>
+    `;
+  }
+
+  const current = data.find(c=>c.name===selectedChapter) || data[0];
+  return switcher + section("Chapter Seç") + `
+    <select onchange="setSelectedChapter(this.value)">
+      ${chapters.map(ch=>`<option ${ch===current.name?"selected":""}>${ch}</option>`).join("")}
+    </select>
+    ${section("Chapter Özeti")}
+    <div class="chapterHero">
+      ${pill("Chapter View")}
+      <h3>${current.name}</h3>
+      <p>${current.name} chapter görünümü. Üyeler, toplam kilometre, yaklaşan etkinlikler ve son haberler burada toplanır.</p>
+      <div class="chapterStats">
+        <div class="chapterStat"><small>Üye</small><b>${current.members.length}</b></div>
+        <div class="chapterStat"><small>Km</small><b>${current.totalKm}</b></div>
+        <div class="chapterStat"><small>Etkinlik</small><b>${current.events.length}</b></div>
+      </div>
+    </div>
+    ${section("Chapter Adminleri")}
+    ${current.admins.map(a=>card(`<div class="kmLine"><div><b>${a.nick}</b><p>${a.name || ""}<br>${a.role}</p></div>${roleBadge(a.role)}</div>`)).join("") || card("<h3>Admin atanmadı</h3><p>Bu chapter için yönetici kaydı görünmüyor.</p>")}
+    ${section("Üyeler")}
+    ${current.members.map(m=>card(`<div class="kmLine"><div><b>${m.nick}</b><p>${m.name || ""}<br>${m.role}</p>${roleBadge(m.role)}</div><div style="text-align:right;color:var(--muted);font-size:12px">${m.events||0} etkinlik<br>${m.km||0} km</div></div>`)).join("") || card("<h3>Üye kaydı yok</h3><p>Bu chapter için aktif üye görünmüyor.</p>")}
+    ${section("Yaklaşan Etkinlikler")}
+    <div class="eventScroller">${current.events.map(e=>`<div class="eventSlide">${card(`${pill(e.type)}<h3>${e.title}</h3><p>${e.date} · ${e.time}<br>${e.route}</p>`)}</div>`).join("")}</div>
+    ${section("Son Haberler")}
+    ${current.news.map(n=>card(`<div class="meta">${pill(n.tag)}<span>${n.date}</span></div><h3>${n.title}</h3><p>${n.body}</p>`)).join("")}
+  `;
+}
+function archiveScreen(){
+  const docs = [
+    {title:"Kulüp Kuralları", tag:"Kural", body:"Genel disiplin, temsil ve davranış esasları."},
+    {title:"Toplantı Kararları", tag:"Karar", body:"Alınan kararlar, tarih ve uygulama notlarıyla arşivlenir."},
+    {title:"Prospect Süreci", tag:"Süreç", body:"Prospect döneminde beklentiler, görevler ve değerlendirme esasları."},
+    {title:"Sosyal Medya Yayın Disiplini", tag:"Dijital", body:"Resmi paylaşım onay zinciri ve gizlilik kuralları."},
+    {title:"Sponsorluk Dosyaları", tag:"Dosya", body:"Sponsor ilişkileri ve kullanılacak kurumsal materyaller."},
+    {title:"Festival Planları", tag:"Plan", body:"Motofest ve büyük organizasyon planları."}
+  ];
+  return section("Arşiv") + docs.map(d=>card(`${pill(d.tag)}<h3>${d.title}</h3><p>${d.body}</p>`)).join("");
+}
+function mediaScreen(){
+  const galleries = [
+    {title:"Uşak Chapter Açılışı", tag:"Galeri", body:"Açılış sürüşü, club house ve toplu kareler."},
+    {title:"Mayıs Sürüşü", tag:"Etkinlik", body:"Sürüş sonrası seçilen fotoğraf ve kısa videolar."},
+    {title:"Yelek Törenleri", tag:"Arşiv", body:"Tören görüntüleri sadece üyeler tarafından görüntülenir."}
+  ];
+  return section("Medya / Galeri") + card(`<h3>Paylaşım Disiplini</h3><p>Galeriye yalnızca admin yükleme yapar. Dışarıda paylaşılacak içerikler ayrıca işaretlenir.</p>`) + galleries.map(g=>card(`${pill(g.tag)}<h3>${g.title}</h3><p>${g.body}</p><button class="btn ghost" style="width:100%;margin-top:12px">Aç</button>`)).join("");
+}
+function securityScreen(){
+  return section("Güvenlik / Gizlilik") +
+    card(`<h3>Ekran Görüntüsü ve Paylaşım</h3><p>Uygulama içeriği kulüp içi kullanım içindir. Yönetim onayı olmadan dışarıya taşınmaz.</p>`) +
+    card(`<h3>Üye Verileri</h3><p>Üye Bilgileri yalnızca yetki seviyesine göre görüntülenir. Telefon, başvuru ve yönetim kayıtları gizli kabul edilir.</p>`) +
+    card(`<h3>KVKK ve Kullanım Şartları</h3><p>Kayıt sırasında verilen onaylar üyelik süreci, etkinlik organizasyonu ve kulüp içi iletişim amacıyla kullanılır.</p>`);
+}
+
+
+function saveList(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+function logAdmin(action, target){
+  adminLogs.unshift({date:new Date().toLocaleString("tr-TR"), admin:currentUser?.nick || "Sistem", action, target});
+  saveList("rdAdminLogs", adminLogs);
+}
+function pushNotification(type, title, body, target="Genel"){
+  notifications.unshift({id:"nt_"+Date.now(), type, title, body, target, date:new Date().toLocaleString("tr-TR"), read:false});
+  saveList("rdNotifications", notifications);
+}
+function allNews(){
+  return [...customNews, ...baseNews].map((n,i)=>({...n, id:n.id || ("custom_"+i)}));
+}
+function isNewsRead(id){ return readNewsIds.includes(id); }
+function markNewsRead(id){
+  if(!readNewsIds.includes(id)) readNewsIds.push(id);
+  saveList("rdReadNewsIds", readNewsIds);
+  render("news");
+}
+function memberBadges(m){
+  const badges = [];
+  if((m.km||0) >= 1000) badges.push({title:"Road King", desc:"1000 km üzeri aktif sürüş"});
+  if((m.events||0) >= 10) badges.push({title:"Event Loyal", desc:"Etkinlik katılımı yüksek"});
+  if(["Hangaround","Prospect"].includes(m.role)) badges.push({title:"New Blood", desc:"Yeni süreçte aktif takip"});
+  if(m.role === "Admin" || m.role === "Kurul Üyesi") badges.push({title:"Old Guard", desc:"Yapı ve karar sorumluluğu"});
+  if(readNewsIds.length >= 3) badges.push({title:"Discipline", desc:"Duyuruları takip ediyor"});
+  if(!badges.length) badges.push({title:"On Road", desc:"Aktiflik oluşuyor"});
+  return badges;
+}
+function newsScreen(){
+  return section("Haberler") + allNews().map(n=>{
+    const unread = !isNewsRead(n.id);
+    return card(`
+      <div class="meta">
+        <div>${pill(n.importance || n.tag)}${unread ? '<span class="noticeDot"></span>' : ''}</div>
+        <span>${n.date}</span>
+      </div>
+      <h3>${n.title}</h3>
+      <p>${n.body}</p>
+      ${n.required ? '<div class="requiredBanner">Zorunlu okuma. Devam etmek için “Okudum” işaretlenmeli.</div>' : ''}
+      <button class="btn ${unread ? 'primary' : 'ghost'}" style="width:100%;margin-top:12px" onclick="markNewsRead('${n.id}')">${unread ? 'Okudum' : 'Okundu'}</button>
+    `);
+  }).join("");
+}
+function notificationsScreen(){
+  return section("Bildirim Merkezi") + (notifications.map((n,i)=>card(`
+    <div class="meta">${pill(n.type)}<span>${n.date}</span></div>
+    <h3>${n.title}</h3>
+    <p>${n.body}<br>Hedef: ${n.target}</p>
+    <button class="btn ghost" style="width:100%;margin-top:12px" onclick="notifications[${i}].read=true;saveList('rdNotifications',notifications);render('notifications')">${n.read ? 'Okundu' : 'Okundu'}</button>
+  `)).join("") || card("<h3>Bildirim yok</h3><p>Başvuru, km onayı, etkinlik ve yönetim bildirimleri burada görünür.</p>"));
+}
+function profileScreen(){
+  const badges = memberBadges(currentUser);
+  return section("Profil / Üyelik") + `
+    <div class="profileBox">
+      <div class="avatar">${(currentUser.nick||"RD").slice(0,2).toUpperCase()}</div>
+      <div><b>${currentUser.nick}</b><p>${currentUser.name||""}<br>${currentUser.chapter} · ${currentUser.role}</p>${roleBadge(currentUser.role)}</div>
+    </div>
+    ${card(`${pill(currentUser.nickType||"Onaylı Nick")}<h3>Üyelik Bilgileri</h3><p>İsim soyisim: ${currentUser.name||"-"}<br>Katılım: ${currentUser.joined||"-"}<br>Yetki: ${currentUser.isAdmin?"Sınırsız Admin Yetkisi":"Tam Erişim"}</p><button class="btn danger" style="width:100%;margin-top:12px" onclick="logout()">Çıkış</button>`)}
+    ${section("Rozetler")}
+    <div class="badgeGrid">${badges.map(b=>`<div class="achievement"><b>${b.title}</b><span>${b.desc}</span></div>`).join("")}</div>
+  `;
+}
+function approveApplication(i){
+  const app=applications[i];app.status="Aktif";const idx=accounts.findIndex(a=>a.name===app.name&&a.password===app.password);if(idx>=0)accounts[idx].status="Aktif";applications.splice(i,1);
+  localStorage.setItem("rdAccounts",JSON.stringify(accounts));localStorage.setItem("rdApplications",JSON.stringify(applications));
+  logAdmin("Onaylandı", app.nick + " / " + app.name);
+  pushNotification("Başvuru", "Başvurun onaylandı", "RainDogs App erişimin aktif edildi.", app.nick);
+  render("adminApplications");
+}
+function rejectApplication(i){
+  const app=applications[i];applications.splice(i,1);accounts=accounts.filter(a=>!(a.name===app.name&&a.password===app.password));
+  localStorage.setItem("rdAccounts",JSON.stringify(accounts));localStorage.setItem("rdApplications",JSON.stringify(applications));
+  logAdmin("Başvuru reddedildi", app.nick + " / " + app.name);
+  render("adminApplications");
+}
+function approveKm(id){
+  const k=kmEntries.find(x=>x.id==id);if(k){k.status="Onaylandı";const m=accounts.find(a=>a.nick===k.memberNick);if(m)m.km=(m.km||0)+Number(k.km||0);localStorage.setItem("rdKmEntries",JSON.stringify(kmEntries));localStorage.setItem("rdAccounts",JSON.stringify(accounts));logAdmin("Onaylandı", k.memberNick + " - " + k.km + " km");pushNotification("Km Onayı", "Km kaydın onaylandı", k.route + " / " + k.km + " km", k.memberNick);render("adminKm")}
+}
+function createNews(){if(!newsTitle.value||!newsBody.value){alert("Başlık ve metin gir.");return}const item={id:"custom_"+Date.now(),title:newsTitle.value,tag:newsTag.value||"Duyuru",importance:newsImportance.value,required:newsRequired.checked,date:"Bugün",body:newsBody.value};customNews.unshift(item);localStorage.setItem("rdNews",JSON.stringify(customNews));logAdmin("Haber yayınlandı", item.title);pushNotification("Duyuru", item.title, item.body, "Genel");alert("Haber yayına alındı.");go("news")}
+function adminCreateScreen(){return section("İçerik Oluştur")+card(`<h3>Haber Oluştur</h3><div class="fieldGroup"><input id="newsTitle" class="input" placeholder="Başlık"><input id="newsTag" class="input" placeholder="Kategori"><select id="newsImportance"><option>Normal</option><option>Önemli</option><option>Zorunlu Okuma</option><option>Yönetim Kararı</option></select><textarea id="newsBody" placeholder="Duyuru metni"></textarea><label class="checkboxRow"><input id="newsRequired" type="checkbox"><span>Bu duyuru için “Okudum” onayı zorunlu olsun.</span></label><button class="btn primary" onclick="createNews()">Yayınla</button></div>`)+card(`<h3>Oluştur</h3><div class="fieldGroup"><input id="eventTitle" class="input" placeholder="Etkinlik adı"><input id="eventDate" class="input" placeholder="Tarih"><input id="eventTime" class="input" placeholder="Saat"><input id="eventRoute" class="input" placeholder="Rota"><button class="btn primary" onclick="createEvent()">Ekle</button></div>`)+card(`<h3>Chapter Yönetimi</h3><p>Mevcut chapterlar: ${chapters.join(", ")}</p><div class="fieldGroup"><input id="chapterName" class="input" placeholder="Yeni chapter / şehir"><button class="btn ghost" onclick="addChapter()">Ekle</button></div>`)}
+function adminLogsScreen(){
+  return section("Admin Logları") + (adminLogs.map(l=>card(`<div class="logItem"><div class="meta">${pill(l.action)}<span>${l.date}</span></div><h3>${l.target}</h3><p>İşlem yapan: ${l.admin}</p></div>`)).join("") || card("<h3>Log yok</h3><p>Onay, red, km onayı, haber ve etkinlik işlemleri burada kayıt altına alınır.</p>"));
+}
+function chapterReportsScreen(){
+  return section("Chapter Raporları") + card(`<h3>Rapor Gir</h3><div class="fieldGroup"><select id="reportChapter">${chapters.map(c=>`<option>${c}</option>`).join("")}</select><input id="reportEvents" class="input" type="number" placeholder="Bu ay etkinlik sayısı"><input id="reportKm" class="input" type="number" placeholder="Bu ay toplam km"><textarea id="reportNotes" placeholder="Notlar / ihtiyaçlar"></textarea><button class="btn primary" onclick="addChapterReport()">Kaydet</button></div>`) + section("Kayıtlı Raporlar") + (chapterReports.map(r=>card(`<div class="meta">${pill(r.chapter)}<span>${r.date}</span></div><h3>${r.events} etkinlik · ${r.km} km</h3><p>${r.notes}</p>`)).join("") || card("<h3>Rapor yok</h3><p>Chapter Raporları burada listelenir.</p>"));
+}
+function addChapterReport(){const r={chapter:reportChapter.value,events:reportEvents.value||0,km:reportKm.value||0,notes:reportNotes.value||"-",date:"Bugün"};chapterReports.unshift(r);saveList("rdChapterReports",chapterReports);logAdmin("Chapter raporu eklendi", r.chapter);render("chapterReports")}
+function memberNotesScreen(){
+  const members=allMembers();
+  return section("Üye Notları") + card(`<h3>Yönetim Notu Ekle</h3><div class="fieldGroup"><select id="noteMember">${members.map(m=>`<option>${m.nick}</option>`).join("")}</select><select id="noteType"><option>Olumlu Katkı</option><option>Uyarı</option><option>Katılım Eksikliği</option><option>Görev Takibi</option><option>Disiplin Notu</option></select><textarea id="noteBody" placeholder="Yalnızca yönetim tarafından görülecek not"></textarea><button class="btn primary" onclick="addMemberNote()">Kaydet</button></div>`) + section("Kayıtlı Notlar") + (memberNotes.map(n=>card(`<div class="meta">${pill(n.type)}<span>${n.date}</span></div><h3>${n.member}</h3><p>${n.body}<br>Giren: ${n.admin}</p>`)).join("") || card("<h3>Not yok</h3><p>Üye Notları sadece yönetim panelinde görünür.</p>"));
+}
+function addMemberNote(){const n={member:noteMember.value,type:noteType.value,body:noteBody.value||"-",admin:currentUser.nick,date:"Bugün"};memberNotes.unshift(n);saveList("rdMemberNotes",memberNotes);logAdmin("Üye notu eklendi", n.member + " / " + n.type);render("memberNotes")}
+
+
+function getUnreadRequiredNews(){
+  return allNews().filter(n => n.required && !isNewsRead(n.id));
+}
+function requiredLockScreen(n){
+  return `<div class="lockScreen"><div class="lockCard">${pill(n.importance || "Zorunlu Okuma")}<h2>Okunması Gereken<br>Duyuru Var</h2><p>${n.title}</p><div class="result">${n.body}</div><button class="btn primary" style="width:100%;margin-top:14px" onclick="go('news')">Oku</button></div></div>`;
+}
+function showOnboarding(){
+  title.innerText = "RainDogs";
+  subtitle.innerText = "İlk giriş";
+  bottomNav.style.display = "none";
+  content.innerHTML = `<div class="onboarding"><div class="onboardingCard">${pill("1 / 3")}<h2>Kulüp<br>Merkezi</h2><p>Haberler, etkinlikler, rotalar ve chapter yapısı tek yerde.</p><button class="btn primary" style="width:100%;margin-top:16px" onclick="onboardingStep2()">Devam Et</button></div></div>`;
+}
+function onboardingStep2(){
+  content.innerHTML = `<div class="onboarding"><div class="onboardingCard">${pill("2 / 3")}<h2>Yolda Olan<br>Görünür</h2><p>Kilometre günlüğü, leaderboard ve rozetler aktifliği görünür hale getirir.</p><button class="btn primary" style="width:100%;margin-top:16px" onclick="onboardingStep3()">Devam Et</button></div></div>`;
+}
+function onboardingStep3(){
+  content.innerHTML = `<div class="onboarding"><div class="onboardingCard">${pill("3 / 3")}<h2>Disiplin<br>Esastır</h2><p>Başvurular, kilometre kayıtları ve kritik duyurular admin onayından geçer.</p><button class="btn primary" style="width:100%;margin-top:16px" onclick="finishOnboarding()">Uygulamaya Gir</button></div></div>`;
+}
+function finishOnboarding(){
+  onboardingDone = true;
+  localStorage.setItem("rdOnboardingDone","true");
+  bottomNav.style.display = "grid";
+  go("home");
+}
+function badgesScreen(){
+  const badges = memberBadges(currentUser);
+  return section("Rozetler") + `<div class="badgeGrid">${badges.map(b=>`<div class="achievement"><b>${b.title}</b><span>${b.desc}</span></div>`).join("")}</div>` + section("Tüm Rozetler") + card(`<h3>Rozet Sistemi</h3><p>Road King, Event Loyal, Iron Rider, New Blood, Chapter Power, Old Guard ve Discipline rozetleri aktiflik, km, katılım ve okuma disiplinine göre oluşur.</p>`);
+}
+function memberStatusLabel(m){
+  if(m.status === "Aktif") return "Aktif";
+  if(m.status === "Onay Bekliyor") return "Onay Bekliyor";
+  return m.status || "Aktif";
+}
+function activityLevel(m){
+  const score = (m.km||0)/100 + (m.events||0)*4;
+  if(score > 120) return "Çok Aktif";
+  if(score > 60) return "Aktif";
+  if(score > 25) return "Normal";
+  return "Düşük";
+}
+function setMemberStatusFilter(f){
+  memberStatusFilter = f;
+  render("members");
+}
+function membersScreen(){
+  const listAll = [...allMembers(), ...accounts.filter(a=>a.status!=="Aktif")];
+  const filters = ["Tümü","Aktif","Pasif","Askıda","Ayrıldı","Onay Bekliyor"];
+  const list = memberStatusFilter==="Tümü" ? listAll : listAll.filter(m=>memberStatusLabel(m)===memberStatusFilter);
+  return `<div class="filterBar">${filters.map(f=>`<button class="${memberStatusFilter===f?'active':''}" onclick="setMemberStatusFilter('${f}')">${f}</button>`).join("")}</div>` + section("Üyeler") + (list.map((m,i)=>card(`
+    <div class="memberCardTop">
+      <div>
+        <div class="noticeRow"><b style="font-size:22px">${m.nick}</b><span class="statusPill">${memberStatusLabel(m)}</span></div>
+        <p>${m.name||""}<br>${m.chapter} · ${m.role}<br>Aktiflik: ${activityLevel(m)} · Son giriş: ${m.lastSeen || "-"}</p>
+        ${roleBadge(m.role)}
+      </div>
+      <div style="text-align:right;color:var(--muted);font-size:12px">${m.events||0} etkinlik<br>${m.km||0} km</div>
+    </div>
+    ${currentUser.isAdmin?`<div class="actionGrid"><button class="btn ghost" onclick="assignNick(${i})">Ata</button><button class="btn ghost" onclick="changeMemberStatus(${i})">Değiştir</button><button class="btn ghost" onclick="changeMemberRole(${i})">Değiştir</button><button class="btn ghost" onclick="quickMemberNote('${m.nick}')">Not Ekle</button></div>`:""}
+  `)).join("") || card("<h3>Kayıt yok</h3><p>Bu filtrede üye görünmüyor.</p>"));
+}
+function changeMemberStatus(i){
+  const statuses = ["Aktif","Pasif","Askıda","Ayrıldı","Onay Bekliyor"];
+  const s = prompt("Yeni durum: Aktif / Pasif / Askıda / Ayrıldı / Onay Bekliyor", "Aktif");
+  if(!s || !statuses.includes(s)){ alert("Geçerli durum gir."); return; }
+  alert("Prototipte yerleşik üyeler kalıcı düzenlenmez. Backend aşamasında bu işlem kaydedilecek.");
+  logAdmin("Üye durumu değiştirildi", "Liste index: " + i + " / " + s);
+}
+function changeMemberRole(i){
+  const roles = ["Hangaround","Prospect","Member","Kurul Üyesi","Admin"];
+  const r = prompt("Yeni statü: Hangaround / Prospect / Member / Kurul Üyesi / Admin", "Member");
+  if(!r || !roles.includes(r)){ alert("Geçerli statü gir."); return; }
+  alert("Prototipte yerleşik üyeler kalıcı düzenlenmez. Backend aşamasında bu işlem kaydedilecek.");
+  logAdmin("Üye statüsü değiştirildi", "Liste index: " + i + " / " + r);
+}
+function quickMemberNote(nick){
+  const body = prompt(nick + " için yönetim notu:");
+  if(!body) return;
+  memberNotes.unshift({member:nick,type:"Yönetim Notu",body,admin:currentUser.nick,date:"Bugün"});
+  saveList("rdMemberNotes", memberNotes);
+  logAdmin("Üye notu eklendi", nick);
+  alert("Not kaydedildi.");
+}
+function readReportScreen(){
+  const news = allNews();
+  const members = allMembers();
+  return section("Okuma Raporu") + news.map(n=>{
+    const readCount = isNewsRead(n.id) ? 1 : 0;
+    const rate = Math.round((readCount / Math.max(1,members.length)) * 100);
+    return card(`<div class="meta">${pill(n.importance || n.tag)}<span>${rate}%</span></div><h3>${n.title}</h3><p>Okuyan: ${readCount}<br>Okumayan: ${Math.max(0,members.length-readCount)}<br>Chapter bazlı oran backend aşamasında gerçek kullanıcı verisiyle hesaplanacak.</p><div class="progress"><div style="width:${rate}%"></div></div>`);
+  }).join("");
+}
+function archiveScreen(){
+  const docs = [
+    {title:"Kulüp Kuralları", tag:"Kural", body:"Genel disiplin, temsil ve davranış esasları."},
+    {title:"Toplantı Kararları", tag:"Karar", body:"Alınan kararlar, tarih ve uygulama notlarıyla arşivlenir."},
+    {title:"Prospect Süreci", tag:"Süreç", body:"Prospect döneminde beklentiler, görevler ve değerlendirme esasları."},
+    {title:"Sosyal Medya Yayın Disiplini", tag:"Dijital", body:"Resmi paylaşım onay zinciri ve gizlilik kuralları."},
+    {title:"Sponsorluk Dosyaları", tag:"Dosya", body:"Sponsor ilişkileri ve kullanılacak kurumsal materyaller."},
+    {title:"Festival Planları", tag:"Plan", body:"Motofest ve büyük organizasyon planları."},
+    {title:"Chapter Raporları", tag:"Rapor", body:"Haftalık ve aylık chapter raporları burada arşivlenir."}
+  ];
+  const cats = ["Tümü","Kural","Karar","Süreç","Dijital","Dosya","Plan","Rapor"];
+  return `<div class="filterBar">${cats.map(c=>`<button onclick="filterArchive('${c}')">${c}</button>`).join("")}</div>` + section("Arşiv") + docs.map(d=>card(`${pill(d.tag)}<h3>${d.title}</h3><p>${d.body}</p>`)).join("");
+}
+function filterArchive(c){ alert("Filtre: " + c + ". Backend aşamasında liste dinamik filtrelenecek."); }
+function adminPanelScreen(){return section("Yönetim Paneli")+`<div class="grid2"><div class="statCard"><small>Başvuru</small><b>${applications.length}</b></div><div class="statCard"><small>Km Onayı</small><b>${kmEntries.filter(k=>k.status==="Onay Bekliyor").length}</b></div></div>`+card(`<h3>Operasyon Merkezi</h3><p>Başvurular, km onayları, raporlar, loglar ve üye yönetimi buradan takip edilir.</p><div class="fieldGroup"><button class="btn primary" onclick="go('adminApplications')">Başvurular</button><button class="btn ghost" onclick="go('adminKm')">Onayları</button><button class="btn ghost" onclick="go('members')">Üyeler</button><button class="btn ghost" onclick="go('readReport')">Okuma Raporu</button><button class="btn ghost" onclick="go('chapterReports')">Chapter Raporları</button></div>`)}
+
+
+window.addEventListener("load",()=>setTimeout(()=>splash.classList.add("hide"),850));
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>toast.classList.remove("show"),2600);
+}
+function closeDetail(){ detailOverlay.classList.remove("open"); }
+function openDetail(html){
+  detailPanel.innerHTML = html + `<button class="btn ghost" style="width:100%;margin-top:14px" onclick="closeDetail()">Kapat</button>`;
+  detailOverlay.classList.add("open");
+}
+function emptyState(title, body){
+  return `<div class="emptyState"><h3>${title}</h3><p>${body}</p></div>`;
+}
+function openMemberDetail(nick){
+  const m = allMembers().find(x=>x.nick===nick) || {};
+  const notes = memberNotes.filter(n=>n.member===nick);
+  const kms = kmEntries.filter(k=>k.memberNick===nick);
+  openDetail(`
+    ${pill(m.role || "Üye")}
+    <h3 style="font-size:30px;margin:14px 0 0">${m.nick || nick}</h3>
+    <p>${m.name || ""}<br>${m.chapter || "-"} · ${m.role || "-"}<br>Aktiflik: ${activityLevel(m)}</p>
+    ${roleBadge(m.role || "Member")}
+    <div class="chapterStats">
+      <div class="chapterStat"><small>Km</small><b>${m.km||0}</b></div>
+      <div class="chapterStat"><small>Etkinlik</small><b>${m.events||0}</b></div>
+      <div class="chapterStat"><small>Not</small><b>${notes.length}</b></div>
+    </div>
+    <div class="section">Km Geçmişi</div>
+    ${kms.map(k=>`<div class="compactItem"><b>${k.route}</b><p>${k.date} · ${k.km} km · ${k.status}</p></div>`).join("") || emptyState("Km geçmişi yok","Bu üyeye ait kilometre kaydı görünmüyor.")}
+    <div class="section">Yönetim Notları</div>
+    ${currentUser.isAdmin ? (notes.map(n=>`<div class="compactItem"><b>${n.type}</b><p>${n.body}<br>${n.date} · ${n.admin}</p></div>`).join("") || emptyState("Not yok","Bu üye için yönetim notu bulunmuyor.")) : emptyState("Yetki gerekli","Yönetim notları sadece admin tarafından görüntülenir.")}
+  `);
+}
+function openEventDetail(index){
+  const e = events[index];
+  openDetail(`
+    ${pill(e.type)}
+    <h3 style="font-size:30px;margin:14px 0 0">${e.title}</h3>
+    <p>${e.date} · ${e.time}<br>Toplanma: ${e.location}<br>Rota: ${e.route}</p>
+    <div class="chapterStats">
+      <div class="chapterStat"><small>Katılım</small><b>${e.attending}</b></div>
+      <div class="chapterStat"><small>Durum</small><b>${e.status ? "Var" : "Yok"}</b></div>
+      <div class="chapterStat"><small>Tip</small><b>${e.type}</b></div>
+    </div>
+    <div class="section">Katılım Seçenekleri</div>
+    <p>Katılıyorum, belki, katılamıyorum, artçı ile geliyorum, konumda buluşacağım veya club house’tan çıkacağım seçenekleri etkinlik kartından işaretlenebilir.</p>
+    <div class="section">Etkinlik Sonrası Rapor</div>
+    <div class="result">Katılanlar, toplam km, kısa özet, galeri bağlantısı ve notlar backend aşamasında bu detay ekranına bağlanacak.</div>
+  `);
+}
+function searchScreen(){
+  return `<div class="searchHeader"><input id="globalSearch" class="input" placeholder="Üye, nick, haber, rota, chapter veya arşiv ara" oninput="runSearch()"></div><div id="searchResults">${emptyState("Arama hazır","Bir kelime yaz; üye, rota, haber, arşiv ve chapter sonuçları burada listelensin.")}</div>`;
+}
+function runSearch(){
+  const q = globalSearch.value.trim().toLowerCase();
+  if(q.length < 2){ searchResults.innerHTML = emptyState("Arama hazır","En az iki karakter yaz."); return; }
+  const rows = [];
+  allMembers().forEach(m=>{ if([m.nick,m.name,m.chapter,m.role].join(" ").toLowerCase().includes(q)) rows.push({type:"Üye", title:m.nick, body:`${m.name||""} · ${m.chapter} · ${m.role}`, action:`openMemberDetail('${m.nick}')`}); });
+  routes.forEach((r,i)=>{ if([r.name,r.difficulty,r.surface,r.character,r.notes].join(" ").toLowerCase().includes(q)) rows.push({type:"Rota", title:r.name, body:`${r.km} km · ${r.character}`, action:`go('routes')`}); });
+  allNews().forEach(n=>{ if([n.title,n.tag,n.body,n.importance].join(" ").toLowerCase().includes(q)) rows.push({type:"Haber", title:n.title, body:n.body, action:`go('news')`}); });
+  chapters.forEach(c=>{ if(c.toLowerCase().includes(q)) rows.push({type:"Chapter", title:c, body:"Chapter sayfasını aç", action:`selectedChapter='${c}';chapterScope='chapter';go('chapters')`}); });
+  const archiveItems = ["Kulüp Kuralları","Toplantı Kararları","Prospect Süreci","Sosyal Medya Yayın Disiplini","Sponsorluk Dosyaları","Festival Planları","Chapter Raporları"];
+  archiveItems.forEach(a=>{ if(a.toLowerCase().includes(q)) rows.push({type:"Arşiv", title:a, body:"Arşiv sonucu", action:`go('archive')`}); });
+  searchResults.innerHTML = rows.length ? rows.map(r=>card(`<div class="searchResultType">${r.type}</div><h3>${r.title}</h3><p>${r.body}</p><button class="btn ghost" style="width:100%;margin-top:12px" onclick="${r.action}">Aç</button>`)).join("") : emptyState("Sonuç yok","Başka bir kelime dene.");
+}
+function versionsScreen(){
+  const versions = [
+    ["v1.0","Üyelik sistemi, giriş ekranı ve temel modüller."],
+    ["v1.1","Chapter Sayfaları, arşiv, medya ve güvenlik bölümleri."],
+    ["v1.2","Rozetler, bildirim merkezi, admin logları ve okuma raporu."],
+    ["v1.3","Rol bazlı görünürlük, zorunlu duyuru kilidi ve onboarding."],
+    ["v1.4","Arama motoru, detay ekranları, toast bildirimleri ve dışa aktarım."]
+  ];
+  return section("Sürüm Notları") + versions.map(v=>card(`<div class="versionLine"><div class="versionDot"></div><div><h3>${v[0]}</h3><p>${v[1]}</p></div></div>`)).join("");
+}
+function adminExportScreen(){
+  const data = {
+    members: allMembers().map(m=>({nick:m.nick,name:m.name,chapter:m.chapter,role:m.role,km:m.km,events:m.events,status:m.status})),
+    kmEntries,
+    events,
+    chapterReports,
+    applications,
+    adminLogs
+  };
+  return section("Dışa Aktar") + card(`<h3>Yönetim Çıktıları</h3><p>Üye listesi, km kayıtları, etkinlik katılımı, chapter raporları ve admin logları burada dışa aktarılır.</p><div class="fieldGroup"><button class="btn primary" onclick="copyExport()">Veriyi Kopyala</button><button class="btn ghost" onclick="downloadExport()">JSON İndir</button></div>`) + `<div id="exportData" class="exportBox">${JSON.stringify(data,null,2)}</div>`;
+}
+function copyExport(){
+  navigator.clipboard?.writeText(exportData.textContent);
+  showToast("Veri kopyalandı.");
+}
+function downloadExport(){
+  const blob = new Blob([exportData.textContent], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "raindogs-export.json"; a.click();
+  URL.revokeObjectURL(url);
+  showToast("JSON dışa aktarıldı.");
+}
+function adminPanelScreen(){return section("Yönetim Paneli")+`<div class="grid2"><div class="statCard"><small>Başvuru</small><b>${applications.length}</b></div><div class="statCard"><small>Km Onayı</small><b>${kmEntries.filter(k=>k.status==="Onay Bekliyor").length}</b></div></div>`+section("Hızlı Aksiyonlar")+`<div class="quickGrid"><button class="quickBtn" onclick="go('adminApplications')"><span>✅</span>Onayla</button><button class="quickBtn" onclick="go('adminKm')"><span>🏍</span>Onayla</button><button class="quickBtn" onclick="go('adminCreate')"><span>▤</span>Yayınla</button><button class="quickBtn" onclick="go('adminCreate')"><span>◷</span>Oluştur</button></div>`+card(`<h3>Operasyon Merkezi</h3><p>Başvurular, km onayları, raporlar, loglar, üye yönetimi ve dışa aktarım buradan takip edilir.</p><div class="fieldGroup"><button class="btn ghost" onclick="go('readReport')">Okuma Raporu</button><button class="btn ghost" onclick="go('adminExport')">Dışa Aktar</button></div>`)}
+function membersScreen(){
+  const listAll = [...allMembers(), ...accounts.filter(a=>a.status!=="Aktif")];
+  const filters = ["Tümü","Aktif","Pasif","Askıda","Ayrıldı","Onay Bekliyor"];
+  const list = memberStatusFilter==="Tümü" ? listAll : listAll.filter(m=>memberStatusLabel(m)===memberStatusFilter);
+  return `<div class="filterBar">${filters.map(f=>`<button class="${memberStatusFilter===f?'active':''}" onclick="setMemberStatusFilter('${f}')">${f}</button>`).join("")}</div>` + section("Üyeler") + (list.map((m,i)=>card(`
+    <div class="memberCardTop" onclick="openMemberDetail('${m.nick}')">
+      <div>
+        <div class="noticeRow"><b style="font-size:22px">${m.nick}</b><span class="statusPill">${memberStatusLabel(m)}</span></div>
+        <p>${m.name||""}<br>${m.chapter} · ${m.role}<br>Aktiflik: ${activityLevel(m)} · Son giriş: ${m.lastSeen || "-"}</p>
+        ${roleBadge(m.role)}
+      </div>
+      <div style="text-align:right;color:var(--muted);font-size:12px">${m.events||0} etkinlik<br>${m.km||0} km</div>
+    </div>
+    ${currentUser.isAdmin?`<div class="actionGrid"><button class="btn ghost" onclick="assignNick(${i})">Ata</button><button class="btn ghost" onclick="changeMemberStatus(${i})">Değiştir</button><button class="btn ghost" onclick="changeMemberRole(${i})">Değiştir</button><button class="btn ghost" onclick="quickMemberNote('${m.nick}')">Not Ekle</button></div>`:""}
+  `)).join("") || emptyState("Kayıt yok","Bu filtrede üye görünmüyor."));
+}
+function eventsScreen(){return section("Etkinlikler")+events.map((e,i)=>card(`<div class="meta">${pill(e.type)}<span>${e.attending} kişi</span></div><h3 onclick="openEventDetail(${i})">${e.title}</h3><p>${e.date} · ${e.time}<br>Toplanma: ${e.location}<br>Rota: ${e.route}</p><div class="fieldGroup" style="margin-top:14px"><select onchange="setEventOption(${i},this.value)"><option>Katılım durumunu seç</option><option>Katılıyorum</option><option>Belki</option><option>Katılamıyorum</option><option>Artçı ile geliyorum</option><option>Konumda buluşacağım</option><option>Club house’tan çıkacağım</option></select><button class="btn ${e.status?'primary':'ghost'}" onclick="toggleEvent(${i})">${e.status?'Katılım İşaretlendi':'Katılıyorum'}</button><button class="btn ghost" onclick="openEventDetail(${i})">Aç</button></div>${e.options?.[currentUser.nick]?`<div class="result">Durumun: ${e.options[currentUser.nick]}</div>`:""}`)).join("")}
+
+
+function updateHeaderNotifDot(){
+  const dot = document.getElementById("headerNotifDot");
+  if(!dot) return;
+  const unread = notifications.some(n=>!n.read);
+  dot.style.display = unread ? "block" : "none";
+}
+function openNotificationsSheet(){
+  const body = notifications.length ? notifications.slice(0,8).map((n,i)=>`
+    <div class="compactItem">
+      <div class="meta">${pill(n.type)}<span>${n.date}</span></div>
+      <h3 style="margin:10px 0 0">${n.title}</h3>
+      <p>${n.body}<br>Hedef: ${n.target}</p>
+      <button class="btn ghost" style="width:100%;margin-top:10px" onclick="notifications[${i}].read=true;saveList('rdNotifications',notifications);updateHeaderNotifDot();openNotificationsSheet()">Okundu</button>
+    </div>
+  `).join("") : emptyState("Bildirim yok","Sessizlik iyidir. Önemli bir şey olursa burada görünür.");
+  openDetail(`
+    ${pill("Bildirim Merkezi")}
+    <h3 style="font-size:30px;margin:14px 0 14px">Bildirimler</h3>
+    ${body}
+    <button class="btn primary" style="width:100%;margin-top:14px" onclick="closeDetail();go('notifications')">Aç</button>
+  `);
+}
+function profileScreen(){
+  const badges = memberBadges(currentUser);
+  const myEntries = kmEntries.filter(e => e.memberNick === currentUser.nick);
+  const approvedTotal = myEntries.filter(e=>e.status==="Onaylandı").reduce((s,e)=>s+Number(e.km||0),0);
+  return section("Profil / Üyelik") + `
+    <div class="profileBox">
+      <div class="avatar">${(currentUser.nick||"RD").slice(0,2).toUpperCase()}</div>
+      <div><b>${currentUser.nick}</b><p>${currentUser.name||""}<br>${currentUser.chapter} · ${currentUser.role}</p>${roleBadge(currentUser.role)}</div>
+    </div>
+    ${card(`${pill(currentUser.nickType||"Onaylı Nick")}<h3>Üyelik Bilgileri</h3><p>İsim soyisim: ${currentUser.name||"-"}<br>Katılım: ${currentUser.joined||"-"}<br>Yetki: ${currentUser.isAdmin?"Sınırsız Admin Yetkisi":"Tam Erişim"}</p><button class="btn danger" style="width:100%;margin-top:12px" onclick="logout()">Çıkış</button>`)}
+    ${section("Km Günlüğü")}
+    ${card(`${pill("Bu Ay")}<div style="font-size:46px;font-weight:950;letter-spacing:-.055em;margin-top:12px">${approvedTotal} km</div><p>Kilometre kayıtları profilin altında tutulur. Yeni kayıtlar admin onayına gider.</p><div class="fieldGroup"><input id="profileRouteInput" class="input" placeholder="Rota / açıklama"><input id="profileKmInput" class="input" type="number" placeholder="Kilometre"><input id="profileProofInput" class="input" placeholder="Kanıt / not"><button class="btn primary" onclick="addProfileKm()">Kaydet</button></div>`)}
+    ${myEntries.map(e=>`<div class="card kmLine"><div><b>${e.route}</b><p>${e.date} · ${e.type} · ${e.status}<br>Kanıt: ${e.proof||"-"}</p></div><b>${e.km} km</b></div>`).join("") || emptyState("Km kaydı yok","Henüz yola düşen bir kayıt yok. İlk kilometreni ekle.")}
+    ${section("Rozetler")}
+    <div class="badgeGrid">${badges.map(b=>`<div class="achievement"><b>${b.title}</b><span>${b.desc}</span></div>`).join("")}</div>
+  `;
+}
+function addProfileKm(){
+  const route = profileRouteInput.value.trim();
+  const km = Number(profileKmInput.value);
+  const proof = profileProofInput.value.trim();
+  if(!route || !km){ showToast("Rota ve kilometre gir."); return; }
+  kmEntries.unshift({id:Date.now(),date:"Bugün",route,km,type:"Manuel",status:"Onay Bekliyor",memberNick:currentUser.nick,proof});
+  localStorage.setItem("rdKmEntries",JSON.stringify(kmEntries));
+  showToast("Km kaydı düştü. Admin onayı bekliyor.");
+  render("profile");
+}
+
+
+const badgeCatalog = {
+  "Road King": "Ay içinde veya toplamda yüksek kilometre yapan üyeyi temsil eder. Yolda olanın emeği görünür.",
+  "Event Loyal": "Etkinliklere düzenli katılan ve organizasyon disiplinini koruyan üyeyi temsil eder.",
+  "Iron Rider": "Tek ay içinde 500 km ve üzeri onaylı sürüş yapan üyeyi temsil eder.",
+  "New Blood": "Hangaround veya Prospect sürecinde aktif takip ve katılım gösteren yeni üyeyi temsil eder.",
+  "Chapter Power": "Chapter toplam kilometre ve etkinlik katkısında öne çıkan üyeleri temsil eder.",
+  "Old Guard": "Kulüp yapısında uzun süreli sorumluluk, devamlılık ve temsil gücünü ifade eder.",
+  "Discipline": "Zorunlu duyuruları okuyup onaylayan, kulüp içi iletişim disiplinini takip eden üyeyi temsil eder.",
+  "On Road": "Aktiflik verisi oluşmaya başlayan üyeyi temsil eder.",
+  "Admin": "Sistem ve yönetim operasyonlarında sınırsız yetki taşıyan kullanıcıdır.",
+  "Kurul": "Karar süreçlerinde sorumluluk alan kurul üyesini temsil eder."
+};
+function showBadgeInfo(title){
+  const desc = badgeCatalog[title] || "Bu rozet kulüp içi aktiflik, disiplin veya katkı durumunu gösterir.";
+  openDetail(`${pill("Rozet Bilgisi")}<h3 style="font-size:30px;margin:14px 0 0">${title}</h3><p>${desc}</p><div class="result">Rozetler profil, leaderboard ve yönetim değerlendirmelerinde üyelerin aktiflik izini görünür kılar.</div>`);
+}
+let badgeHoldTimer = null;
+function badgeHoldStart(title){
+  clearTimeout(badgeHoldTimer);
+  badgeHoldTimer = setTimeout(()=>showBadgeInfo(title),450);
+}
+function badgeHoldEnd(){
+  clearTimeout(badgeHoldTimer);
+}
+function badgeTile(b){
+  return `<div class="achievement badgeInfo" onpointerdown="badgeHoldStart('${b.title}')" onpointerup="badgeHoldEnd()" onpointerleave="badgeHoldEnd()" onclick="showBadgeInfo('${b.title}')"><b>${b.title}</b><span>${b.desc}</span></div>`;
+}
+function memberBadges(m){
+  const badges = [];
+  if((m.km||0) >= 1000) badges.push({title:"Road King", desc:"Yüksek km aktifliği"});
+  if((m.events||0) >= 10) badges.push({title:"Event Loyal", desc:"Etkinlik devamlılığı"});
+  if((m.km||0) >= 500) badges.push({title:"Iron Rider", desc:"500 km+ sürüş gücü"});
+  if(["Hangaround","Prospect"].includes(m.role)) badges.push({title:"New Blood", desc:"Yeni süreçte aktif takip"});
+  if((m.chapter||"") && (m.km||0) >= 700) badges.push({title:"Chapter Power", desc:"Chapter katkısı yüksek"});
+  if(m.role === "Admin" || m.role === "Kurul Üyesi") badges.push({title:"Old Guard", desc:"Yapı ve karar sorumluluğu"});
+  if(readNewsIds.length >= 3) badges.push({title:"Discipline", desc:"Duyuru takibi güçlü"});
+  if(m.role === "Admin") badges.push({title:"Admin", desc:"Sınırsız yönetim yetkisi"});
+  if(m.role === "Kurul Üyesi") badges.push({title:"Kurul", desc:"Kurul sorumluluğu"});
+  if(!badges.length) badges.push({title:"On Road", desc:"Aktiflik oluşuyor"});
+  return badges;
+}
+function profileScreen(){
+  const badges = memberBadges(currentUser);
+  const myEntries = kmEntries.filter(e => e.memberNick === currentUser.nick);
+  const approvedTotal = myEntries.filter(e=>e.status==="Onaylandı").reduce((s,e)=>s+Number(e.km||0),0);
+  return section("Profil / Üyelik") + `
+    <div class="profileBox">
+      <div class="avatar">${(currentUser.nick||"RD").slice(0,2).toUpperCase()}</div>
+      <div><b>${currentUser.nick}</b><p>${currentUser.name||""}<br>${currentUser.chapter} · ${currentUser.role}</p>${roleBadge(currentUser.role)}</div>
+    </div>
+    ${card(`${pill(currentUser.nickType||"Onaylı Nick")}<h3>Üyelik Bilgileri</h3><p>İsim soyisim: ${currentUser.name||"-"}<br>Katılım: ${currentUser.joined||"-"}<br>Yetki: ${currentUser.isAdmin?"Sınırsız Admin Yetkisi":"Tam Erişim"}</p><button class="btn danger" style="width:100%;margin-top:12px" onclick="logout()">Çıkış</button>`)}
+    ${section("Km Günlüğü")}
+    ${card(`${pill("Bu Ay")}<div style="font-size:46px;font-weight:950;letter-spacing:-.055em;margin-top:12px">${approvedTotal} km</div><p>Kilometre kayıtları profilin altında tutulur. Yeni kayıtlar admin onayına gider.</p><div class="fieldGroup"><input id="profileRouteInput" class="input" placeholder="Rota / açıklama"><input id="profileKmInput" class="input" type="number" placeholder="Kilometre"><input id="profileProofInput" class="input" placeholder="Kanıt / not"><button class="btn primary" onclick="addProfileKm()">Kaydet</button></div>`)}
+    ${myEntries.map(e=>`<div class="card kmLine"><div><b>${e.route}</b><p>${e.date} · ${e.type} · ${e.status}<br>Kanıt: ${e.proof||"-"}</p></div><b>${e.km} km</b></div>`).join("") || emptyState("Km kaydı yok","Henüz yola düşen bir kayıt yok. İlk kilometreni ekle.")}
+    ${section("Rozetler")}
+    <div class="badgeGrid">${badges.map(b=>badgeTile(b)).join("")}</div>
+  `;
+}
+function badgesScreen(){
+  const badges = Object.keys(badgeCatalog).map(k=>({title:k, desc:badgeCatalog[k]}));
+  return section("Rozetler") + `<div class="badgeGrid">${badges.map(b=>badgeTile(b)).join("")}</div>` + section("Bilgi") + card(`<h3>Basılı Tut</h3><p>Rozetin anlamını görmek için rozetin üzerine basılı tutabilir veya dokunabilirsin.</p>`);
+}
+
+
+function appSettingsScreen(){
+  const themeName = document.body.classList.contains("light") ? "Gündüz Modu" : "Gece Modu";
+  return section("Uygulama Ayarları") +
+    card(`
+      ${pill("Tema")}
+      <h3>Gece / Gündüz Modu</h3>
+      <p>Aktif tema: ${themeName}. Arayüz karanlık veya açık kullanım için değiştirilebilir.</p>
+      <button class="btn primary" style="width:100%;margin-top:12px" onclick="toggleTheme();showToast('Tema değiştirildi.');render('appSettings')">Değiştir</button>
+    `) +
+    card(`
+      ${pill("Bildirim")}
+      <h3>Bildirim Tercihleri</h3>
+      <p>Sadece önemli işlemler için bildirim önerilir. Böylece uygulama kalabalık hissettirmez.</p>
+      <label class="checkboxRow"><input type="checkbox" checked><span>Yeni etkinlik ve saat değişikliği bildirimleri</span></label>
+      <label class="checkboxRow"><input type="checkbox" checked><span>Başvuru ve kilometre onay bildirimleri</span></label>
+      <label class="checkboxRow"><input type="checkbox"><span>Tüm haberler için bildirim gönder</span></label>
+    `) +
+    card(`
+      ${pill("Görünüm")}
+      <h3>Arayüz Tercihleri</h3>
+      <p>Logo, ikon seti, kart sertliği ve tema detayları gerçek uygulama aşamasında buradan yönetilebilir.</p>
+      <div class="result">Tasarım dili: siyah / beyaz, minimal, sert ve kulüp içi kullanıma uygun.</div>
+    `) +
+    card(`
+      ${pill("Sistem")}
+      <h3>Uygulama Bilgisi</h3>
+      <p>Sürüm: v18<br>Durum: Tasarım prototipi<br>Veri: cihaz içi geçici kayıt</p>
+      <button class="btn ghost" style="width:100%;margin-top:12px" onclick="go('versions')">Aç</button>
+    `);
+}
+
+
+let leaderboardBadgeFilter = "Tümü";
+function setLeaderboardBadgeFilter(b){
+  leaderboardBadgeFilter = b;
+  render("leaderboard");
+}
+function leaderboardScreen(){
+  let list = allMembers().slice();
+  if(leaderboardMode==="km") list.sort((a,b)=>(b.km||0)-(a.km||0));
+  if(leaderboardMode==="event") list.sort((a,b)=>(b.events||0)-(a.events||0));
+  if(leaderboardMode==="rookie") list.sort((a,b)=>((["Hangaround","Prospect"].includes(b.role)?b.km:0))-((["Hangaround","Prospect"].includes(a.role)?a.km:0)));
+
+  const totalKm = list.reduce((s,m)=>s+Number(m.km||0),0);
+  const avgKm = Math.round(totalKm / Math.max(1,list.length));
+  const topKm = Math.max(0,...list.map(m=>Number(m.km||0)));
+  const totalEvents = list.reduce((s,m)=>s+Number(m.events||0),0);
+
+  const badgeNames = ["Tümü","Road King","Event Loyal","Iron Rider","New Blood","Chapter Power","Old Guard","Discipline","Admin","Kurul","On Road"];
+  if(leaderboardBadgeFilter !== "Tümü"){
+    list = list.filter(m => memberBadges(m).some(b=>b.title === leaderboardBadgeFilter));
+  }
+
+  const max = Math.max(1,...list.map(m=>leaderboardMode==="event"?(m.events||0):(m.km||0)));
+  return `
+    <div class="segment">
+      <button class="${leaderboardMode==="km"?"active":""}" onclick="leaderboardMode='km';render('leaderboard')">Road King</button>
+      <button class="${leaderboardMode==="event"?"active":""}" onclick="leaderboardMode='event';render('leaderboard')">Event Loyal</button>
+      <button class="${leaderboardMode==="rookie"?"active":""}" onclick="leaderboardMode='rookie';render('leaderboard')">Rookie Flame</button>
+    </div>
+
+    ${section("Km İstatistikleri")}
+    <div class="lbStatsGrid">
+      <div class="lbStat"><small>Toplam Km</small><b>${totalKm}</b></div>
+      <div class="lbStat"><small>Ortalama</small><b>${avgKm}</b></div>
+      <div class="lbStat"><small>En Yüksek</small><b>${topKm}</b></div>
+      <div class="lbStat"><small>Etkinlik</small><b>${totalEvents}</b></div>
+      <div class="lbStat"><small>Üye</small><b>${allMembers().length}</b></div>
+      <div class="lbStat"><small>Rozet</small><b>${badgeNames.length-1}</b></div>
+    </div>
+
+    ${section("Rozet Filtreleri")}
+    <div class="badgeStrip">
+      ${badgeNames.map(b=>`<button class="badgeChip ${leaderboardBadgeFilter===b?'active':''}" onclick="setLeaderboardBadgeFilter('${b}')">${b}</button>`).join("")}
+    </div>
+
+    ${section("Leaderboard")}
+    ${list.map((m,i)=>{
+      const val = leaderboardMode==="event" ? (m.events||0) : (m.km||0);
+      const badges = memberBadges(m).slice(0,3);
+      return card(`
+        <div class="rank">
+          <div class="rankNo ${i===0?'first':''}">${i+1}</div>
+          <div style="flex:1">
+            <b>${m.nick}${i===0?' 👑':''}</b>
+            <p>${m.name||""}<br>${m.chapter} · ${m.role}</p>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+              ${badges.map(b=>`<span class="roleBadge badgeInfo" onclick="showBadgeInfo('${b.title}')">${b.title}</span>`).join("")}
+            </div>
+            <div class="progress"><div style="width:${val/max*100}%"></div></div>
+          </div>
+          <div style="text-align:right"><b>${val}</b><p>${leaderboardMode==="event"?"etkinlik":"km"}</p></div>
+        </div>
+      `);
+    }).join("") || emptyState("Sonuç yok","Bu rozet filtresinde üye bulunmuyor.")}
+  `;
+}
+
+
+/* v25 safe targeted fixes */
+leaderboardBadgeFilter = typeof leaderboardBadgeFilter !== "undefined" ? leaderboardBadgeFilter : "Tümü";
+function safeToast(msg){ if(typeof showToast === "function") showToast(msg); else alert(msg); }
+function emptyState(title, body){ return `<div class="emptyState"><h3>${title}</h3><p>${body}</p></div>`; }
+function currentAvatar(){ return localStorage.getItem("rdAvatar_" + (currentUser?.nick || "guest")); }
+function avatarHTML(){ const img=currentAvatar(); return img ? `<img src="${img}" alt="Profil fotoğrafı">` : `${(currentUser.nick||"RD").slice(0,2).toUpperCase()}`; }
+function triggerAvatarUpload(){ const input=document.getElementById("avatarUpload"); if(input) input.click(); }
+function handleAvatarUpload(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    localStorage.setItem("rdAvatar_" + (currentUser?.nick || "guest"), e.target.result);
+    safeToast("Profil fotoğrafı eklendi. Siyah beyaz filtre uygulandı.");
+    render("profile");
+  };
+  reader.readAsDataURL(file);
+}
+function profileScreen(){
+  const badges = memberBadges(currentUser);
+  const myEntries = kmEntries.filter(e => e.memberNick === currentUser.nick);
+  const approvedTotal = myEntries.filter(e=>e.status==="Onaylandı").reduce((s,e)=>s+Number(e.km||0),0);
+  return section("Profil / Üyelik") + `
+    <div class="profileBox">
+      <div class="avatar" onclick="triggerAvatarUpload()" title="Profil fotoğrafı ekle">${avatarHTML()}</div>
+      <div>
+        <b>${currentUser.nick}</b>
+        <p>${currentUser.name||""}<br>${currentUser.chapter} · ${currentUser.role}</p>
+        ${roleBadge(currentUser.role)}
+        <div class="helpText">Profil fotoğrafı eklemek için avatar alanına dokun.</div>
+      </div>
+    </div>
+
+    ${section("Üye Bilgileri")}
+    <div class="profileInfoCard">
+      <div class="profileInfoGrid">
+        <div class="profileInfoItem"><small>İsim</small><b>${currentUser.name||"-"}</b></div>
+        <div class="profileInfoItem"><small>Nick</small><b>${currentUser.nick||"-"}</b></div>
+        <div class="profileInfoItem"><small>Chapter</small><b>${currentUser.chapter||"-"}</b></div>
+        <div class="profileInfoItem"><small>Statü</small><b>${currentUser.role||"-"}</b></div>
+        <div class="profileInfoItem"><small>Yaş</small><b>${currentUser.age||"-"}</b></div>
+        <div class="profileInfoItem"><small>Motor</small><b>${currentUser.motorcycle||"-"}</b></div>
+        <div class="profileInfoItem"><small>Ehliyet</small><b>${currentUser.license||"-"}</b></div>
+        <div class="profileInfoItem"><small>Kan</small><b>${currentUser.blood||"-"}</b></div>
+        <div class="profileInfoItem"><small>Katılım</small><b>${currentUser.joined||"-"}</b></div>
+        <div class="profileInfoItem"><small>Yetki</small><b>${currentUser.isAdmin?"Sınırsız Admin":"Tam Erişim"}</b></div>
+      </div>
+    </div>
+
+    ${section("Km Günlüğü")}
+    ${card(`${pill("Bu Ay")}<div style="font-size:46px;font-weight:950;letter-spacing:-.055em;margin-top:12px">${approvedTotal} km</div><p>Kilometre kayıtları profilin altında tutulur. Yeni kayıtlar admin onayına gider.</p><div class="fieldGroup"><input id="profileRouteInput" class="input" placeholder="Rota / açıklama"><input id="profileKmInput" class="input" type="number" placeholder="Kilometre"><input id="profileProofInput" class="input" placeholder="Kanıt / not"><button class="btn primary" onclick="addProfileKm()">Kaydet</button></div>`)}
+    ${myEntries.map(e=>`<div class="card kmLine"><div><b>${e.route}</b><p>${e.date} · ${e.type} · ${e.status}<br>Kanıt: ${e.proof||"-"}</p></div><b>${e.km} km</b></div>`).join("") || emptyState("Km kaydı yok","Henüz yola düşen bir kayıt yok. İlk kilometreni ekle.")}
+
+    ${section("Rozetler")}
+    <div class="badgeGrid">${badges.map(b=>typeof badgeTile==="function" ? badgeTile(b) : `<div class="achievement"><b>${b.title}</b><span>${b.desc}</span></div>`).join("")}</div>
+
+    <button class="btn danger profileLogout" style="width:100%" onclick="logout()">Çıkış</button>
+  `;
+}
+function addProfileKm(){
+  const route = profileRouteInput.value.trim();
+  const km = Number(profileKmInput.value);
+  const proof = profileProofInput.value.trim();
+  if(!route || !km){ safeToast("Rota ve kilometre gir."); return; }
+  kmEntries.unshift({id:Date.now(),date:"Bugün",route,km,type:"Manuel",status:"Onay Bekliyor",memberNick:currentUser.nick,proof});
+  localStorage.setItem("rdKmEntries",JSON.stringify(kmEntries));
+  safeToast("Km kaydı düştü. Admin onayı bekliyor.");
+  render("profile");
+}
+function setLeaderboardBadgeFilter(b){
+  leaderboardBadgeFilter = b;
+  const sc = document.querySelector(".badgeStrip");
+  const left = sc ? sc.scrollLeft : 0;
+  render("leaderboard");
+  requestAnimationFrame(()=>{ const sc2=document.querySelector(".badgeStrip"); if(sc2) sc2.scrollLeft=left; });
+}
+function leaderboardScreen(){
+  let list = allMembers().slice();
+  if(leaderboardMode==="km"){
+    list = list.filter(m => ["Member","Kurul Üyesi","Admin"].includes(m.role));
+    list.sort((a,b)=>(b.km||0)-(a.km||0));
+  }
+  if(leaderboardMode==="event"){
+    list.sort((a,b)=>(b.events||0)-(a.events||0));
+  }
+  if(leaderboardMode==="rookie"){
+    list = list.filter(m => ["Hangaround","Prospect"].includes(m.role));
+    list.sort((a,b)=>(b.km||0)-(a.km||0));
+  }
+  const totalKm = list.reduce((s,m)=>s+Number(m.km||0),0);
+  const avgKm = Math.round(totalKm / Math.max(1,list.length));
+  const topKm = Math.max(0,...list.map(m=>Number(m.km||0)));
+  const totalEvents = list.reduce((s,m)=>s+Number(m.events||0),0);
+  const badgeNames = ["Tümü","Road King","Event Loyal","Iron Rider","New Blood","Chapter Power","Old Guard","Discipline","Admin","Kurul","On Road"];
+  if(leaderboardBadgeFilter !== "Tümü"){
+    list = list.filter(m => memberBadges(m).some(b=>b.title === leaderboardBadgeFilter));
+  }
+  const max = Math.max(1,...list.map(m=>leaderboardMode==="event"?(m.events||0):(m.km||0)));
+  return `
+    <div class="segment">
+      <button class="${leaderboardMode==="km"?"active":""}" onclick="leaderboardMode='km';render('leaderboard')">Road King</button>
+      <button class="${leaderboardMode==="event"?"active":""}" onclick="leaderboardMode='event';render('leaderboard')">Event Loyal</button>
+      <button class="${leaderboardMode==="rookie"?"active":""}" onclick="leaderboardMode='rookie';render('leaderboard')">Rookie Flame</button>
+    </div>
+    ${section("Km İstatistikleri")}
+    <div class="lbStatsGrid">
+      <div class="lbStat"><small>Toplam km</small><b>${totalKm}</b></div>
+      <div class="lbStat"><small>Ortalama</small><b>${avgKm}</b></div>
+      <div class="lbStat"><small>En yüksek</small><b>${topKm}</b></div>
+      <div class="lbStat"><small>Etkinlik</small><b>${totalEvents}</b></div>
+      <div class="lbStat"><small>Üye</small><b>${list.length}</b></div>
+      <div class="lbStat"><small>Rozet</small><b>${badgeNames.length-1}</b></div>
+    </div>
+    ${section("Rozet Filtreleri")}
+    <div class="badgeStrip">
+      ${badgeNames.map(b=>`<button class="badgeChip ${leaderboardBadgeFilter===b?'active':''}" onclick="setLeaderboardBadgeFilter('${b}')">${b}</button>`).join("")}
+    </div>
+    ${section("Leaderboard")}
+    ${list.map((m,i)=>{
+      const val = leaderboardMode==="event" ? (m.events||0) : (m.km||0);
+      const badges = memberBadges(m).slice(0,3);
+      return card(`
+        <div class="rank">
+          <div class="rankNo ${i===0?'first':''}">${i+1}</div>
+          <div style="flex:1">
+            <b>${m.nick}${i===0?' 👑':''}</b>
+            <p>${m.name||""}<br>${m.chapter} · ${m.role}</p>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+              ${badges.map(b=>`<span class="roleBadge badgeInfo" onclick="showBadgeInfo('${b.title}')">${b.title}</span>`).join("")}
+            </div>
+            <div class="progress"><div style="width:${val/max*100}%"></div></div>
+          </div>
+          <div style="text-align:right"><b>${val}</b><p>${leaderboardMode==="event"?"etkinlik":"km"}</p></div>
+        </div>
+      `);
+    }).join("") || emptyState("Sonuç yok","Bu filtrede üye bulunmuyor.")}
+  `;
+}
+function adminPanelScreen(){
+  return section("Yönetim Paneli")+
+  `<div class="grid2"><div class="statCard"><small>Başvuru</small><b>${applications.length}</b></div><div class="statCard"><small>Km onayı</small><b>${kmEntries.filter(k=>k.status==="Onay Bekliyor").length}</b></div></div>`+
+  section("Hızlı Aksiyonlar")+
+  `<div class="adminQuickGrid">
+    <button class="quickBtn" onclick="go('adminApplications')"><span>✓</span>Onayla</button>
+    <button class="quickBtn" onclick="go('adminKm')"><span>KM</span>Onayla</button>
+    <button class="quickBtn" onclick="go('adminCreate')"><span>DU</span>Yayınla</button>
+    <button class="quickBtn" onclick="go('adminCreate')"><span>ET</span>Oluştur</button>
+  </div>`+
+  card(`<h3>Operasyon Merkezi</h3><p>Başvurular, km onayları, raporlar, loglar, üye yönetimi ve dışa aktarım buradan takip edilir.</p><div class="fieldGroup"><button class="btn ghost" onclick="go('readReport')">Okuma Raporu</button><button class="btn ghost" onclick="go('adminExport')">Dışa Aktar</button></div>`);
+}
+function chapterReportsScreen(){
+  return section("Chapter Raporları") +
+  card(`<h3 class="formCardTitle">Rapor gir</h3><div class="fieldGroup"><select id="reportChapter">${chapters.map(c=>`<option>${c}</option>`).join("")}</select><input id="reportEvents" class="input" type="number" placeholder="Bu ay etkinlik sayısı"><input id="reportKm" class="input" type="number" placeholder="Bu ay toplam km"><textarea id="reportNotes" placeholder="Notlar / ihtiyaçlar"></textarea><button class="btn primary" onclick="addChapterReport()">Kaydet</button></div>`) +
+  section("Kayıtlı Raporlar") +
+  (chapterReports.map(r=>card(`<div class="meta">${pill(r.chapter)}<span>${r.date}</span></div><h3>${r.events} etkinlik · ${r.km} km</h3><p>${r.notes}</p>`)).join("") || emptyState("Rapor yok","Chapter Raporları burada listelenir."));
+}
+function memberNotesScreen(){
+  const members=allMembers();
+  return section("Üye Notları") +
+  card(`<h3 class="formCardTitle">Yönetim notu ekle</h3><div class="fieldGroup"><select id="noteMember">${members.map(m=>`<option>${m.nick}</option>`).join("")}</select><select id="noteType"><option>Olumlu Katkı</option><option>Uyarı</option><option>Katılım Eksikliği</option><option>Görev Takibi</option><option>Disiplin Notu</option></select><textarea id="noteBody" placeholder="Yalnızca yönetim tarafından görülecek not"></textarea><button class="btn primary" onclick="addMemberNote()">Kaydet</button></div>`) +
+  section("Kayıtlı Notlar") +
+  (memberNotes.map(n=>card(`<div class="meta">${pill(n.type)}<span>${n.date}</span></div><h3>${n.member}</h3><p>${n.body}<br>Giren: ${n.admin}</p>`)).join("") || emptyState("Not yok","Üye Notları sadece yönetim panelinde görünür."));
+}
+function membersScreen(){
+  const listAll = [...allMembers(), ...accounts.filter(a=>a.status!=="Aktif")];
+  const filters = ["Tümü","Aktif","Pasif","Askıda","Ayrıldı","Onay Bekliyor"];
+  const list = memberStatusFilter==="Tümü" ? listAll : listAll.filter(m=>memberStatusLabel(m)===memberStatusFilter);
+  return `<div class="filterBar">${filters.map(f=>`<button class="${memberStatusFilter===f?'active':''}" onclick="setMemberStatusFilter('${f}')">${f}</button>`).join("")}</div>` + section("Üyeler") + (list.map((m,i)=>card(`
+    <div class="memberCardTop" onclick="openMemberDetail('${m.nick}')">
+      <div>
+        <div class="noticeRow"><b style="font-size:22px">${m.nick}</b><span class="statusPill">${memberStatusLabel(m)}</span></div>
+        <p>${m.name||""}<br>${m.chapter} · ${m.role}<br>Aktiflik: ${activityLevel(m)} · Son giriş: ${m.lastSeen || "-"}</p>
+        ${roleBadge(m.role)}
+      </div>
+      <div style="text-align:right;color:var(--muted);font-size:12px">${m.events||0} etkinlik<br>${m.km||0} km</div>
+    </div>
+    ${currentUser.isAdmin?`<div class="actionGrid"><button class="btn ghost" onclick="assignNick(${i})">Ata</button><button class="btn ghost" onclick="changeMemberStatus(${i})">Değiştir</button><button class="btn ghost" onclick="changeMemberRole(${i})">Değiştir</button><button class="btn ghost" onclick="quickMemberNote('${m.nick}')">Not Ekle</button><button class="btn deleteBtn" onclick="deleteMember('${m.nick}')">Kaldır</button></div>`:""}
+  `)).join("") || emptyState("Kayıt yok","Bu filtrede üye görünmüyor."));
+}
+function deleteMember(nick){
+  if(!currentUser.isAdmin){ safeToast("Yetki gerekli."); return; }
+  if(!confirm(nick + " adlı üyeyi kaldırmak istediğine emin misin? Bu işlem prototipte kayıtlı kullanıcılar için uygulanır.")) return;
+  accounts = accounts.filter(a => a.nick !== nick);
+  applications = applications.filter(a => a.nick !== nick);
+  localStorage.setItem("rdAccounts", JSON.stringify(accounts));
+  localStorage.setItem("rdApplications", JSON.stringify(applications));
+  if(typeof logAdmin === "function") logAdmin("Üye kaldırıldı", nick);
+  safeToast("Üye kaldırıldı.");
+  render("members");
+}
+function archiveScreen(){
+  const docs = [
+    {title:"Kulüp Kuralları", tag:"Kural", body:"Genel disiplin, temsil ve davranış esasları."},
+    {title:"Toplantı Kararları", tag:"Karar", body:"Alınan kararlar, tarih ve uygulama notlarıyla arşivlenir."},
+    {title:"Prospect Süreci", tag:"Süreç", body:"Prospect döneminde beklentiler, görevler ve değerlendirme esasları."},
+    {title:"Sosyal Medya Yayın Disiplini", tag:"Dijital", body:"Resmi paylaşım onay zinciri ve gizlilik kuralları."},
+    {title:"Sponsorluk Dosyaları", tag:"Dosya", body:"Sponsor ilişkileri ve kullanılacak kurumsal materyaller."},
+    {title:"Festival Planları", tag:"Plan", body:"Motofest ve büyük organizasyon planları."},
+    {title:"Chapter Raporları", tag:"Rapor", body:"Haftalık ve aylık chapter raporları burada arşivlenir."}
+  ];
+  const cats = ["Tümü","Kural","Karar","Süreç","Dijital","Dosya","Plan","Rapor"];
+  return `<div class="filterBar">${cats.map(c=>`<button onclick="filterArchive('${c}')">${c}</button>`).join("")}</div>` + section("Arşiv") + docs.map(d=>card(`${pill(d.tag)}<h3>${d.title}</h3><p>${d.body}</p>`)).join("");
+}
+
+
+/* v26 layout/function overrides */
+function appSettingsScreen(){
+  const themeName = document.body.classList.contains("light") ? "Gündüz modu" : "Gece modu";
+  return section("Uygulama Ayarları") +
+    card(`
+      ${pill("Tema")}
+      <h3>Gece / Gündüz Modu</h3>
+      <p>Aktif tema: ${themeName}. Arayüzü karanlık veya açık kullanım için değiştirebilirsin.</p>
+      <button class="btn primary" style="width:100%;margin-top:12px" onclick="toggleTheme();safeToast('Tema değiştirildi.');render('appSettings')">Değiştir</button>
+    `) +
+    card(`
+      ${pill("Bildirim")}
+      <h3>Bildirim Tercihleri</h3>
+      <p>Sadece önemli işlemler için bildirim önerilir. Böylece uygulama kalabalık hissettirmez.</p>
+      <label class="checkboxRow"><input type="checkbox" checked><span>Yeni etkinlik ve saat değişikliği bildirimleri</span></label>
+      <label class="checkboxRow"><input type="checkbox" checked><span>Başvuru ve kilometre onay bildirimleri</span></label>
+      <label class="checkboxRow"><input type="checkbox"><span>Tüm haberler için bildirim gönder</span></label>
+    `) +
+    card(`
+      ${pill("Sistem")}
+      <h3>Uygulama Bilgisi</h3>
+      <p>Sürüm: v26<br>Durum: tasarım prototipi<br>Veri: cihaz içi geçici kayıt</p>
+      <button class="btn ghost" style="width:100%;margin-top:12px" onclick="go('versions')">Sürüm Notlarını aç</button>
+    `);
+}
+function settingsScreen(){
+  return appSettingsScreen();
+}
+function adminPanelScreen(){
+  return section("Yönetim Paneli")+
+  `<div class="grid2">
+    <div class="statCard"><small>Başvuru</small><b>${applications.length}</b></div>
+    <div class="statCard"><small>Km onayı</small><b>${kmEntries.filter(k=>k.status==="Onay Bekliyor").length}</b></div>
+  </div>`+
+  section("Hızlı Aksiyonlar")+
+  `<div class="adminQuickGrid">
+    <button class="quickBtn" onclick="go('adminApplications')"><span>✓</span>Onayla</button>
+    <button class="quickBtn" onclick="go('adminKm')"><span>KM</span>Onayla</button>
+    <button class="quickBtn" onclick="go('adminCreate')"><span>DU</span>Yayınla</button>
+    <button class="quickBtn" onclick="go('adminCreate')"><span>ET</span>Oluştur</button>
+  </div>`+
+  `<div class="card adminPanelCard">
+    <h3>Operasyon Merkezi</h3>
+    <p>Başvurular, km onayları, raporlar, loglar, üye yönetimi ve dışa aktarım buradan takip edilir.</p>
+    <div class="fieldGroup">
+      <button class="btn ghost" onclick="go('readReport')">Okuma Raporu</button>
+      <button class="btn ghost" onclick="go('adminExport')">Dışa Aktar</button>
+    </div>
+  </div>`;
+}
+function chapterReportsScreen(){
+  return section("Chapter Raporları") +
+  `<div class="card formSectionCard">
+    <h3 class="formCardTitle">Rapor gir</h3>
+    <div class="fieldGroup">
+      <select id="reportChapter">${chapters.map(c=>`<option>${c}</option>`).join("")}</select>
+      <input id="reportEvents" class="input" type="number" placeholder="Bu ay etkinlik sayısı">
+      <input id="reportKm" class="input" type="number" placeholder="Bu ay toplam km">
+      <textarea id="reportNotes" placeholder="Notlar / ihtiyaçlar"></textarea>
+      <button class="btn primary" onclick="addChapterReport()">Kaydet</button>
+    </div>
+  </div>` +
+  section("Kayıtlı Raporlar") +
+  (chapterReports.map(r=>card(`<div class="meta">${pill(r.chapter)}<span>${r.date}</span></div><h3>${r.events} etkinlik · ${r.km} km</h3><p>${r.notes}</p>`)).join("") || emptyState("Rapor yok","Chapter Raporları burada listelenir."));
+}
+function memberNotesScreen(){
+  const members=allMembers();
+  return section("Üye Notları") +
+  `<div class="card formSectionCard">
+    <h3 class="formCardTitle">Yönetim notu ekle</h3>
+    <div class="fieldGroup">
+      <select id="noteMember">${members.map(m=>`<option>${m.nick}</option>`).join("")}</select>
+      <select id="noteType"><option>Olumlu Katkı</option><option>Uyarı</option><option>Katılım Eksikliği</option><option>Görev Takibi</option><option>Disiplin Notu</option></select>
+      <textarea id="noteBody" placeholder="Yalnızca yönetim tarafından görülecek not"></textarea>
+      <button class="btn primary" onclick="addMemberNote()">Kaydet</button>
+    </div>
+  </div>` +
+  section("Kayıtlı Notlar") +
+  (memberNotes.map(n=>card(`<div class="meta">${pill(n.type)}<span>${n.date}</span></div><h3>${n.member}</h3><p>${n.body}<br>Giren: ${n.admin}</p>`)).join("") || emptyState("Not yok","Üye Notları sadece yönetim panelinde görünür."));
+}
+
+
+/* v27 navigation history and iPhone-like swipe back */
+let rdHistoryStack = Array.isArray(window.rdHistoryStack) ? window.rdHistoryStack : [];
+let rdCurrentScreen = window.rdCurrentScreen || "home";
+let rdNavigatingBack = false;
+
+const rdOriginalGo = go;
+go = function(screen){
+  if(!rdNavigatingBack && rdCurrentScreen && screen !== rdCurrentScreen){
+    rdHistoryStack.push(rdCurrentScreen);
+    if(rdHistoryStack.length > 25) rdHistoryStack.shift();
+  }
+  rdCurrentScreen = screen;
+  rdOriginalGo(screen);
+};
+
+function rdBack(){
+  if(!rdHistoryStack.length) return;
+  const prev = rdHistoryStack.pop();
+  rdNavigatingBack = true;
+  rdCurrentScreen = prev;
+  rdOriginalGo(prev);
+  rdNavigatingBack = false;
+}
+
+let rdTouchStartX = 0;
+let rdTouchStartY = 0;
+let rdTouchActive = false;
+
+document.addEventListener("touchstart", function(e){
+  if(!e.touches || !e.touches.length) return;
+  const t = e.touches[0];
+  rdTouchStartX = t.clientX;
+  rdTouchStartY = t.clientY;
+  rdTouchActive = rdTouchStartX < 34;
+}, {passive:true});
+
+document.addEventListener("touchmove", function(e){
+  if(!rdTouchActive || !e.touches || !e.touches.length) return;
+  const t = e.touches[0];
+  const dx = t.clientX - rdTouchStartX;
+  const dy = Math.abs(t.clientY - rdTouchStartY);
+  const hint = document.getElementById("backHint");
+  if(dx > 42 && dy < 70 && hint) hint.classList.add("show");
+}, {passive:true});
+
+document.addEventListener("touchend", function(e){
+  const hint = document.getElementById("backHint");
+  if(hint) hint.classList.remove("show");
+  if(!rdTouchActive || !e.changedTouches || !e.changedTouches.length) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - rdTouchStartX;
+  const dy = Math.abs(t.clientY - rdTouchStartY);
+  rdTouchActive = false;
+  if(dx > 86 && dy < 80){
+    rdBack();
+  }
+}, {passive:true});
+
+function adminCreateScreen(){
+  return section("İçerik Oluştur") +
+  `<div class="card contentCreateCard">
+    <h3 class="contentCreateTitle">Haber Oluştur</h3>
+    <div class="fieldGroup">
+      <input id="newsTitle" class="input" placeholder="Başlık">
+      <input id="newsTag" class="input" placeholder="Kategori">
+      <select id="newsImportance"><option>Normal</option><option>Önemli</option><option>Zorunlu Okuma</option><option>Yönetim Kararı</option></select>
+      <textarea id="newsBody" placeholder="Duyuru metni"></textarea>
+      <label class="checkboxRow"><input id="newsRequired" type="checkbox"><span>Bu duyuru için “Okudum” onayı zorunlu olsun.</span></label>
+      <button class="btn primary" onclick="createNews()">Yayınla</button>
+    </div>
+  </div>` +
+  `<div class="card contentCreateCard">
+    <h3 class="contentCreateTitle">Oluştur</h3>
+    <div class="fieldGroup">
+      <input id="eventTitle" class="input" placeholder="Etkinlik adı">
+      <input id="eventDate" class="input" placeholder="Tarih">
+      <input id="eventTime" class="input" placeholder="Saat">
+      <input id="eventRoute" class="input" placeholder="Rota">
+      <button class="btn primary" onclick="createEvent()">Ekle</button>
+    </div>
+  </div>` +
+  `<div class="card contentCreateCard">
+    <h3 class="contentCreateTitle">Chapter Yönetimi</h3>
+    <p>Mevcut chapterlar: ${chapters.join(", ")}</p>
+    <div class="fieldGroup">
+      <input id="chapterName" class="input" placeholder="Yeni chapter / şehir">
+      <button class="btn ghost" onclick="addChapter()">Ekle</button>
+    </div>
+  </div>`;
+}
+
+
+/* v28 member search / chapter filter */
+let memberSearchQuery = "";
+let memberChapterFilter = "Tümü";
+
+function setMemberSearchQuery(v){
+  memberSearchQuery = v || "";
+  render("members");
+}
+function setMemberChapterFilter(v){
+  memberChapterFilter = v || "Tümü";
+  render("members");
+}
+function resetMemberFilters(){
+  memberSearchQuery = "";
+  memberChapterFilter = "Tümü";
+  memberStatusFilter = "Tümü";
+  render("members");
+}
+function membersScreen(){
+  const listAll = [...allMembers(), ...accounts.filter(a=>a.status!=="Aktif")];
+  const filters = ["Tümü","Aktif","Pasif","Askıda","Ayrıldı","Onay Bekliyor"];
+  const chapterOptions = ["Tümü", ...Array.from(new Set(listAll.map(m => m.chapter).filter(Boolean))).sort((a,b)=>a.localeCompare(b,"tr"))];
+
+  const q = (memberSearchQuery || "").trim().toLowerCase();
+
+  let list = listAll;
+
+  if(memberStatusFilter !== "Tümü"){
+    list = list.filter(m => memberStatusLabel(m) === memberStatusFilter);
+  }
+
+  if(memberChapterFilter !== "Tümü"){
+    list = list.filter(m => (m.chapter || "") === memberChapterFilter);
+  }
+
+  if(q.length){
+    list = list.filter(m => [
+      m.nick,
+      m.name,
+      m.chapter,
+      m.role,
+      m.status,
+      m.motorcycle,
+      m.phone
+    ].join(" ").toLowerCase().includes(q));
+  }
+
+  return `
+    <div class="memberTools">
+      <div class="memberToolsGrid">
+        <input class="input" id="memberSearchInput" value="${memberSearchQuery.replaceAll('"','&quot;')}" placeholder="Üye, nick, isim, motor veya telefon ara" oninput="memberSearchQuery=this.value;render('members')">
+        <div class="memberToolsRow">
+          <select onchange="setMemberChapterFilter(this.value)">
+            ${chapterOptions.map(c=>`<option ${memberChapterFilter===c?'selected':''}>${c}</option>`).join("")}
+          </select>
+          <select onchange="setMemberStatusFilter(this.value)">
+            ${filters.map(f=>`<option ${memberStatusFilter===f?'selected':''}>${f}</option>`).join("")}
+          </select>
+        </div>
+        <button class="btn ghost" onclick="resetMemberFilters()">Temizle</button>
+      </div>
+    </div>
+
+    ${section("Üye Bilgi Erişimi")}
+    <div class="memberCountPill">${list.length} üye gösteriliyor</div>
+
+    ${list.map((m,i)=>card(`
+      <div class="memberCardTop" onclick="openMemberDetail('${m.nick}')">
+        <div>
+          <div class="noticeRow"><b style="font-size:22px">${m.nick}</b><span class="statusPill">${memberStatusLabel(m)}</span></div>
+          <p>${m.name||""}<br>${m.chapter} · ${m.role}<br>Aktiflik: ${activityLevel(m)} · Son giriş: ${m.lastSeen || "-"}</p>
+          ${roleBadge(m.role)}
+        </div>
+        <div style="text-align:right;color:var(--muted);font-size:12px">${m.events||0} etkinlik<br>${m.km||0} km</div>
+      </div>
+      ${currentUser.isAdmin?`<div class="actionGrid"><button class="btn ghost" onclick="assignNick(${i})">Ata</button><button class="btn ghost" onclick="changeMemberStatus(${i})">Değiştir</button><button class="btn ghost" onclick="changeMemberRole(${i})">Değiştir</button><button class="btn ghost" onclick="quickMemberNote('${m.nick}')">Not Ekle</button><button class="btn deleteBtn" onclick="deleteMember('${m.nick}')">Kaldır</button></div>`:""}
+    `)).join("") || emptyState("Sonuç yok","Arama veya filtreye uygun üye bulunamadı.")}
+  `;
+}
+
+
+/* v29 member search no-focus-loss */
+function setMemberSearchQueryLive(v){
+  memberSearchQuery = v || "";
+  updateMembersListOnly();
+}
+function setMemberChapterFilter(v){
+  memberChapterFilter = v || "Tümü";
+  updateMembersListOnly();
+}
+function setMemberStatusFilter(v){
+  memberStatusFilter = v || "Tümü";
+  updateMembersListOnly();
+}
+function resetMemberFilters(){
+  memberSearchQuery = "";
+  memberChapterFilter = "Tümü";
+  memberStatusFilter = "Tümü";
+  render("members");
+}
+function getFilteredMembers(){
+  const listAll = [...allMembers(), ...accounts.filter(a=>a.status!=="Aktif")];
+  const q = (memberSearchQuery || "").trim().toLowerCase();
+  let list = listAll;
+
+  if(memberStatusFilter !== "Tümü"){
+    list = list.filter(m => memberStatusLabel(m) === memberStatusFilter);
+  }
+
+  if(memberChapterFilter !== "Tümü"){
+    list = list.filter(m => (m.chapter || "") === memberChapterFilter);
+  }
+
+  if(q.length){
+    list = list.filter(m => [
+      m.nick,
+      m.name,
+      m.chapter,
+      m.role,
+      m.status,
+      m.motorcycle,
+      m.phone
+    ].join(" ").toLowerCase().includes(q));
+  }
+  return list;
+}
+function memberCardsHTML(list){
+  return `
+    ${section("Üye Bilgi Erişimi")}
+    <div class="memberCountPill">${list.length} üye gösteriliyor</div>
+    ${list.map((m,i)=>card(`
+      <div class="memberCardTop" onclick="openMemberDetail('${m.nick}')">
+        <div>
+          <div class="noticeRow"><b style="font-size:22px">${m.nick}</b><span class="statusPill">${memberStatusLabel(m)}</span></div>
+          <p>${m.name||""}<br>${m.chapter} · ${m.role}<br>Aktiflik: ${activityLevel(m)} · Son giriş: ${m.lastSeen || "-"}</p>
+          ${roleBadge(m.role)}
+        </div>
+        <div style="text-align:right;color:var(--muted);font-size:12px">${m.events||0} etkinlik<br>${m.km||0} km</div>
+      </div>
+      ${currentUser.isAdmin?`<div class="actionGrid"><button class="btn ghost" onclick="assignNick(${i})">Ata</button><button class="btn ghost" onclick="changeMemberStatus(${i})">Değiştir</button><button class="btn ghost" onclick="changeMemberRole(${i})">Değiştir</button><button class="btn ghost" onclick="quickMemberNote('${m.nick}')">Not Ekle</button><button class="btn deleteBtn" onclick="deleteMember('${m.nick}')">Kaldır</button></div>`:""}
+    `)).join("") || emptyState("Sonuç yok","Arama veya filtreye uygun üye bulunamadı.")}
+  `;
+}
+function updateMembersListOnly(){
+  const box = document.getElementById("memberResults");
+  if(!box) return;
+  box.innerHTML = memberCardsHTML(getFilteredMembers());
+}
+function membersScreen(){
+  const listAll = [...allMembers(), ...accounts.filter(a=>a.status!=="Aktif")];
+  const filters = ["Tümü","Aktif","Pasif","Askıda","Ayrıldı","Onay Bekliyor"];
+  const chapterOptions = ["Tümü", ...Array.from(new Set(listAll.map(m => m.chapter).filter(Boolean))).sort((a,b)=>a.localeCompare(b,"tr"))];
+
+  return `
+    <div class="memberTools">
+      <div class="memberToolsGrid">
+        <input class="input memberSearchInput" id="memberSearchInput" value="${(memberSearchQuery || "").replaceAll('"','&quot;')}" placeholder="Üye, nick, isim, motor veya telefon ara" oninput="setMemberSearchQueryLive(this.value)">
+        <div class="memberToolsRow">
+          <select onchange="setMemberChapterFilter(this.value)">
+            ${chapterOptions.map(c=>`<option ${memberChapterFilter===c?'selected':''}>${c}</option>`).join("")}
+          </select>
+          <select onchange="setMemberStatusFilter(this.value)">
+            ${filters.map(f=>`<option ${memberStatusFilter===f?'selected':''}>${f}</option>`).join("")}
+          </select>
+        </div>
+        <button class="btn ghost" onclick="resetMemberFilters()">Temizle</button>
+      </div>
+    </div>
+    <div id="memberResults" class="memberResults">
+      ${memberCardsHTML(getFilteredMembers())}
+    </div>
+  `;
+}
+
+
+/* v30 language standardization */
+function titleText(t){
+  const map = {
+    "home":["RainDogs","Kulüp merkezi"],
+    "news":["Haberler","Duyurular ve yönetim mesajları"],
+    "events":["Etkinlikler","Katılım ve sürüş planı"],
+    "routes":["Rotalar","Sürüş notları ve mesafeler"],
+    "leaderboard":["Leaderboard","Km ve aktiflik sıralaması"],
+    "profile":["Profil","Üyelik bilgileri ve hesap"],
+    "members":["Üyeler","Chapter ve roller"],
+    "chapters":["Chapter Sayfaları","Türkiye ve chapter bazlı görünüm"],
+    "archive":["Arşiv","Kurallar, kararlar ve dokümanlar"],
+    "culture":["Kültür","Disiplin, temsil ve yapı"],
+    "adminPanel":["Yönetim Paneli","Operasyon merkezi"],
+    "adminCreate":["İçerik Oluştur","Haber, etkinlik ve chapter yönetimi"],
+    "chapterReports":["Chapter Raporları","Haftalık ve aylık özetler"],
+    "memberNotes":["Üye Notları","Yönetim içi kayıtlar"],
+    "appSettings":["Uygulama Ayarları","Tema, bildirim ve görünüm"]
+  };
+  return map[t] || (titles && titles[t]) || ["RainDogs","Kulüp merkezi"];
+}
+const rdOriginalGoLanguage = go;
+go = function(screen){
+  rdOriginalGoLanguage(screen);
+  const txt = titleText(screen);
+  if(document.getElementById("title")) title.innerText = txt[0];
+  if(document.getElementById("subtitle")) subtitle.innerText = txt[1];
+};
+
+
+/* v32 admin panel chapter add */
+function addChapterFromPanel(){
+  const input = document.getElementById("adminPanelChapterName");
+  const name = input ? input.value.trim() : "";
+  if(!name){
+    safeToast("Chapter adı gir.");
+    return;
+  }
+  const exists = chapters.some(c => c.toLowerCase() === name.toLowerCase());
+  if(exists){
+    safeToast("Bu chapter zaten listede var.");
+    return;
+  }
+  chapters.push(name);
+  chapters.sort((a,b)=>a.localeCompare(b,"tr"));
+  localStorage.setItem("rdChapters", JSON.stringify(chapters));
+  if(typeof logAdmin === "function") logAdmin("Chapter eklendi", name);
+  safeToast(name + " chapter eklendi.");
+  render("adminPanel");
+}
+function adminPanelScreen(){
+  return section("Yönetim Paneli")+
+  `<div class="grid2">
+    <div class="statCard"><small>Başvuru</small><b>${applications.length}</b></div>
+    <div class="statCard"><small>Km Onayı</small><b>${kmEntries.filter(k=>k.status==="Onay Bekliyor").length}</b></div>
+  </div>`+
+  section("Hızlı Aksiyonlar")+
+  `<div class="adminQuickGrid">
+    <button class="quickBtn" onclick="go('adminApplications')"><span>✓</span>Onayla</button>
+    <button class="quickBtn" onclick="go('adminKm')"><span>KM</span>Onayla</button>
+    <button class="quickBtn" onclick="go('adminCreate')"><span>DU</span>Yayınla</button>
+    <button class="quickBtn" onclick="go('adminCreate')"><span>ET</span>Oluştur</button>
+  </div>`+
+  `<div class="card adminPanelCard">
+    <h3>Chapter Ekle</h3>
+    <p>Yeni chapter / şehir ekleyebilir, eklenen chapterları kayıt formunda ve chapter sayfalarında görünür hale getirebilirsin.</p>
+    <div class="fieldGroup">
+      <input id="adminPanelChapterName" class="input" placeholder="Yeni chapter adı">
+      <button class="btn primary" onclick="addChapterFromPanel()">Ekle</button>
+    </div>
+    <div class="result">Mevcut chapterlar: ${chapters.join(", ")}</div>
+  </div>`+
+  `<div class="card adminPanelCard">
+    <h3>Operasyon Merkezi</h3>
+    <p>Başvurular, km onayları, raporlar, loglar, üye yönetimi ve dışa aktarım buradan takip edilir.</p>
+    <div class="fieldGroup">
+      <button class="btn ghost" onclick="go('readReport')">Okuma Raporu</button>
+      <button class="btn ghost" onclick="go('adminExport')">Dışa Aktar</button>
+    </div>
+  </div>`;
+}
+
+syncLoginType();syncRegisterNickMode();boot();updateHeaderNotifDot();
+</script>
+<div id="detailOverlay" class="detailOverlay" onclick="closeDetail()"><div id="detailPanel" class="detailPanel" onclick="event.stopPropagation()"></div></div>
+<input id="avatarUpload" type="file" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
+</body>
+</html>
