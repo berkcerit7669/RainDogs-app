@@ -3904,7 +3904,7 @@ activateSelfAdmin=function(){safeToast("Yeni üyelikler yönetim onayı olmadan 
 
 /* v63 kesin yetki matrisi ve National yayin onayi */
 function isTopNationalV63(user=currentUser){return !!user&&["Amir","NVP"].includes(user.nationalRole)}
-function canDirectNationalPublishV63(user=currentUser){return isApplicationAdmin(user)||isTopNationalV63(user)}
+function canDirectNationalPublishV63(user=currentUser){return isTopNationalV63(user)||user?.nationalRole==="National Secretary"}
 function canApproveNationalPublishV64(user=currentUser){return canDirectNationalPublishV63(user)||user?.nationalRole==="National Secretary"}
 const rdV63ApproveNationalEvent=approveNationalEvent;
 approveNationalEvent=function(id,accept){const e=charterEvents.find(x=>x.id===id);if(!canApproveNationalPublishV64()||(currentUser?.nationalRole==="National Secretary"&&e?.createdBy===currentUser.nick)){safeToast("National Secretary kendi gönderdiği içeriği onaylayamaz; Amir veya NVP kararı gerekir.");return}rdV63ApproveNationalEvent(id,accept)};
@@ -3914,7 +3914,7 @@ charterCapabilities=function(user=currentUser){
   const role=user?.role||"",all=["President","Vice President"].includes(role);
   return {
     news:all||["Secretary","Road Captain","Tail Gunner","Sgt. at Arms"].includes(role),
-    events:all||["Secretary","Road Captain","Tail Gunner"].includes(role),
+    events:all||["Sgt. at Arms","Road Captain","Tail Gunner"].includes(role),
     routes:all||role==="Road Captain",
     finance:all||role==="Treasurer",
     discipline:all||role==="Sgt. at Arms",

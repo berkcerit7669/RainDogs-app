@@ -3,6 +3,7 @@ import { withSupabase } from "jsr:@supabase/server@^1";
 const H={"Content-Type":"application/json; charset=utf-8","Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization,apikey,content-type","Access-Control-Allow-Methods":"GET,POST,OPTIONS"};
 const out=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:H});
 const NATIONAL_FULL=new Set(["Amir","NVP","National Secretary","National Sgt. at Arms"]);
+const NATIONAL_DIRECT_PUBLISH=new Set(["Amir","NVP","National Secretary"]);
 const LOCAL_CONTENT:{[key:string]:Set<string>}={
   event:new Set(["President","Vice President","Sgt. at Arms","Road Captain","Tail Gunner"]),
   announcement:new Set(["President","Vice President","Sgt. at Arms","Secretary","Road Captain","Tail Gunner"]),
@@ -31,10 +32,10 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
       ctx.supabaseAdmin.from("events").select("*,charters:owner_charter_id(name)").or(national?"id.not.is.null":`scope.in.(national,joint),owner_charter_id.eq.${own}`).order("starts_at"),
       ctx.supabaseAdmin.from("announcements").select("*,charters:charter_id(name)").or(national?"id.not.is.null":`scope.in.(national,joint),charter_id.eq.${own}`).order("created_at",{ascending:false}),
       ctx.supabaseAdmin.from("routes").select("*,charters:charter_id(name)").or(national?"id.not.is.null":`scope.in.(national,joint),charter_id.eq.${own}`).order("created_at",{ascending:false}),
-      ctx.supabaseAdmin.from("attendance").select("*").or(national?"event_id.not.is.null":`member_id.eq.${actor.id}`),
+      ctx.supabaseAdmin.from("attendance").select("*").or(management?"event_id.not.is.null":`member_id.eq.${actor.id}`),
       ctx.supabaseAdmin.from("km_entries").select("*").or(national?"member_id.not.is.null":`member_id.eq.${actor.id}`).order("created_at",{ascending:false}),
       ctx.supabaseAdmin.from("clubhouse_visits").select("*,profiles:member_id(nick),charters:charter_id(name)").or(national?"id.not.is.null":`charter_id.eq.${own}`).order("entered_at",{ascending:false}),
-      ctx.supabaseAdmin.from("member_notes").select("*").or(national?"id.not.is.null":`charter_id.eq.${own}`).order("created_at",{ascending:false}),
+      management?ctx.supabaseAdmin.from("member_notes").select("*").or(national?"id.not.is.null":`charter_id.eq.${own}`).order("created_at",{ascending:false}):Promise.resolve({data:[],error:null}),
       ctx.supabaseAdmin.from("notifications").select("*").eq("recipient_id",actor.id).order("created_at",{ascending:false}),
       ctx.supabaseAdmin.from("help_tickets").select("*").or(actor.is_app_admin?"id.not.is.null":`reporter_id.eq.${actor.id}`).order("created_at",{ascending:false}),
       management?ctx.supabaseAdmin.from("profiles").select("id,nick,full_name,phone,motorcycle,member_level,account_status,charter_id,charter_role,national_role,is_app_admin,created_at,charters:charter_id(name)").or(national?"id.not.is.null":`charter_id.eq.${own}`).order("nick"):Promise.resolve({data:[],error:null}),
@@ -43,12 +44,15 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
       ctx.supabaseAdmin.from("clubhouse_states").select("*").or(national?"charter_id.not.is.null":`charter_id.eq.${own}`)
     ]);
     const failed=[charters,events,announcements,routes,attendance,km,visits,notes,notifications,tickets,profiles,applications,logs,clubhouseStates].find(x=>x.error);if(failed?.error)return out({error:failed.error.message},500);
-    return out({actor,charters:charters.data,events:events.data,announcements:announcements.data,routes:routes.data,attendance:attendance.data,kmEntries:km.data,clubhouseVisits:visits.data,memberNotes:notes.data,notifications:notifications.data,helpTickets:tickets.data,profiles:profiles.data,applications:applications.data,adminLogs:logs.data,clubhouseStates:clubhouseStates.data});
+    const visibleEventIds=new Set((events.data||[]).map((event:any)=>event.id));
+    const visibleAttendance=national?(attendance.data||[]):management?(attendance.data||[]).filter((row:any)=>visibleEventIds.has(row.event_id)):(attendance.data||[]);
+    return out({actor,charters:charters.data,events:events.data,announcements:announcements.data,routes:routes.data,attendance:visibleAttendance,kmEntries:km.data,clubhouseVisits:visits.data,memberNotes:notes.data,notifications:notifications.data,helpTickets:tickets.data,profiles:profiles.data,applications:applications.data,adminLogs:logs.data,clubhouseStates:clubhouseStates.data});
   }
 
   if(action==="content.save"){
     const kind=String(body.kind||""),table=kind==="event"?"events":kind==="announcement"?"announcements":kind==="route"?"routes":"";if(!table)return out({error:"Geçersiz içerik."},400);
     const cid=body.data?.owner_charter_id||body.data?.charter_id||actor.charter_id;if(!manages(kind,cid))return out({error:"Bu içerik için yetkin yok."},403);
+    if(body.data?.scope==="national"&&!NATIONAL_DIRECT_PUBLISH.has(actor.national_role||""))return out({error:"Türkiye geneli içerik Amir, NVP veya National Secretary onayı gerektirir."},403);
     const data={...body.data,created_by:body.data?.created_by||actor.id,updated_at:new Date().toISOString()};
     const query=body.id?ctx.supabaseAdmin.from(table).update(data).eq("id",body.id):ctx.supabaseAdmin.from(table).insert(data);const {data:saved,error}=await query.select().single();if(error)return out({error:error.message},400);await audit(body.id?"İçerik düzenlendi":"İçerik oluşturuldu",kind,saved.id,{title:saved.title||saved.name});return out({item:saved});
   }
@@ -65,7 +69,8 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     const {data:item,error}=await ctx.supabaseAdmin.from("clubhouse_visits").update({exited_at:new Date().toISOString(),closed_by:actor.id}).eq("member_id",actor.id).is("exited_at",null).select().maybeSingle();if(error)return out({error:error.message},400);return out({item});
   }
   if(action==="clubhouse.status"){
-    if(!manages("announcement",body.charterId||actor.charter_id))return out({error:"Kulüp evi durumunu yalnızca yönetim değiştirebilir."},403);
+    const requestedCharter=body.charterId||actor.charter_id;
+    if(!fullNational&&!(actor.charter_role&&requestedCharter===actor.charter_id))return out({error:"Kulüp evi durumunu yalnızca yönetim değiştirebilir."},403);
     const charterId=body.charterId||actor.charter_id,status=String(body.status||"available");if(!["available","busy"].includes(status))return out({error:"Geçersiz durum."},400);
     const {data:item,error}=await ctx.supabaseAdmin.from("clubhouse_states").upsert({charter_id:charterId,status,note:String(body.note||""),updated_by:actor.id,updated_at:new Date().toISOString()},{onConflict:"charter_id"}).select().single();if(error)return out({error:error.message},400);await audit("Kulüp evi durumu güncellendi","clubhouse",charterId,{status});return out({item});
   }
@@ -106,6 +111,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     const {data:target}=await ctx.supabaseAdmin.from("profiles").select("*").eq("id",body.memberId).maybeSingle();if(!target)return out({error:"Üye bulunamadı."},404);
     const sameCharter=target.charter_id===actor.charter_id,localManager=!!actor.charter_role&&sameCharter;
     if(!fullNational&&!actor.is_app_admin&&!localManager)return out({error:"Bu üyeyi düzenleme yetkin yok."},403);
+    if(localManager&&!fullNational&&!actor.is_app_admin&&(target.is_app_admin||target.national_role))return out({error:"Charter yönetimi National veya uygulama yöneticisi hesabını değiştiremez."},403);
     const patch:any={updated_at:new Date().toISOString()};
     if(body.accountStatus){const allowed=actor.is_app_admin||fullNational||["President","Vice President","Secretary","Sgt. at Arms"].includes(actor.charter_role||"");if(!allowed)return out({error:"Üyelik durumu yetkin yok."},403);patch.account_status=body.accountStatus}
     if(body.memberLevel)patch.member_level=body.memberLevel;
