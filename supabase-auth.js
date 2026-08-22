@@ -102,6 +102,7 @@
       localStorage.removeItem("rdUser");
       sessionStorage.setItem("rdUser", JSON.stringify(user));
       boot();
+      window.dispatchEvent(new CustomEvent("raindogs:authenticated", { detail: { user } }));
     } catch (error) {
       clearSession();
       localStorage.removeItem("rdRememberMe");
@@ -155,6 +156,7 @@
       sessionStorage.setItem("rdUser", JSON.stringify(user));
       currentUser = user;
       boot();
+      window.dispatchEvent(new CustomEvent("raindogs:authenticated", { detail: { user } }));
       safeToast("Başvurun alındı. Charter yönetimi onayladığında hesabın aktif olacak.");
     } catch (error) {
       safeToast(error?.message || "Başvuru gönderilemedi.");
@@ -181,6 +183,7 @@
       localStorage.removeItem("rdUser");
       sessionStorage.setItem("rdUser", JSON.stringify(user));
       boot();
+      window.dispatchEvent(new CustomEvent("raindogs:authenticated", { detail: { user } }));
     } catch (error) {
       safeToast(error?.message || "Nick veya şifre hatalı ya da üyelik aktif değil.");
     } finally {
