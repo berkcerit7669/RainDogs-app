@@ -1096,8 +1096,9 @@ html,body,.app{min-height:100%;min-height:100dvh}.header>div:first-child{min-wid
     <div id="registerForm" style="display:none">
       <div class="fieldGroup">
         <input id="regName" class="input" placeholder="İsim soyisim">
+        <input id="regEmail" class="input" type="email" inputmode="email" autocomplete="email" placeholder="E-posta (hesap kurtarma için)">
         <div class="passwordWrap">
-          <input id="regPassword" class="input" type="password" placeholder="Şifre belirle">
+          <input id="regPassword" class="input" type="password" autocomplete="new-password" placeholder="Şifre belirle (en az 8 karakter)">
           <button type="button" class="eyeBtn" onclick="togglePassword('regPassword', this)">👁</button>
         </div>
         <select id="regNickMode" onchange="syncRegisterNickMode()">

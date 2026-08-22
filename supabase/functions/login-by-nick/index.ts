@@ -50,10 +50,10 @@ export default {
 
     const { data: profile } = await ctx.supabaseAdmin
       .from("profiles")
-      .select("id,nick,full_name,account_status,charter_id,charter_role,national_role,is_app_admin")
+      .select("id,nick,full_name,member_level,account_status,charter_id,charter_role,national_role,is_app_admin,charters(name)")
       .ilike("nick", nick)
       .maybeSingle();
-    if (!profile || profile.account_status !== "active") return failure();
+    if (!profile || !["active", "pending"].includes(profile.account_status)) return failure();
 
     const { data: authRecord, error: userError } = await ctx.supabaseAdmin.auth.admin.getUserById(profile.id);
     const email = authRecord?.user?.email;
@@ -66,6 +66,9 @@ export default {
     if (signInError || !signedIn.session) return failure();
 
     await ctx.supabaseAdmin.rpc("clear_nick_login_attempts", { p_key_hash: rateKey });
-    return new Response(JSON.stringify({ session: signedIn.session, profile }), { status: 200, headers: jsonHeaders });
+    const charterRelation = Array.isArray(profile.charters) ? profile.charters[0] : profile.charters;
+    const responseProfile = { ...profile, charter_name: charterRelation?.name ?? "" };
+    delete responseProfile.charters;
+    return new Response(JSON.stringify({ session: signedIn.session, profile: responseProfile }), { status: 200, headers: jsonHeaders });
   }),
 };

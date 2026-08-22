@@ -62,7 +62,7 @@
   }
 
   async function appUser(profile, session) {
-    const chapter = await charterName(profile.charter_id, session.access_token).catch(() => "");
+    const chapter = profile.charter_name || await charterName(profile.charter_id, session.access_token).catch(() => "");
     return {
       id: profile.id,
       nick: profile.nick,
@@ -72,7 +72,7 @@
       nationalRole: profile.national_role || "",
       accessLevel: profile.national_role ? "national" : "member",
       isAdmin: Boolean(profile.is_app_admin),
-      status: profile.account_status === "active" ? "Aktif" : profile.account_status,
+      status: profile.account_status === "active" ? "Aktif" : profile.account_status === "pending" ? "Onay Bekliyor" : profile.account_status,
       km: 0,
       events: 0,
       backend: "supabase"
@@ -85,7 +85,7 @@
       headers: { Authorization: `Bearer ${session.access_token}` }
     });
     const profile = rows?.[0];
-    if (!profile || profile.account_status !== "active") throw new Error("Üyeliğin aktif değil.");
+    if (!profile || !["active", "pending"].includes(profile.account_status)) throw new Error("Üyeliğin aktif değil.");
     return profile;
   }
 
@@ -119,6 +119,49 @@
       body: JSON.stringify({ nick, password })
     });
   }
+
+  async function registerMember(payload) {
+    return request("/functions/v1/register-member", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${config.publishableKey}` },
+      body: JSON.stringify(payload)
+    });
+  }
+
+  window.registerUser = async function () {
+    const button = document.querySelector("#registerForm .btn.primary");
+    const fullName = document.getElementById("regName")?.value.trim() || "";
+    const email = document.getElementById("regEmail")?.value.trim() || "";
+    const password = document.getElementById("regPassword")?.value || "";
+    const charter = document.getElementById("regChapter")?.value || "";
+    const phone = document.getElementById("regPhone")?.value.trim() || "";
+    const requestedRole = document.getElementById("regRole")?.value || "";
+    const requestedNationalRole = document.getElementById("regNationalRole")?.value || "";
+    const noNick = document.getElementById("regNickMode")?.value === "noNick";
+    const nick = noNick ? "" : document.getElementById("regNick")?.value.trim() || "";
+    if (!fullName || !email || !password || !charter || !phone || !requestedRole) { safeToast("Zorunlu alanların tamamını doldur."); return; }
+    if (!noNick && !nick) { safeToast("Mevcut nickini gir veya henüz nickim yok seçeneğini kullan."); return; }
+    if (password.length < 8) { safeToast("Şifre en az 8 karakter olmalı."); return; }
+    if (!document.getElementById("kvkkCheck")?.checked || !document.getElementById("termsCheck")?.checked || !document.getElementById("contactCheck")?.checked) {
+      safeToast("Kayıt için aydınlatma, kullanım ve iletişim onaylarını kabul etmelisin."); return;
+    }
+    if (button) { button.disabled = true; button.textContent = "Başvuru gönderiliyor…"; }
+    try {
+      const result = await registerMember({ fullName, email, password, charter, phone, requestedRole, requestedNationalRole, nick, noNick });
+      const user = await appUser(result.profile, result.session);
+      saveSession(result.session, false);
+      localStorage.removeItem("rdRememberMe");
+      localStorage.removeItem("rdUser");
+      sessionStorage.setItem("rdUser", JSON.stringify(user));
+      currentUser = user;
+      boot();
+      safeToast("Başvurun alındı. Charter yönetimi onayladığında hesabın aktif olacak.");
+    } catch (error) {
+      safeToast(error?.message || "Başvuru gönderilemedi.");
+    } finally {
+      if (button) { button.disabled = false; button.textContent = "Gönder"; }
+    }
+  };
 
   window.loginUser = async function () {
     const button = document.querySelector("#loginForm .btn.primary");
