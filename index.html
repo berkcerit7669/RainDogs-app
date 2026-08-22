@@ -1091,7 +1091,6 @@ html,body,.app{min-height:100%;min-height:100dvh}.header>div:first-child{min-wid
         <button class="btn primary" style="width:100%" onclick="loginUser()">Gir</button>
       </div>
       <div class="helpText">Onaylı nicki olan üyeler nick ve şifre ile giriş yapar. Nicki olmayan üyeler kayıt olurken belirledikleri isim soyisim ve şifre ile giriş yapar.</div>
-      <div class="demoAccess"><b>Sunum hesabı</b><br>Nick: Sexist Dog<br>Şifre: admin</div>
     </div>
 
     <div id="registerForm" style="display:none">
@@ -4361,22 +4360,6 @@ syncLoginType();syncRegisterNickMode();syncChapterOptions();boot();updateHeaderN
 <script src="supabase-auth.js"></script>
 <div id="detailOverlay" class="detailOverlay" onclick="closeDetail()"><div id="detailPanel" class="detailPanel" onclick="event.stopPropagation()"></div></div>
 <input id="avatarUpload" type="file" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
-
-<!-- RainDogs'un mevcut scriptleri burada -->
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-  const SUPABASE_URL = "https://rainzsxcqrfrvihmvhee.supabase.co";
-  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_r_HbTDAAQ_oapWl3L0LRPQ_9_2l9OiK";
-
-  window.supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
-  );
-
-  console.log("RainDogs Supabase client hazır:", window.supabaseClient);
-</script>
 
 </body>
 </html>

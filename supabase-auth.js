@@ -26,6 +26,18 @@
     try { return JSON.parse(raw); } catch { clearSession(); return null; }
   }
 
+  function sessionIsFresh(session) {
+    return Boolean(session?.access_token && Number(session?.expires_at || 0) > Math.floor(Date.now() / 1000) + 30);
+  }
+
+  async function refreshSession(session) {
+    if (!session?.refresh_token) throw new Error("Oturum süresi doldu.");
+    return request("/auth/v1/token?grant_type=refresh_token", {
+      method: "POST",
+      body: JSON.stringify({ refresh_token: session.refresh_token })
+    });
+  }
+
   async function request(path, options) {
     const response = await fetch(config.url + path, {
       ...options,
@@ -65,6 +77,39 @@
       events: 0,
       backend: "supabase"
     };
+  }
+
+  async function profileForSession(session) {
+    const rows = await request(`/rest/v1/profiles?id=eq.${encodeURIComponent(session.user.id)}&select=id,nick,full_name,member_level,account_status,charter_id,charter_role,national_role,is_app_admin`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${session.access_token}` }
+    });
+    const profile = rows?.[0];
+    if (!profile || profile.account_status !== "active") throw new Error("Üyeliğin aktif değil.");
+    return profile;
+  }
+
+  async function restoreSession() {
+    const stored = readSession();
+    if (!stored) return;
+    try {
+      const session = sessionIsFresh(stored) ? stored : await refreshSession(stored);
+      const profile = await profileForSession(session);
+      const user = await appUser(profile, session);
+      const remember = localStorage.getItem("rdRememberMe") === "1";
+      saveSession(session, remember);
+      currentUser = user;
+      localStorage.removeItem("rdUser");
+      sessionStorage.setItem("rdUser", JSON.stringify(user));
+      boot();
+    } catch (error) {
+      clearSession();
+      localStorage.removeItem("rdRememberMe");
+      localStorage.removeItem("rdUser");
+      sessionStorage.removeItem("rdUser");
+      currentUser = null;
+      boot();
+    }
   }
 
   async function loginByNick(nick, password) {
@@ -124,4 +169,7 @@
   document.querySelector(".demoAccess")?.remove();
   const help = document.querySelector("#loginForm .helpText");
   if (help) help.textContent = "Onaylanmış üyeler nick ve kendilerine ait şifre ile güvenli giriş yapar.";
+  const remember = document.getElementById("rememberMe");
+  if (remember) remember.checked = localStorage.getItem("rdRememberMe") === "1";
+  restoreSession();
 })();

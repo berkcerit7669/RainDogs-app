@@ -1,22 +1,23 @@
-# RainDogs App — Sunum Adayı
+# RainDogs App
 
-RainDogs için hazırlanan, tarayıcıda çalışan mobil demo. Veriler merkezi bir sunucu yerine test yapılan cihazın tarayıcısında tutulur.
+RainDogs için mobil öncelikli web uygulaması. Kimlik doğrulama Supabase Auth üzerinden nick ve şifreyle yapılır.
 
-## Sunum hesabı
+## Mevcut backend durumu
 
-- Nick: `Sexist Dog`
-- Şifre: `admin`
+- Giriş ve oturum yönetimi Supabase'e bağlıdır.
+- Üyeler yalnızca onaylı ve aktif hesaplarıyla giriş yapabilir.
+- Üye, etkinlik, duyuru, rota, kilometre ve kulüp evi modüllerinin merkezi veritabanına taşınması devam etmektedir.
 
-Normal üye akışı için kayıt oluşturulur, admin hesabıyla başvuru onaylanır ve oluşturulan hesapla tekrar giriş yapılır.
+Gerçek şifreler veya gizli Supabase anahtarları kaynak koduna eklenmemelidir. Tarayıcı yapılandırmasında yalnızca publishable key kullanılabilir.
 
 ## Telefonda kullanım
 
 Uygulama bir web adresinde yayınlandıktan sonra iPhone'da Safari ile açılabilir. **Paylaş → Ana Ekrana Ekle** seçildiğinde uygulama benzeri tam ekran görünümde çalışır.
 
-## Test verisini temizleme
+## Yerel test verisini temizleme
 
 Uygulama içinde **Menü → Uygulama Ayarları → Demo Verisini Sıfırla** kullanılabilir. Alternatif olarak yayın adresinin sonuna `?reset=1` eklenebilir.
 
-## Önemli sınır
+## Geçiş notu
 
-Bu sürüm sunum ve kullanıcı akışı testi içindir. Hesaplar, onaylar ve içerikler yalnızca kullanılan cihazda saklanır; farklı cihazlar arasında paylaşılmaz. Gerçek kullanıcı verisi girilmemelidir.
+Kimlik doğrulama merkezi olsa da uygulama modüllerinin bir bölümü halen tarayıcı verisini kullanır. Bu modüller Supabase tablolarına geçirilmeden çok cihazlı üretim kullanımı tamamlanmış sayılmaz.
