@@ -1,4 +1,4 @@
-import { withSupabase } from "npm:@supabase/server@^1";
+import { withSupabase } from "jsr:@supabase/server@^1";
 import { createClient } from "npm:@supabase/supabase-js@^2";
 
 const jsonHeaders = { "Content-Type": "application/json; charset=utf-8" };
