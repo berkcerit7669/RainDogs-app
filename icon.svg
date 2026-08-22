@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#050505"/>
+  <rect x="38" y="38" width="436" height="436" rx="88" fill="none" stroke="#ffffff" stroke-opacity=".18" stroke-width="8"/>
+  <image href="raindogs-logo.png" x="54" y="86" width="404" height="340" preserveAspectRatio="xMidYMid meet"/>
+</svg>
