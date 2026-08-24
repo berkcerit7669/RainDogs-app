@@ -92,7 +92,11 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     ]);
     const visibleApprovals=(approvalRequests.data||[]).filter((request:any)=>national||request.submitted_by===actor.id||request.source_charter_id===own||request.target_charter_id===own);
     const visibleEventCharters=national?(eventCharters.data||[]):(eventCharters.data||[]).filter((row:any)=>visibleEventIds.has(row.event_id));
-    return out({actor,charters:charters.data,events:visibleEvents,eventCharters:visibleEventCharters,announcements:announcements.data,routes:routes.data,attendance:visibleAttendance,kmEntries:km.data,clubhouseVisits:visits.data,memberNotes:notes.data,notifications:notifications.data,helpTickets:tickets.data,profiles:profiles.data,applications:applications.data,adminLogs:logs.data,clubhouseStates:clubhouseStates.data,announcementReads:announcementReads.data,eventResponses:visibleResponses,emergencyProfiles:emergency.data,charterFinance:finance.data,charterDiscipline:discipline.data,boardPolls:polls.data,boardPollVotes:pollVotes.data,approvalRequests:visibleApprovals,helpTicketMessages:ticketMessages.data});
+    const deletionQuery=actor.is_app_admin?ctx.supabaseAdmin.from("account_deletion_requests").select("*,profiles:member_id(nick,full_name)").order("created_at",{ascending:false}):ctx.supabaseAdmin.from("account_deletion_requests").select("*").eq("member_id",actor.id).order("created_at",{ascending:false}).limit(1);
+    const deletionRequests=await deletionQuery;
+    if(deletionRequests.error)return out({error:deletionRequests.error.message},500);
+    const ownDeletionRequest=actor.is_app_admin?(deletionRequests.data||[]).find((x:any)=>x.member_id===actor.id)||null:(deletionRequests.data||[])[0]||null;
+    return out({actor,charters:charters.data,events:visibleEvents,eventCharters:visibleEventCharters,announcements:announcements.data,routes:routes.data,attendance:visibleAttendance,kmEntries:km.data,clubhouseVisits:visits.data,memberNotes:notes.data,notifications:notifications.data,helpTickets:tickets.data,profiles:profiles.data,applications:applications.data,adminLogs:logs.data,clubhouseStates:clubhouseStates.data,announcementReads:announcementReads.data,eventResponses:visibleResponses,emergencyProfiles:emergency.data,charterFinance:finance.data,charterDiscipline:discipline.data,boardPolls:polls.data,boardPollVotes:pollVotes.data,approvalRequests:visibleApprovals,helpTicketMessages:ticketMessages.data,accountDeletionRequest:ownDeletionRequest,accountDeletionRequests:actor.is_app_admin?deletionRequests.data:[]});
   }
 
   if(action==="announcement.read"){
@@ -280,6 +284,29 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
   }
   if(action==="charter.create"){
     if(!actor.is_app_admin&&!fullNational)return out({error:"Charter ekleme yetkin yok."},403);const name=String(body.name||"").trim();if(!name)return out({error:"Charter adı zorunlu."},400);const {data:item,error}=await ctx.supabaseAdmin.from("charters").insert({name}).select().single();if(error)return out({error:error.message},400);await audit("Charter oluşturuldu","charter",item.id,{name});return out({item});
+  }
+  if(action==="account.deletion.request"){
+    const {data:existing}=await ctx.supabaseAdmin.from("account_deletion_requests").select("*").eq("member_id",actor.id).eq("status","requested").maybeSingle();
+    if(existing)return out({item:existing});
+    const {data:item,error}=await ctx.supabaseAdmin.from("account_deletion_requests").insert({member_id:actor.id,status:"requested"}).select().single();
+    if(error)return out({error:error.message},400);
+    const {data:admins}=await ctx.supabaseAdmin.from("profiles").select("id").eq("is_app_admin",true).eq("account_status","active").neq("id",actor.id);
+    if(admins?.length)await notify(admins.map((x:any)=>({recipient_id:x.id,type:"Hesap",title:"Hesap kapatma talebi",body:`${actor.nick} hesabının kapatılmasını istiyor.`,action_path:"members"})));
+    await audit("Hesap kapatma talebi oluşturuldu","account_deletion_request",item.id);
+    return out({item});
+  }
+  if(action==="account.deletion.cancel"){
+    const {data:item,error}=await ctx.supabaseAdmin.from("account_deletion_requests").update({status:"cancelled",decided_at:new Date().toISOString()}).eq("member_id",actor.id).eq("status","requested").select().maybeSingle();
+    if(error)return out({error:error.message},400);return out({item});
+  }
+  if(action==="account.deletion.decide"){
+    if(!actor.is_app_admin)return out({error:"Hesap kapatma taleplerini yalnızca uygulama admini sonuçlandırabilir."},403);
+    const {data:request}=await ctx.supabaseAdmin.from("account_deletion_requests").select("*").eq("id",body.id).eq("status","requested").maybeSingle();
+    if(!request)return out({error:"Bekleyen talep bulunamadı."},404);
+    const approve=body.approve!==false,status=approve?"completed":"rejected",now=new Date().toISOString();
+    if(approve){const {error:profileError}=await ctx.supabaseAdmin.from("profiles").update({account_status:"left",updated_at:now}).eq("id",request.member_id);if(profileError)return out({error:profileError.message},400);await ctx.supabaseAdmin.from("push_subscriptions").delete().eq("member_id",request.member_id)}
+    const {data:item,error}=await ctx.supabaseAdmin.from("account_deletion_requests").update({status,decided_by:actor.id,decided_at:now,decision_note:String(body.note||"").trim()}).eq("id",request.id).select().single();
+    if(error)return out({error:error.message},400);await audit(approve?"Hesap erişimi kapatıldı":"Hesap kapatma talebi reddedildi","account_deletion_request",request.id,{memberId:request.member_id});return out({item});
   }
   return out({error:"Bilinmeyen işlem."},404);
 })};

@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="RainDogs" />
 <meta name="description" content="RainDogs kulüp yönetimi ve üye deneyimi uygulaması." />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob: https://*.supabase.co; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icon.svg" type="image/svg+xml" />
 <title>RainDogs App</title>
@@ -4314,6 +4316,38 @@ const styleV80=document.createElement("style");styleV80.textContent=`
 .managementCreateV80{margin:16px 0;border:1px solid var(--line);border-radius:24px;background:rgba(255,255,255,.035);overflow:hidden}.managementCreateV80>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:18px 20px}.managementCreateV80>summary::-webkit-details-marker{display:none}.managementCreateV80>summary span:first-child{display:grid;gap:4px}.managementCreateV80>summary small{color:var(--muted);font-size:12px}.summaryPlusV80{font-size:28px;color:var(--muted);transition:.2s}.managementCreateV80[open] .summaryPlusV80{transform:rotate(45deg)}.managementCreateBodyV80{padding:0 14px 14px}.managementTabsV80{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:6px;margin:14px 0 18px;border:1px solid var(--line);border-radius:18px;background:#111}.managementTabsV80 button{min-width:0;padding:12px 6px;border:0;border-radius:13px;background:transparent;color:var(--muted);font-weight:800;font-size:12px}.managementTabsV80 button.active{background:#fff;color:#050505}.managementCreateBodyV80 .section:first-child{margin-top:8px}@media(max-width:390px){.managementTabsV80 button{font-size:11px;padding:11px 3px}}
 .clubhouseReportV80{display:grid;gap:10px}.clubhouseTopV80{padding:18px;border:1px solid rgba(255,255,255,.18);border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.09),rgba(255,255,255,.025));display:grid;gap:5px}.clubhouseTopV80 small,.clubhouseMetricsV80 small{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:800}.clubhouseTopV80 b{font-size:24px;line-height:1.1}.clubhouseTopV80 span{color:var(--muted);font-size:13px}.clubhouseMetricsV80{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.clubhouseMetricsV80>div{padding:14px;border:1px solid var(--line);border-radius:17px;background:rgba(255,255,255,.045);display:grid;gap:5px}.clubhouseMetricsV80 b{font-size:21px}.clubhouseHistoryV80{margin-top:14px;border:1px solid var(--line);border-radius:20px;overflow:hidden}.clubhouseHistoryV80>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;padding:16px;cursor:pointer;font-weight:800}.clubhouseHistoryV80>summary::-webkit-details-marker{display:none}.clubhouseHistoryV80>summary b{color:var(--muted);font-size:12px}.clubhouseHistoryV80>div{border-top:1px solid var(--line);padding:0 14px}.clubhouseHistoryRowV80{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 2px;border-bottom:1px solid rgba(255,255,255,.08)}.clubhouseHistoryRowV80:last-child{border-bottom:0}.clubhouseHistoryRowV80>div{display:grid;gap:4px;min-width:0}.clubhouseHistoryRowV80 b{font-size:14px}.clubhouseHistoryRowV80 b span{color:var(--muted);font-weight:600}.clubhouseHistoryRowV80 small{color:var(--muted);font-size:11px}.clubhouseHistoryRowV80 strong{font-size:12px;white-space:nowrap}
 `;document.head.appendChild(styleV80);
+
+/* v85 yayın sertleştirmesi: KVKK/veri hakları ve uygulama içi onay akışları. */
+securityScreen=function(){
+  const request=window.__rdAccountDeletionRequest||window.rdLastBootstrap?.accountDeletionRequest||null;
+  const requestStatus=request?`<div class="result ${request.status==="requested"?"bad":"good"}"><b>Hesap kapatma talebi:</b> ${escapeHtml(request.status==="requested"?"İncelemede":request.status)}${request.created_at?`<br><span>${new Date(request.created_at).toLocaleString("tr-TR")}</span>`:""}</div>`:"";
+  return section("Güvenlik ve Veri Hakları")+
+    card(`${pill("KVKK Aydınlatma")}<h3>Verilerin neden işleniyor?</h3><p>Üyelik ve yetki doğrulama, Charter operasyonları, etkinlik katılımı, kilometre ve kulüp evi kayıtları, acil durum bilgisi ve kulüp içi iletişim için gerekli veriler işlenir. Erişim, görev ve Charter kapsamına göre sınırlandırılır.</p>`)+
+    card(`<h3>Saklama ve erişim ilkesi</h3><p>Aktif hesap verileri üyelik boyunca tutulur. Üyelik sona erdiğinde giriş kapatılır; mali, güvenlik, yoklama ve yönetim kayıtları hesap verebilirlik amacıyla yetkili raporlarda korunur. Süresi dolan operasyonel içerikler arşive taşınır. Acil durum verisi yalnızca gerekli yetki kapsamında görüntülenir.</p><div class="helpText">Bu metin ürün içi politika taslağıdır; canlı üyelik öncesinde kulübün yetkili hukuk danışmanı tarafından son kez onaylanmalıdır.</div>`)+
+    card(`<h3>Hakların ve taleplerin</h3><p>Bilgilerine erişme, düzeltme, kullanım amacı hakkında bilgi alma ve hesabının kapatılmasını isteme hakkın vardır. Kapatma talebi anında veri silmez; yönetim incelemesi sonrası giriş kapatılır ve tutulması zorunlu kayıtlar korunur.</p>${requestStatus}<div class="btnRow"><button class="btn ghost" onclick="go('profile')">Bilgilerimi Düzenle</button><button class="btn danger" onclick="requestAccountDeletionV85()" ${request?.status==="requested"?"disabled":""}>Hesabımı Kapat</button></div>`)+
+    card(`<h3>Güvenli kullanım</h3><p>Şifreni paylaşma, ortak cihazlarda “Beni hatırla” seçeneğini kullanma ve şüpheli bir işlem görürsen Yardım / Sorun Bildir ekranından uygulama adminine ilet.</p>`);
+};
+
+async function requestAccountDeletionV85(){
+  appConfirm("Hesap kapatma talebin uygulama yönetimine gönderilsin mi? Girişin, talep onaylanana kadar açık kalır.",async()=>{
+    try{
+      if(typeof window.raindogsBackendRequest!=="function")throw new Error("Backend bağlantısı hazır değil.");
+      const result=await window.raindogsBackendRequest("account.deletion.request",{});
+      window.__rdAccountDeletionRequest=result.item||{status:"requested",created_at:new Date().toISOString()};
+      safeToast("Hesap kapatma talebin alındı.");go("security");
+    }catch(error){safeToast(error?.message||"Talep gönderilemedi.")}
+  });
+}
+
+function appPromptV85(titleText,message,initialValue,onSubmit){
+  window.__rdPromptAction=onSubmit;
+  detailPanel.innerHTML=`${pill(titleText||"Bilgi")}<h3 style="font-size:28px;margin:16px 0 10px">${escapeHtml(message)}</h3><input id="rdPromptV85" class="input" value="${escapeHtml(initialValue||"")}" autocomplete="off"><div class="btnRow" style="margin-top:18px"><button class="btn ghost" onclick="window.__rdPromptAction=null;closeDetail()">Vazgeç</button><button class="btn primary" onclick="const action=window.__rdPromptAction,value=document.getElementById('rdPromptV85').value;window.__rdPromptAction=null;closeDetail();if(action)action(value)">Kaydet</button></div>`;
+  detailOverlay.classList.add("open");setTimeout(()=>document.getElementById("rdPromptV85")?.focus(),50);
+}
+
+resetDemoData=function(){if(!isApplicationAdmin(currentUser)){safeToast("Demo sıfırlama yalnızca uygulama yöneticisine açıktır.");return}appConfirm("Bu cihazdaki deneme işlemleri temizlenip hazır sunum verileri geri yüklensin mi?",()=>appPromptV85("Son Onay","Devam etmek için SIFIRLA yaz","",word=>{if(word!=="SIFIRLA"){safeToast("Sıfırlama iptal edildi.");return}Object.keys(localStorage).filter(key=>key.startsWith("rd")).forEach(key=>localStorage.removeItem(key));location.href=location.pathname}))};
+removeProfilePhoto=function(){const key="rdAvatar_"+(currentUser?.nick||"guest");if(!localStorage.getItem(key)){safeToast("Kaldırılacak profil fotoğrafı yok.");return}appConfirm("Profil fotoğrafı kaldırılsın mı?",()=>{localStorage.removeItem(key);safeToast("Profil fotoğrafı kaldırıldı.");go("profile")})};
+cancelManagedEvent=function(key){const e=managedEvent(key);if(!e||(!canUseGlobalManagement()&&!canEditLocalItem(e)))return;appConfirm(`${e.title} iptal edilsin mi?`,()=>{e.status="İptal";saveV39();audit("Etkinlik iptal edildi",e.title);pushNotification("Etkinlik",`${e.title} iptal edildi`,e.ownerCharter||"Türkiye Geneli",e.ownerCharter||"Genel");render(rdCurrentScreen==="adminPanel"?"adminPanel":"charterAdmin")})};
 
 syncLoginType();syncRegisterNickMode();syncChapterOptions();boot();updateHeaderNotifDot();
 </script>

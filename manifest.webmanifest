@@ -2,7 +2,7 @@
   "name": "RainDogs App",
   "short_name": "RainDogs",
   "id": "./",
-  "description": "RainDogs kulüp yönetimi ve üye deneyimi demo uygulaması.",
+  "description": "RainDogs kulüp yönetimi, etkinlik, rota ve üye deneyimi uygulaması.",
   "lang": "tr",
   "start_url": "./",
   "display": "standalone",

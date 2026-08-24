@@ -1,0 +1,9 @@
+{
+  "name": "raindogs-app",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node tests/release-check.mjs"
+  }
+}
