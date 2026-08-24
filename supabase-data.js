@@ -21,7 +21,8 @@ hydrate=async function(){
   events=[...customEvents];
   routes=(window.rdLastBootstrap?.routes||[]).map(routeRow).filter(x=>x.scope!=="charter");
   accounts=[...(window.rdBackendProfiles||[])];
-  render("home");
+  const target=typeof rdCurrentScreen==="string"&&rdCurrentScreen?rdCurrentScreen:"home";
+  if(target==="home")go("home");else render(target);
 };
 window.rdBackend={call,hydrate};window.addEventListener("raindogs:authenticated",hydrate);
 const localKm=window.addKm;window.addKm=async function(){if(!currentUser?.backend)return localKm();const route=document.getElementById("routeInput")?.value.trim(),km=Number(document.getElementById("kmInput")?.value);if(!route||!km)return safeToast("Rota ve kilometre gir.");try{await call("km.submit",{routeName:route,km});await hydrate();render("km");safeToast("Kilometre kaydı onaya gönderildi.")}catch(e){safeToast(e.message)}};
