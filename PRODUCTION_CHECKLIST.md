@@ -17,7 +17,7 @@
 - Yoklama kilometresi yalnızca `finalize_event_attendance` sunucu fonksiyonu üzerinden eklenir.
 - Girişte e-posta/telefon doğrulaması ve yönetim onayı birlikte kullanılır.
 - Yönetim hesaplarında çok faktörlü doğrulama zorunlu tutulur.
-- Supabase Auth hız sınırlamaları, CAPTCHA ve sızdırılmış parola koruması açılır.
+- Supabase Auth hız sınırlamaları, CAPTCHA ve sızdırılmış parola koruması açılır (Dashboard ortam ayarı).
 - Günlük otomatik veritabanı yedeği ve aylık geri yükleme testi yapılır.
 - Hata izleme aracına şifre, telefon, acil durum kartı veya yönetim notu gönderilmez.
 
@@ -30,4 +30,10 @@
 
 ## Mevcut durum
 
-Supabase veritabanı, Auth ve Edge Function katmanı üretim projesine bağlanmış ve dağıtılmıştır. Merkezi oturum açıldığında üye, etkinlik, duyuru, rota, kilometre ve yönetim verileri yalnızca Supabase kaynaklarından yüklenir; cihazdaki demo verileri üretim listelerine karıştırılmaz. Hangaround, Prospect, Member, Charter yönetimi, National ve uygulama admini hesaplarıyla uçtan uca ekran testi yayın öncesindeki son zorunlu adımdır.
+Supabase veritabanı, Auth ve Edge Function katmanı üretim projesine bağlanmıştır. Merkezi oturum açıldığında üye, etkinlik, duyuru, rota, kilometre, katılım, kulüp evi ve yönetim verileri yalnızca Supabase kaynaklarından yüklenir; cihazdaki demo verileri üretim listelerine karıştırılmaz. Hangaround, Prospect, Member, Charter yönetimi, National ve uygulama admini hesaplarıyla yetki matrisi testi her backend dağıtımından sonra yeniden çalıştırılır.
+
+## Yayından sonra ayrıca etkinleştirilecek servisler
+
+- Gerçek cihaz push bildirimi: VAPID/FCM/APNs, servis worker, abonelik tablosu ve izin ekranı.
+- Unutulan şifre: doğrulanmış gerçek e-posta, Supabase SMTP ve doğru site/redirect URL'leri.
+- Operasyon: hata izleme, veri saklama politikası ve planın desteklediği yedekleme/geri yükleme tatbikatı.

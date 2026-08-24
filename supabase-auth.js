@@ -6,6 +6,11 @@
 
   const SESSION_KEY = "rdSupabaseSession";
 
+  if (localStorage.getItem("rdRememberMe") !== "1") {
+    localStorage.removeItem("rdUser");
+    localStorage.removeItem(SESSION_KEY);
+  }
+
   function storageForSession() {
     return localStorage.getItem("rdRememberMe") === "1" ? localStorage : sessionStorage;
   }
@@ -266,6 +271,42 @@
   };
 
   window.refreshBackendApplications = () => loadBackendApplications(true);
+
+  window.changeOwnPassword = async function () {
+    if (!currentUser?.backend) return;
+    const next = document.getElementById("newPassword")?.value || "";
+    const repeat = document.getElementById("newPasswordRepeat")?.value || "";
+    if (next.length < 8) { safeToast("Yeni şifre en az 8 karakter olmalı."); return; }
+    if (next !== repeat) { safeToast("Yeni şifreler eşleşmiyor."); return; }
+    try {
+      const session = await authenticatedSession();
+      await request("/auth/v1/user", {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ password: next })
+      });
+      const old = document.getElementById("oldPassword");
+      const first = document.getElementById("newPassword");
+      const second = document.getElementById("newPasswordRepeat");
+      if (old) old.value = "";
+      if (first) first.value = "";
+      if (second) second.value = "";
+      safeToast("Şifren güvenli şekilde güncellendi.");
+    } catch (error) { safeToast(error?.message || "Şifre güncellenemedi."); }
+  };
+
+  const originalProfileScreen = window.profileScreen;
+  if (typeof originalProfileScreen === "function") {
+    window.profileScreen = function () {
+      let html = originalProfileScreen();
+      if (!currentUser?.backend) return html;
+      html = html.replace(
+        /<input id="oldPassword"[\s\S]*?<button class="btn primary" onclick="changeOwnPassword\(\)">Şifreyi Değiştir<\/button>/,
+        `<input id="newPassword" class="input" type="password" autocomplete="new-password" placeholder="Yeni şifre (en az 8 karakter)"><input id="newPasswordRepeat" class="input" type="password" autocomplete="new-password" placeholder="Yeni şifreyi tekrar et"><button class="btn primary" onclick="changeOwnPassword()">Şifreyi Değiştir</button>`
+      );
+      return html;
+    };
+  }
 
   const oldLogout = window.logout;
   window.logout = async function () {
