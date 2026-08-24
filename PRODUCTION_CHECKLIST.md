@@ -30,4 +30,4 @@
 
 ## Mevcut durum
 
-Supabase veritabanı, Auth ve Edge Function katmanı üretim projesine bağlanmış ve dağıtılmıştır. Arayüzdeki bazı demo/önbellek akışları `localStorage` kullanmaya devam eder; gerçek kişisel veriyle davetli kabul testleri tamamlanmadan genel kullanıma açılmamalıdır. Hangaround, Prospect, Member, Charter yönetimi, National ve uygulama admini hesaplarıyla uçtan uca ekran testi yayın öncesindeki son zorunlu adımdır.
+Supabase veritabanı, Auth ve Edge Function katmanı üretim projesine bağlanmış ve dağıtılmıştır. Merkezi oturum açıldığında üye, etkinlik, duyuru, rota, kilometre ve yönetim verileri yalnızca Supabase kaynaklarından yüklenir; cihazdaki demo verileri üretim listelerine karıştırılmaz. Hangaround, Prospect, Member, Charter yönetimi, National ve uygulama admini hesaplarıyla uçtan uca ekran testi yayın öncesindeki son zorunlu adımdır.

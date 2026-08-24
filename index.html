@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="RainDogs" />
-<meta name="description" content="RainDogs kulüp yönetimi ve üye deneyimi demo uygulaması." />
+<meta name="description" content="RainDogs kulüp yönetimi ve üye deneyimi uygulaması." />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icon.svg" type="image/svg+xml" />
 <title>RainDogs App</title>
@@ -1245,32 +1245,10 @@ function syncChapterOptions(){
   if(chapters.includes(current)) select.value = current;
 }
 
-const builtInMembers = [
-  {name:"Işık Ayberk Cerit", nick:"Sexist Dog", password:"admin", chapter:"Denizli", role:"Admin", km:9999, events:99, status:"Aktif", isAdmin:true, lastSeen:"Şimdi"},
-  {name:"Işık Ayberk Cerit", nick:"Cerit", password:"admin", chapter:"Denizli", role:"Kurul Üyesi", age:"-", motorcycle:"Harley-Davidson", license:"A", blood:"-", phone:"", km:980, events:12, status:"Aktif", isAdmin:true},
-  {name:"Ghost Rider", nick:"Ghost", password:"1234", chapter:"Uşak", role:"Member", km:1240, events:10, status:"Aktif", lastSeen:"Bugün"},
-  {name:"Veli Baldan", nick:"Baldan", password:"1234", chapter:"Denizli", role:"Member", km:760, events:9, status:"Aktif", lastSeen:"Dün", birthday:"08-25"},
-  {name:"Road Wolf", nick:"Wolf", password:"1234", chapter:"İzmir", role:"Prospect", km:520, events:7, status:"Aktif", lastSeen:"3 gün önce"}
-];
-
-const baseNews = [
-  {id:"n_001", title:"Uşak Chapter Açılışı Tamamlandı", tag:"Chapter", importance:"Normal", required:false, date:"20 Ağustos 2026", body:"RainDogs Uşak yapılanması resmi olarak aktif edildi. Açılış sürüşü ve club house buluşması yüksek katılımla tamamlandı."},
-  {id:"n_002", title:"Ağustos Sürüş Planı Yayında", tag:"Duyuru", importance:"Önemli", required:false, date:"18 Ağustos 2026", body:"Ağustos ayı sürüş takvimi güncellendi. Katılım durumunuzu etkinlik ekranından işaretleyin."},
-  {id:"n_003", title:"Dijital Disiplin Hatırlatması", tag:"Yönetim", importance:"Zorunlu Okuma", required:true, date:"15 Ağustos 2026", body:"Resmi içerikler onay zincirinden geçmeden paylaşılmaz. Kulüp dışına taşan her içerik kulübün imajını etkiler."}
-];
-
-let events = [
-  {title:"Ağustos Kapanış Sürüşü", date:"29 Ağustos 2026", iso:"2026-08-29", time:"20:00", location:"Club House", route:"Denizli → Uşak", distance:"184 km", type:"Uzun Yol", attending:18, status:false, order:1, options:{}},
-  {title:"Başkanlar Kurulu Toplantısı", date:"05 Eylül 2026", iso:"2026-09-05", time:"21:00", location:"Online", route:"Toplantı", distance:"Online", type:"Kurul", attending:7, status:false, order:2, options:{}},
-  {title:"Sığacık Kıyı Buluşması", date:"12 Eylül 2026", iso:"2026-09-12", time:"18:30", location:"Sığacık Kaleiçi", route:"Sığacık → Urla", distance:"76 km", type:"Kısa Rota", attending:11, status:false, order:3, options:{}},
-  ...customEvents
-];
-
-const routes = [
-  {name:"Denizli — Uşak Club Ride", km:184, duration:"2s 35dk", difficulty:"Orta", surface:"Asfalt", character:"Uzun düz tempo", notes:"Grup düzeni bozulmazsa temiz akan rota. Mola planı önceden netleştirilmeli."},
-  {name:"Sığacık — Urla Kıyı Rotası", km:76, duration:"1s 40dk", difficulty:"Kolay", surface:"Kıyı yolu", character:"Rahat manzara rotası", notes:"Yeni sürücüler için uygun. Grup temposu sabit tutulmalı."},
-  {name:"Denizli — Babadağ Viraj Etabı", km:58, duration:"1s 15dk", difficulty:"Zor", surface:"Virajlı asfalt", character:"Virajlı teknik etap", notes:"Yeni sürücüler için önerilmez. Disiplinli takip gerekir."}
-];
+const builtInMembers = [];
+const baseNews = [];
+let events = [...customEvents];
+let routes = [];
 
 const culture = [
   {title:"Kulüp Dili", body:"Az konuş. Net ol. Gerekeni zamanında yap."},
@@ -1308,9 +1286,18 @@ let selectedChapter = "Denizli";
 function isApproved(u){return u && u.status==="Aktif"}
 function isPresentationUser(u){return !!u && (u.nick||"").trim().toLowerCase()==="sexist dog"}
 function isAdminIdentity(user){if(!user)return false;const name=(user.name||"").trim().toLowerCase();const nick=(user.nick||"").trim().toLowerCase();return name==="ışık ayberk cerit" || nick==="sexist dog" || nick==="cerit"}
-function allMembers(){return [...builtInMembers,...accounts.filter(a=>a.status==="Aktif")]}
-function allNickKeys(){return [...builtInMembers.map(u=>(u.nick||"").toLowerCase()),...accounts.map(u=>(u.nick||"").toLowerCase()).filter(Boolean),...applications.map(u=>(u.nick||"").toLowerCase()).filter(Boolean)]}
-function allNameKeys(){return accounts.map(u=>(u.name||"").trim().toLowerCase()).filter(Boolean)}
+function allMembers(){
+  const source=currentUser?.backend?(window.rdBackendProfiles||[]):[...builtInMembers,...accounts];
+  return source.filter(a=>a.status==="Aktif");
+}
+function allNickKeys(){
+  const source=currentUser?.backend?(window.rdBackendProfiles||[]):[...builtInMembers,...accounts];
+  return [...source.map(u=>(u.nick||"").toLowerCase()).filter(Boolean),...applications.map(u=>(u.nick||"").toLowerCase()).filter(Boolean)];
+}
+function allNameKeys(){
+  const source=currentUser?.backend?(window.rdBackendProfiles||[]):accounts;
+  return source.map(u=>(u.name||"").trim().toLowerCase()).filter(Boolean);
+}
 function pill(t){return `<span class="pill">${t}</span>`} function section(t){return `<div class="section">${t}</div>`} function card(h){return `<div class="card">${h}</div>`}
 
 function boot(){
@@ -1390,7 +1377,7 @@ function presentationGuideScreen(){
   section("Yönetim Kullanımı")+
   guideStep("05","Başvuru Onayı","Yeni kayıt yalnızca Onay Bekliyor ekranını görür. Admin, Menü → Yönetim Ana Ekranı → Başvurular yolundan kullanıcıyı onaylar veya reddeder.")+
   guideStep("06","İçerik ve Chapter Yönetimi","Yönetim panelinden haber ve etkinlik oluşturulur, yeni chapter eklenir, kilometre kayıtları onaylanır, üye notları ve chapter raporları takip edilir.")+
-  guideStep("07","Raporlama ve Güvenlik","Okuma raporu, admin logları ve dışa aktarım yönetim işlemlerini görünür tutar. Bu prototipte veriler yalnızca kullanılan tarayıcıda saklanır; gerçek kişisel veri girilmemelidir.")+
+  guideStep("07","Raporlama ve Güvenlik","Okuma raporu, admin logları ve dışa aktarım yönetim işlemlerini görünür tutar. Merkezi veriler Supabase üzerinde saklanır; erişim kapsamı kullanıcının görev ve Charter yetkisine göre belirlenir.")+
   guideStep("08","Türkiye / Charter Görünümü","Ekranın üstündeki kapsam seçicisinden Türkiye geneli içerikler ile kullanıcının kendi Charter merkezi arasında geçiş yapılır.")+
   guideStep("09","Kulüp Evi Kullanımı","Kulüp evi açıkken üye “Kulüp Evindeyim” ile girişini, ayrılırken çıkışını kaydeder. Konaklama mümkün olduğu için kayıt otomatik kapanmaz; gerektiğinde hatırlatma gönderilir.")+
   guideStep("10","Yerel ve Ortak Etkinlikler","Charter yönetimi yerel etkinliği anında yayınlar. Ortak etkinlik diğer Charterın kabulüyle iki tarafta, Türkiye geneli talep ise National onayıyla ana takvimde görünür.")+
@@ -2388,7 +2375,7 @@ function appSettingsScreen(){
     card(`
       ${pill("Sistem")}
       <h3>Uygulama Bilgisi</h3>
-      <p>Sürüm: Sunum Adayı 1<br>Durum: test edilebilir tasarım prototipi<br>Veri: bu cihazda geçici kayıt</p>
+      <p>Sürüm: Üretim Adayı<br>Durum: merkezi sistem bağlı<br>Veri: Supabase üzerinde güvenli kayıt</p>
       <button class="btn ghost" style="width:100%;margin-top:12px" onclick="go('versions')">Sürüm Notlarını aç</button>
       <button class="btn danger" style="width:100%;margin-top:10px" onclick="resetDemoData()">Demo Verisini Sıfırla</button>
     `);
@@ -3251,40 +3238,7 @@ boot=function(){rdV37Boot();setTimeout(()=>{alignScopeWithScreen();forceMetricLa
 let eventParticipants=JSON.parse(localStorage.getItem("rdEventParticipants")||"{}");
 let memberHistory=JSON.parse(localStorage.getItem("rdMemberHistory")||"[]");
 function saveV39(){localStorage.setItem("rdEventParticipants",JSON.stringify(eventParticipants));localStorage.setItem("rdMemberHistory",JSON.stringify(memberHistory));saveCharterData()}
-const demoRoleAccounts=[
-  {name:"Demo Ankara Başkan",nick:"Ankara President",password:"1234",chapter:"Ankara",role:"President",status:"Aktif",km:1460,events:14,lastSeen:"Bugün"},
-  {name:"Demo Denizli Sayman",nick:"Denizli Treasurer",password:"1234",chapter:"Denizli",role:"Treasurer",status:"Aktif",km:880,events:11,lastSeen:"Bugün"},
-  {name:"Demo Uşak Yol Kaptanı",nick:"Uşak RC",password:"1234",chapter:"Uşak",role:"Road Captain",status:"Aktif",km:1720,events:16,lastSeen:"Dün"},
-  {name:"Demo Denizli Sergeant",nick:"Denizli Sergeant",password:"1234",chapter:"Denizli",role:"Sgt. at Arms",status:"Aktif",km:710,events:9,lastSeen:"Bugün"},
-  {name:"Demo National Sergeant",nick:"National Sergeant",password:"1234",chapter:"Ankara",role:"Member",nationalRole:"National Sgt. at Arms",accessLevel:"national",status:"Aktif",km:1080,events:12,lastSeen:"Bugün"},
-  {name:"Demo Hendek Prospect",nick:"Hendek Prospect",password:"1234",chapter:"Sakarya/Hendek",role:"Prospect",status:"Aktif",km:260,events:4,lastSeen:"Bugün"},
-  {name:"Demo İzmir Hangaround",nick:"İzmir Hangaround",password:"1234",chapter:"İzmir",role:"Hangaround",status:"Aktif",km:90,events:2,lastSeen:"2 gün önce"},
-  {name:"Demo İzmir Üye",nick:"İzmir Member",password:"1234",chapter:"İzmir",role:"Member",status:"Aktif",km:640,events:8,lastSeen:"Bugün"}
-];
-demoRoleAccounts.forEach(d=>{if(!builtInMembers.some(m=>m.nick===d.nick)){normalizeClubUser(d);builtInMembers.push(d)}});
-const nationalTestAccounts=RD_NATIONAL_ROLES.map((nationalRole,index)=>({
-  name:`Demo ${nationalRole}`,
-  nick:nationalRole==="NVP"?"Harddog":`${nationalRole} Test`,
-  password:"1234",
-  chapter:nationalRole==="NVP"?"Denizli":["Ankara","Denizli","İzmir","Kadıköy","Uşak","Sakarya/Hendek"][index%6],
-  role:nationalRole==="NVP"?"President":"Member",
-  nationalRole,
-  accessLevel:"national",
-  status:"Aktif",
-  km:1200-index*70,
-  events:18-index,
-  lastSeen:"Bugün"
-}));
-/* National test görevleri artık otomatik dağıtılmaz; görevler yönetim ekranından gerçek kişilere atanır. */
-if(!events.some(e=>e.id==="motofest_2026"))events.unshift({id:"motofest_2026",title:"MotoFest On The Road 2026",date:"12–18 Eylül 2026",iso:"2026-09-12",time:"08:00",location:"Ankara",route:"Ankara → Bursa → Çanakkale → Gelibolu → Ayvalık → Didim → Dalyan",distance:"National tur",type:"National",attending:0,order:0,poster:"motofest-on-the-road-2026.jpg",stages:["12 Eylül · Ankara başlangıç","Bursa ve Çanakkale etabı","Gelibolu ve Ayvalık buluşması","Didim geçişi","18 Eylül · Dalyan finiş"]});
-if(!charterNews.length)charterNews.push({id:"demo_dn_1",charter:"Denizli",title:"Haftalık Charter Buluşması",body:"Cuma akşamı kulüp evinde haftalık değerlendirme ve rota planı yapılacaktır.",date:"21.08.2026",createdBy:"Denizli Secretary"});
-if(!charterRoutes.length)charterRoutes.push({id:"demo_dr_1",charter:"Denizli",name:"Denizli · Babadağ Sabah Rotası",distance:"58 km",difficulty:"Orta",notes:"08:30 kulüp evi çıkışlı, tek mola planlı.",createdBy:"Road Captain"});
-if(!charterEvents.length)charterEvents.push({id:390001,title:"Denizli Akşam Buluşması",date:"28 Ağustos 2026",iso:"2026-08-28",location:"Denizli Kulüp Evi",route:"Charter içi kısa buluşma",ownerCharter:"Denizli",kind:"local",partnerCharters:[],partnerStatus:{},nationalStatus:"Gönderilmedi",createdBy:"Denizli President",attending:0,status:"Aktif"});
-if(!notifications.length){notifications.push(
-  {type:"Etkinlik",title:"MotoFest On The Road 2026",body:"12–18 Eylül tarihli National etkinlik takvime eklendi.",target:"Genel",date:"Bugün",read:false},
-  {type:"Charter",title:"Ortak etkinlik daveti",body:"Charter yönetimleri ortak sürüş taleplerini onay ekranından değerlendirebilir.",target:"Yönetim",date:"Bugün",read:false},
-  
-);saveList("rdNotifications",notifications)}
+/* Üretim verileri yalnızca Supabase bootstrap yanıtından yüklenir. */
 saveV39();
 
 function eventKey(e,index,scope){return String(e.id??`${scope}_${index}`)}
@@ -3460,7 +3414,8 @@ clubhouseCard=function(ch=charterName()){let html=rdV41ClubhouseCard(ch),mine=ac
 
 function resetDemoData(){if(!isApplicationAdmin(currentUser)){safeToast("Demo sıfırlama yalnızca uygulama yöneticisine açıktır.");return}if(!confirm("Bu cihazdaki deneme işlemleri temizlenecek ve hazır sunum verileri geri yüklenecek. Devam edilsin mi?"))return;const word=prompt("Onaylamak için SIFIRLA yaz:");if(word!=="SIFIRLA"){safeToast("Sıfırlama iptal edildi.");return}Object.keys(localStorage).filter(key=>key.startsWith("rd")).forEach(key=>localStorage.removeItem(key));location.href=location.pathname}
 const rdV41AppSettingsScreen=appSettingsScreen;
-appSettingsScreen=function(){let html=rdV41AppSettingsScreen().replace(/<button class="btn danger"[^>]*onclick="resetDemoData\(\)"[^>]*>Demo Verisini Sıfırla<\/button>/,"");if(isApplicationAdmin(currentUser))html+=section("Sunum Araçları")+card(`${pill("Uygulama Admini")}<h3>Demo Verilerini Başlangıca Döndür</h3><p>Test girişlerini ve değişiklikleri temizler; hazır hesapları ve örnek sunum içeriğini yeniden kurar.</p><button class="btn danger" style="width:100%;margin-top:10px" onclick="resetDemoData()">Güvenli Demo Sıfırlama</button>`);return html};
+appSettingsScreen=function(){return rdV41AppSettingsScreen()
+  .replace(/<button class="btn danger"[^>]*onclick="resetDemoData\(\)"[^>]*>Demo Verisini Sıfırla<\/button>/,"")};
 const rdV41AdminLogsScreen=adminLogsScreen;
 adminLogsScreen=function(){return `<div class="result">Bütün kayıtlar işlem yapan kişi, zaman, işlem türü ve hedef bilgisiyle tutulur.</div>`+rdV41AdminLogsScreen()};
 notifications.forEach((n,i)=>{if(!n.id)n.id=`legacy_${i}`});saveList("rdNotifications",notifications);
@@ -3758,7 +3713,6 @@ approveNationalEvent=function(id,accept){const e=charterEvents.find(x=>x.id===id
 function notificationIcon(n){const type=(n.type||"").toLocaleLowerCase("tr-TR");if(type.includes("onay"))return `<span class="notificationTypeIcon ${n.title?.includes("onaylandı")?"success":"approval"}">!</span>`;if(type.includes("etkinlik"))return `<span class="notificationTypeIcon">E</span>`;if(type.includes("kulüp"))return `<span class="notificationTypeIcon">K</span>`;return `<span class="notificationTypeIcon">R</span>`}
 notificationsScreen=function(){const visible=notifications.filter(notificationVisible),types=["Tümü","Okunmamış",...new Set(visible.map(n=>n.type).filter(Boolean))],rows=visible.filter(n=>notificationFilter==="Tümü"?true:notificationFilter==="Okunmamış"?!n.read:n.type===notificationFilter);return `<div class="filterBar">${types.map(t=>`<button class="${notificationFilter===t?"active":""}" onclick="setNotificationFilter('${escapeHtml(t)}')">${escapeHtml(t)}</button>`).join("")}</div>${section("Bildirim Merkezi")}${rows.map(n=>card(`<div class="${n.read?"":"notificationUnread"}"><div class="notificationTitleRow">${notificationIcon(n)}<div><div class="meta">${pill(n.type||"Bildirim")}<span>${escapeHtml(n.date||"")}</span></div><h3>${escapeHtml(n.title)}</h3></div></div><p>${escapeHtml(n.body||"")}<br>Hedef: ${escapeHtml(n.target||"Genel")}</p>${!n.read?`<button class="btn ghost" style="width:100%;margin-top:12px" onclick="markNotificationRead('${escapeHtml(n.id||"")}')">Okundu İşaretle</button>`:`<div class="result">Okundu</div>`}</div>`)).join("")||emptyState("Bildirim yok","Bu filtrede gösterilecek bildirim bulunmuyor.")}`}
 openNotificationsSheet=function(){const visible=notifications.filter(notificationVisible),body=visible.length?visible.slice(0,8).map(n=>`<div class="compactItem"><div class="notificationTitleRow">${notificationIcon(n)}<div><div class="meta">${pill(n.type||"Bildirim")}<span>${escapeHtml(n.date||"")}</span></div><h3 style="margin:10px 0 0">${escapeHtml(n.title||"")}</h3></div></div><p>${escapeHtml(n.body||"")}<br>Hedef: ${escapeHtml(n.target||"Genel")}</p>${!n.read?`<button class="btn ghost" style="width:100%;margin-top:10px" onclick="markNotificationRead('${escapeHtml(n.id||"")}')">Okundu İşaretle</button>`:`<div class="result">Okundu</div>`}</div>`).join(""):emptyState("Bildirim yok","Önemli hareketler burada görünür.");openDetail(`${pill("Bildirim Merkezi")}<h3 style="font-size:30px;margin:14px 0">Bildirimler</h3>${visible.some(n=>!n.read)?`<button class="btn ghost" style="width:100%;margin-bottom:12px" onclick="markAllNotificationsRead()">Tümünü Okundu Yap</button>`:""}${body}<button class="btn primary" style="width:100%;margin-top:14px" onclick="closeDetail();go('notifications')">Tüm Bildirimleri Aç</button>`)}
-if(!notifications.some(n=>n.id==="demo_event_approval")){notifications.unshift({id:"demo_event_approval",type:"Etkinlik Onayı",title:"İzmir ortak etkinlik onayı gönderdi",body:"İzmir Gece Sürüşü için Charter onayı bekleniyor. Bu kayıt bildirim ikonunu göstermek için hazırlanmış örnektir.",target:"Denizli",date:"Bugün",read:false,demo:true});saveList("rdNotifications",notifications)}
 const rdV53DetailedVisitReport=detailedVisitReport;
 detailedVisitReport=function(ch){const month=new Date().toISOString().slice(0,7),rows=clubhouseVisits.filter(v=>v.chapter===ch&&(v.entryAt||"").startsWith(month)),by={};rows.forEach(v=>{const x=by[v.nick]||(by[v.nick]={visits:0,minutes:0,guests:0});x.visits++;x.minutes+=v.exitAt?visitDurationMinutes(v):0;x.guests+=Number(v.guests||0)});const entries=Object.entries(by),topVisits=entries.sort((a,b)=>b[1].visits-a[1].visits)[0],topTime=[...entries].sort((a,b)=>b[1].minutes-a[1].minutes)[0],topGuests=[...entries].sort((a,b)=>b[1].guests-a[1].guests)[0];const leaders=entries.length?section("Kulüp Evi Öne Çıkanlar")+`<div class="charterDashboardStats"><div><b>${escapeHtml(topVisits[0])}</b><small>En Çok Ziyaret · ${topVisits[1].visits}</small></div><div><b>${escapeHtml(topTime[0])}</b><small>En Uzun Süre · ${formatDuration(topTime[1].minutes)}</small></div><div><b>${escapeHtml(topGuests[0])}</b><small>En Çok Misafir · ${topGuests[1].guests}</small></div></div>`:section("Kulüp Evi Öne Çıkanlar")+emptyState("Henüz veri yok","İlk tamamlanan ziyaretlerden sonra kullanım liderleri burada görünecek.");return leaders+rdV53DetailedVisitReport(ch)}
 openRideAttendance=function(key){if(!canManageAttendanceKey(key)){safeToast("Bu etkinliğin yoklamasını yönetme yetkin yok.");return}const members=attendanceAudience(key),map=rideAttendance[key]||{},meta=attendanceMeta[key]||{};openDetail(`${pill(meta.finalized?"Yoklama Kapandı":"Kesin Yoklama")}<h3 style="font-size:28px;margin:14px 0">Etkinlik Yoklaması</h3><p>Üye ara; gerçek katılımı Katıldı, Gelmedi veya Mazeretli olarak işaretle.</p><input class="input attendanceSearch" placeholder="Nick, isim veya Charter ara" oninput="filterAttendanceRows(this.value)"><div class="scopeHint">Etkinlik kapsamı: ${members.length} aktif üye</div><div id="attendanceMemberRows">${members.map(m=>`<div class="attendanceRow" data-search="${escapeHtml(`${m.nick} ${m.name||""} ${m.chapter}`.toLocaleLowerCase("tr-TR"))}"><div><b>${escapeHtml(m.nick)}</b><small>${escapeHtml(m.name||"")} · ${escapeHtml(m.chapter)}</small></div><select ${meta.finalized?"disabled":""} onchange="setRideAttendance('${escapeHtml(key)}','${escapeHtml(m.nick)}',this.value)"><option ${!map[m.nick]||map[m.nick]?.status==="Bekleniyor"?"selected":""}>Bekleniyor</option><option ${map[m.nick]?.status==="Katıldı"?"selected":""}>Katıldı</option><option ${map[m.nick]?.status==="Gelmedi"?"selected":""}>Gelmedi</option><option ${map[m.nick]?.status==="Mazeretli"?"selected":""}>Mazeretli</option></select></div>`).join("")}</div>${meta.finalized?attendanceEventSummary(key):`<button class="btn primary" style="width:100%;margin-top:14px" onclick="finalizeAttendance('${escapeHtml(key)}')">Yoklamayı Kapat ve Kaydet</button>`}`)}
@@ -3792,8 +3746,6 @@ const rdV54OpenCharterModule=openCharterAdminModule;
 function openCharterEventApprovalsV54(){const partner=charterEvents.filter(e=>(e.partnerCharters||[]).includes(charterName())&&e.partnerStatus?.[charterName()]==="Bekliyor");showCustomScreen("charterApprovalList","Ortak Etkinlik Onayları",`${charterName()} yönetimi`,`<button class="btn ghost moduleBack" onclick="openCharterAdminModule('approvals')">Onay Merkezine Dön</button>${partner.map(e=>card(`${pill(e.ownerCharter)}<h3>${escapeHtml(e.title)}</h3><p>${escapeHtml(e.date)} · ${escapeHtml(e.location||"-")}<br>${escapeHtml(e.route||"")}</p><div class="btnRow"><button class="btn primary" onclick="decidePartnerEventV54(${e.id},true)">Kabul Et</button><button class="btn danger" onclick="decidePartnerEventV54(${e.id},false)">Reddet</button></div>`)).join("")||emptyState("Ortak davet yok","Bu Charter için bekleyen ortak etkinlik daveti bulunmuyor.")}`)}
 function decidePartnerEventV54(id,accept){const e=charterEvents.find(x=>x.id===id);if(!e||!(e.partnerCharters||[]).includes(charterName())||e.partnerStatus?.[charterName()]!=="Bekliyor"||!canUseManagement(currentUser))return;e.partnerStatus[charterName()]=accept?"Onaylandı":"Reddedildi";saveCharterData();audit(accept?"Ortak etkinlik kabul edildi":"Ortak etkinlik reddedildi",e.title);pushNotification("Etkinlik Onayı",`${e.title}: ${accept?"kabul edildi":"reddedildi"}`,`${charterName()} yönetim kararı`,e.ownerCharter);safeToast(accept?"Ortak etkinlik kabul edildi.":"Ortak etkinlik reddedildi.");openCharterEventApprovalsV54()}
 openCharterAdminModule=function(key){if(key==="clubhouse"){showCustomScreen("charterAdminModule","Kulüp Evi","Canlı kullanım ve aylık istatistik",`<button class="btn ghost moduleBack" onclick="go('charterAdmin')">Charter Yönetimine Dön</button>${clubhouseCard(charterName())}${detailedVisitReport(charterName())}`);return}if(key==="approvals"){const p=charterPendingCounts(),membershipApprover=isApplicationAdmin(currentUser)||currentUser?.nationalRole==="National Sgt. at Arms"||currentUser?.role==="Sgt. at Arms";showCustomScreen("charterAdminModule","Onay Talepleri",`${charterName()} yönetimi`,`<button class="btn ghost moduleBack" onclick="go('charterAdmin')">Charter Yönetimine Dön</button><div class="charterDashboardStats"><div><b>${p.members}</b><small>Üyelik</small></div><div><b>${p.partners}</b><small>Ortak Etkinlik</small></div><div><b>${p.national}</b><small>National</small></div></div><div class="charterToolGrid" style="margin-top:12px">${membershipApprover?`<button class="btn ghost" onclick="go('adminApplications')">Üyelik Başvuruları${p.members?` (${p.members})`:""}</button>`:""}<button class="btn ${p.partners?"primary":"ghost"}" onclick="openCharterEventApprovalsV54()">Etkinlik Onayları${p.partners+p.national?` (${p.partners+p.national})`:""}</button></div>`);return}rdV54OpenCharterModule(key)}
-notifications=notifications.filter(n=>n.id!=="demo_event_approval");
-if(!charterEvents.some(e=>e.demoApprovalV54)){const joint={id:540001,title:"İzmir Gece Sürüşü",date:"30 Ağustos 2026",iso:"2026-08-30",time:"21:00",location:"İzmir Kulüp Evi",route:"İzmir → Urla",ownerCharter:"İzmir",kind:"joint",partnerCharters:["Denizli"],partnerStatus:{Denizli:"Bekliyor"},nationalStatus:"Gönderilmedi",createdBy:"İzmir President",attending:0,demoApprovalV54:true};const national={id:540002,title:"İzmir Türkiye Buluşması",date:"6 Eylül 2026",iso:"2026-09-06",time:"10:00",location:"İzmir",route:"İzmir merkez buluşması",ownerCharter:"İzmir",kind:"national",partnerCharters:[],partnerStatus:{},nationalStatus:"Bekliyor",createdBy:"İzmir President",attending:0,demoApprovalV54:true};charterEvents.unshift(national,joint);notifications.unshift({id:"demo_joint_approval_v54",type:"Ortak Etkinlik",title:joint.title,body:"İzmir Charter ortak etkinlik daveti gönderdi.",target:"Denizli",date:"Bugün",read:false,actionId:joint.id,actionScope:"charter"},{id:"demo_national_approval_v54",type:"Etkinlik Onayı",title:national.title,body:"İzmir Charter Türkiye geneli yayın onayı istiyor.",target:"Etkinlik Onayı",date:"Bugün",read:false,actionId:national.id,actionScope:"national"});saveCharterData()}saveList("rdNotifications",notifications);
 
 /* v55 sade etkinlik ve duyuru kartlari, yonetim gecmisi */
 const motofestV55=events.find(e=>e.id==="motofest_2026");if(motofestV55)motofestV55.endIso="2026-09-18T23:59:59";

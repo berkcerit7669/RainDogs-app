@@ -245,10 +245,14 @@
   window.decideBackendApplication = async function (index, action) {
     const app = backendApplications[index];
     if (!app) return;
-    if (action === "reject" && !confirm(`${app.nick} başvurusu reddedilsin mi?`)) return;
+    if (action === "reject") {
+      appConfirm(`${app.nick} başvurusu reddedilsin mi?`, () => decideBackendApplication(index, "reject-confirmed"));
+      return;
+    }
+    const normalizedAction = action === "reject-confirmed" ? "reject" : action;
     const payload = {
       profileId: app.id,
-      action,
+      action: normalizedAction,
       memberLevel: document.getElementById(`backendLevel_${index}`)?.value,
       charterRole: document.getElementById(`backendCharterRole_${index}`)?.value || "",
       nationalRole: canGrantNationalApplicationRole ? (document.getElementById(`backendNationalRole_${index}`)?.value || "") : ""
@@ -256,7 +260,7 @@
     try {
       await applicationRequest("", { method: "POST", body: JSON.stringify(payload) });
       backendApplications.splice(index, 1);
-      safeToast(action === "approve" ? "Üyelik aktif edildi." : "Başvuru reddedildi.");
+      safeToast(normalizedAction === "approve" ? "Üyelik aktif edildi." : "Başvuru reddedildi.");
       render("adminApplications");
     } catch (error) { safeToast(error?.message || "Karar kaydedilemedi."); }
   };
