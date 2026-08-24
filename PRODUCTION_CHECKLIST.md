@@ -15,6 +15,7 @@
 - RLS bütün kullanıcı tablolarında açık kalır; istemci tarafındaki rol kontrolleri tek güvenlik katmanı sayılmaz.
 - Yönetim işlemleri `admin_logs` tablosuna yazılır.
 - Yoklama kilometresi yalnızca `finalize_event_attendance` sunucu fonksiyonu üzerinden eklenir.
+- Bu fonksiyon istemciden doğrudan çağrılamaz; yalnızca `app-api` service-role akışı çalıştırabilir.
 - Girişte e-posta/telefon doğrulaması ve yönetim onayı birlikte kullanılır.
 - Yönetim hesaplarında çok faktörlü doğrulama zorunlu tutulur.
 - Supabase Auth hız sınırlamaları, CAPTCHA ve sızdırılmış parola koruması açılır (Dashboard ortam ayarı).
