@@ -135,6 +135,23 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     const data={charter_id:charterId,member_id:body.memberId,body:String(body.body||"").trim(),created_by:actor.id,updated_at:new Date().toISOString()};if(!data.member_id||!data.body)return out({error:"Üye ve not zorunlu."},400);
     const query=body.id?ctx.supabaseAdmin.from("charter_discipline").update({body:data.body,updated_at:data.updated_at}).eq("id",body.id).eq("charter_id",charterId):ctx.supabaseAdmin.from("charter_discipline").insert(data);const {data:item,error}=await query.select().single();if(error)return out({error:error.message},400);await audit(body.id?"Disiplin kaydı düzenlendi":"Disiplin kaydı eklendi","discipline",item.id);return out({item});
   }
+  if(action==="board.create"){
+    if(!boardMember)return out({error:"Kurul üyeliği gerekli."},403);
+    const title=String(body.title||"").trim(),question=String(body.question||"").trim(),options=Array.isArray(body.options)?body.options.map((x:any)=>String(x||"").trim()).filter(Boolean):["Evet","Hayır","Çekimser"];
+    if(!title||!question)return out({error:"Başlık ve soru zorunlu."},400);if(options.length<2)return out({error:"En az iki seçenek gerekli."},400);
+    const {data:item,error}=await ctx.supabaseAdmin.from("board_polls").insert({title,question,options,closes_at:body.closesAt||null,created_by:actor.id}).select().single();if(error)return out({error:error.message},400);
+    await audit("Kurul oylaması oluşturuldu","board_poll",item.id,{title});return out({item});
+  }
+  if(action==="board.close"){
+    if(!boardMember)return out({error:"Kurul üyeliği gerekli."},403);
+    const {data:item,error}=await ctx.supabaseAdmin.from("board_polls").update({status:body.reopen?"Açık":"Kapalı",updated_at:new Date().toISOString()}).eq("id",body.id).select().single();if(error)return out({error:error.message},400);
+    await audit(body.reopen?"Kurul oylaması yeniden açıldı":"Kurul oylaması kapatıldı","board_poll",body.id);return out({item});
+  }
+  if(action==="board.delete"){
+    if(!boardMember)return out({error:"Kurul üyeliği gerekli."},403);
+    const {error}=await ctx.supabaseAdmin.from("board_polls").delete().eq("id",body.id);if(error)return out({error:error.message},400);
+    await audit("Kurul oylaması silindi","board_poll",body.id);return out({ok:true});
+  }
   if(action==="board.vote"){
     if(!boardMember)return out({error:"Kurul üyeliği gerekli."},403);const {data:poll}=await ctx.supabaseAdmin.from("board_polls").select("options,status,closes_at").eq("id",body.pollId).maybeSingle();if(!poll||poll.status!=="Açık"||(poll.closes_at&&new Date(poll.closes_at)<=new Date()))return out({error:"Oylama kapalı."},409);
     const option=String(body.option||"");if(!(poll.options||[]).includes(option))return out({error:"Geçersiz seçenek."},400);const {error}=await ctx.supabaseAdmin.from("board_poll_votes").upsert({poll_id:body.pollId,member_id:actor.id,option_value:option,voted_at:new Date().toISOString()},{onConflict:"poll_id,member_id"});if(error)return out({error:error.message},400);return out({ok:true});
