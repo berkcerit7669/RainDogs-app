@@ -30,4 +30,4 @@
 
 ## Mevcut durum
 
-Arayüz sunum ve kullanıcı testi için hazırdır. `index.html` sürümü hâlâ localStorage tabanlı demo modudur; gerçek kişisel veriyle internete açılmamalıdır. Üretim bağlantısı için Supabase proje adresi ve public anon key gereklidir.
+Supabase veritabanı, Auth ve Edge Function katmanı üretim projesine bağlanmış ve dağıtılmıştır. Arayüzdeki bazı demo/önbellek akışları `localStorage` kullanmaya devam eder; gerçek kişisel veriyle davetli kabul testleri tamamlanmadan genel kullanıma açılmamalıdır. Hangaround, Prospect, Member, Charter yönetimi, National ve uygulama admini hesaplarıyla uçtan uca ekran testi yayın öncesindeki son zorunlu adımdır.
