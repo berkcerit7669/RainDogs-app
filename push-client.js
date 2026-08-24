@@ -8,7 +8,7 @@
     const raw = atob((value + pad).replace(/-/g, "+").replace(/_/g, "/"));
     return Uint8Array.from(raw, (char) => char.charCodeAt(0));
   }
-  async function registration() { return navigator.serviceWorker.register("./service-worker.js", { scope: "./" }); }
+  async function registration() { return navigator.serviceWorker.register("./service-worker.js?v=81", { scope: "./" }); }
   async function subscription() { return supported() ? (await registration()).pushManager.getSubscription() : null; }
 
   window.enableDeviceNotifications = async function () {

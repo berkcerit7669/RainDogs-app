@@ -1204,7 +1204,7 @@ html,body,.app{min-height:100%;min-height:100dvh}.header>div:first-child{min-wid
   </div>
 </div>
 
-<script src="supabase-config.js"></script>
+<script src="supabase-config.js?v=81"></script>
 <script>
 if(new URLSearchParams(location.search).get("reset")==="1"){
   Object.keys(localStorage).filter(key=>key.startsWith("rd")).forEach(key=>localStorage.removeItem(key));
@@ -4311,9 +4311,9 @@ const styleV80=document.createElement("style");styleV80.textContent=`
 
 syncLoginType();syncRegisterNickMode();syncChapterOptions();boot();updateHeaderNotifDot();
 </script>
-<script src="supabase-auth.js"></script>
-<script src="supabase-data.js"></script>
-<script src="push-client.js"></script>
+<script src="supabase-auth.js?v=81"></script>
+<script src="supabase-data.js?v=81"></script>
+<script src="push-client.js?v=81"></script>
 <div id="detailOverlay" class="detailOverlay" onclick="closeDetail()"><div id="detailPanel" class="detailPanel" onclick="event.stopPropagation()"></div></div>
 <input id="avatarUpload" type="file" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
 
