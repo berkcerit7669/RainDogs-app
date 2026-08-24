@@ -268,7 +268,18 @@
     const hash = new URLSearchParams(location.hash.replace(/^#/, ""));
     if (hash.get("type") !== "recovery" || !hash.get("access_token")) return;
     recoveryAccessToken = hash.get("access_token") || "";
-    setTimeout(() => openDetail(`${pill("Güvenli Bağlantı")}<h3 style="font-size:28px;margin:14px 0">Yeni Şifre Belirle</h3><div class="fieldGroup"><input id="recoveryPassword" class="input" type="password" autocomplete="new-password" placeholder="Yeni şifre (en az 8 karakter)"><input id="recoveryPasswordRepeat" class="input" type="password" autocomplete="new-password" placeholder="Yeni şifreyi tekrar et"><button class="btn primary" onclick="finishPasswordRecovery()">Şifreyi Kaydet</button></div>`), 0);
+    const showRecoveryPanel = () => {
+      if (!document.getElementById("detailPanel") || !document.getElementById("detailOverlay")) {
+        setTimeout(showRecoveryPanel, 25);
+        return;
+      }
+      openDetail(`${pill("Güvenli Bağlantı")}<h3 style="font-size:28px;margin:14px 0">Yeni Şifre Belirle</h3><div class="fieldGroup"><input id="recoveryPassword" class="input" type="password" autocomplete="new-password" placeholder="Yeni şifre (en az 8 karakter)"><input id="recoveryPasswordRepeat" class="input" type="password" autocomplete="new-password" placeholder="Yeni şifreyi tekrar et"><button class="btn primary" onclick="finishPasswordRecovery()">Şifreyi Kaydet</button></div>`);
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", showRecoveryPanel, { once: true });
+    } else {
+      showRecoveryPanel();
+    }
   }
 
   async function applicationRequest(path = "", options = {}) {
