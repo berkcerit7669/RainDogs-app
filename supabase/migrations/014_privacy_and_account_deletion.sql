@@ -20,7 +20,7 @@ create index if not exists account_deletion_requests_status_created
 alter table public.account_deletion_requests enable row level security;
 drop policy if exists account_deletion_requests_self_read on public.account_deletion_requests;
 create policy account_deletion_requests_self_read on public.account_deletion_requests
-  for select to authenticated using (member_id=auth.uid() or public.is_app_admin());
+  for select to authenticated using (member_id=auth.uid() or exists(select 1 from public.profiles where id=auth.uid() and is_app_admin));
 drop policy if exists account_deletion_requests_self_insert on public.account_deletion_requests;
 create policy account_deletion_requests_self_insert on public.account_deletion_requests
   for insert to authenticated with check (member_id=auth.uid() and status='requested');
