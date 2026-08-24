@@ -1,2 +1,4 @@
 .DS_Store
 supabase/.temp/
+TEST_ACCOUNTS.local.md
+scripts/*.local.mjs
