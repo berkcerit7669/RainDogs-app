@@ -118,11 +118,11 @@
     }
   }
 
-  async function loginByNick(nick, password) {
+  async function loginByNick(identifier, password) {
     return request("/functions/v1/login-by-nick", {
       method: "POST",
       headers: { Authorization: `Bearer ${config.publishableKey}` },
-      body: JSON.stringify({ nick, password })
+      body: JSON.stringify({ identifier, password })
     });
   }
 
@@ -172,14 +172,14 @@
 
   window.loginUser = async function () {
     const button = document.querySelector("#loginForm .btn.primary");
-    const nick = document.getElementById("loginNick")?.value.trim();
+    const identifier = document.getElementById("loginNick")?.value.trim();
     const password = document.getElementById("loginNickPassword")?.value || "";
     const remember = Boolean(document.getElementById("rememberMe")?.checked);
-    if (!nick || !password) { safeToast("Nick ve şifre gir."); return; }
+    if (!identifier || !password) { safeToast("Nick, e-posta veya isim soyisim ile şifreni gir."); return; }
 
     if (button) { button.disabled = true; button.textContent = "Giriş yapılıyor…"; }
     try {
-      const result = await loginByNick(nick, password);
+      const result = await loginByNick(identifier, password);
       const user = await appUser(result.profile, result.session);
       saveSession(result.session, remember);
       if (remember) localStorage.setItem("rdRememberMe", "1");
@@ -223,20 +223,20 @@
   };
 
   window.openPasswordRecovery = function () {
-    const nick = document.getElementById("loginNick")?.value.trim() || "";
-    openDetail(`${pill("Hesap Kurtarma")}<h3 style="font-size:28px;margin:14px 0">Şifreni Yenile</h3><p>Nickini gir. Hesabında doğrulanmış bir e-posta varsa güvenli bağlantıyı oraya göndereceğiz.</p><div class="fieldGroup"><input id="recoveryNick" class="input" autocomplete="username" placeholder="Nick" value="${typeof escapeHtml === "function" ? escapeHtml(nick) : ""}"><button id="recoverySendButton" class="btn primary" onclick="requestPasswordRecovery()">Bağlantıyı Gönder</button></div><div class="helpText">Güvenlik nedeniyle hesabın var olup olmadığı ekranda açıklanmaz.</div>`);
+    const identifier = document.getElementById("loginNick")?.value.trim() || "";
+    openDetail(`${pill("Hesap Kurtarma")}<h3 style="font-size:28px;margin:14px 0">Şifreni Yenile</h3><p>Nickin varsa nickini; henüz nickin yoksa kayıtlı e-posta adresini veya isim soyismini gir.</p><div class="fieldGroup"><input id="recoveryIdentifier" class="input" autocomplete="username" placeholder="Nick, e-posta veya isim soyisim" value="${typeof escapeHtml === "function" ? escapeHtml(identifier) : ""}"><button id="recoverySendButton" class="btn primary" onclick="requestPasswordRecovery()">Bağlantıyı Gönder</button></div><div class="helpText">Güvenlik nedeniyle hesabın var olup olmadığı ekranda açıklanmaz. Aynı isimde birden fazla kayıt varsa e-posta adresini kullan.</div>`);
   };
 
   window.requestPasswordRecovery = async function () {
-    const nick = document.getElementById("recoveryNick")?.value.trim() || "";
+    const identifier = document.getElementById("recoveryIdentifier")?.value.trim() || "";
     const button = document.getElementById("recoverySendButton");
-    if (nick.length < 2) return safeToast("Geçerli nickini gir.");
+    if (identifier.length < 2) return safeToast("Nick, e-posta veya isim soyisim gir.");
     if (button) { button.disabled = true; button.textContent = "Gönderiliyor…"; }
     try {
       const result = await request("/functions/v1/request-password-reset", {
         method: "POST",
         headers: { Authorization: `Bearer ${config.publishableKey}` },
-        body: JSON.stringify({ nick })
+        body: JSON.stringify({ identifier })
       });
       closeDetail();
       safeToast(result.message || "Hesap uygunsa bağlantı e-posta adresine gönderildi.");
@@ -266,11 +266,20 @@
 
   function handleRecoveryRedirect() {
     const hash = new URLSearchParams(location.hash.replace(/^#/, ""));
-    if (hash.get("type") !== "recovery" || !hash.get("access_token")) return;
-    recoveryAccessToken = hash.get("access_token") || "";
+    const query = new URLSearchParams(location.search);
+    const recoveryRequested = query.get("password-recovery") === "1";
+    const recoveryType = hash.get("type") || query.get("type");
+    const accessToken = hash.get("access_token") || query.get("access_token") || "";
+    const recoveryError = hash.get("error_description") || query.get("error_description") || hash.get("error_code") || query.get("error_code") || "";
+    if (!recoveryRequested && recoveryType !== "recovery" && !recoveryError) return;
+    recoveryAccessToken = accessToken;
     const showRecoveryPanel = () => {
       if (!document.getElementById("detailPanel") || !document.getElementById("detailOverlay")) {
         setTimeout(showRecoveryPanel, 25);
+        return;
+      }
+      if (!recoveryAccessToken || recoveryError) {
+        openDetail(`${pill("Bağlantı Geçersiz")}<h3 style="font-size:28px;margin:14px 0">Yeni bağlantı gerekli</h3><p>Bu şifre yenileme bağlantısının süresi dolmuş, daha yeni bir istekle geçersiz olmuş veya bağlantı eksik açılmış olabilir.</p><button class="btn primary" style="width:100%;margin-top:14px" onclick="closeDetail();openPasswordRecovery()">Yeni Bağlantı İste</button>`);
         return;
       }
       openDetail(`${pill("Güvenli Bağlantı")}<h3 style="font-size:28px;margin:14px 0">Yeni Şifre Belirle</h3><div class="fieldGroup"><input id="recoveryPassword" class="input" type="password" autocomplete="new-password" placeholder="Yeni şifre (en az 8 karakter)"><input id="recoveryPasswordRepeat" class="input" type="password" autocomplete="new-password" placeholder="Yeni şifreyi tekrar et"><button class="btn primary" onclick="finishPasswordRecovery()">Şifreyi Kaydet</button></div>`);
@@ -394,13 +403,15 @@
   };
 
   const type = document.getElementById("loginType");
-  if (type) {
-    type.value = "nick";
-    type.style.display = "none";
+  if (type) { type.value = "nick"; type.style.display = "none"; }
+  const loginIdentifier = document.getElementById("loginNick");
+  if (loginIdentifier) {
+    loginIdentifier.placeholder = "Nick, e-posta veya isim soyisim";
+    loginIdentifier.autocomplete = "username";
   }
   document.querySelector(".demoAccess")?.remove();
   const help = document.querySelector("#loginForm .helpText");
-  if (help) help.textContent = "Onaylanmış üyeler nick ve kendilerine ait şifre ile güvenli giriş yapar.";
+  if (help) help.textContent = "Nicki olan üyeler nickiyle; nicki henüz olmayan üyeler kayıtlı e-posta veya isim soyisimle giriş yapar.";
   const remember = document.getElementById("rememberMe");
   if (remember) remember.checked = localStorage.getItem("rdRememberMe") === "1";
   handleRecoveryRedirect();
