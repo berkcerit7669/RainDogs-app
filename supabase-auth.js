@@ -213,6 +213,64 @@
     return session;
   }
 
+  window.raindogsBackendRequest = async function (action, payload = {}) {
+    const session = await authenticatedSession();
+    return request(`/functions/v1/app-api?action=${encodeURIComponent(action)}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ action, ...payload })
+    });
+  };
+
+  window.openPasswordRecovery = function () {
+    const nick = document.getElementById("loginNick")?.value.trim() || "";
+    openDetail(`${pill("Hesap Kurtarma")}<h3 style="font-size:28px;margin:14px 0">Şifreni Yenile</h3><p>Nickini gir. Hesabında doğrulanmış bir e-posta varsa güvenli bağlantıyı oraya göndereceğiz.</p><div class="fieldGroup"><input id="recoveryNick" class="input" autocomplete="username" placeholder="Nick" value="${typeof escapeHtml === "function" ? escapeHtml(nick) : ""}"><button id="recoverySendButton" class="btn primary" onclick="requestPasswordRecovery()">Bağlantıyı Gönder</button></div><div class="helpText">Güvenlik nedeniyle hesabın var olup olmadığı ekranda açıklanmaz.</div>`);
+  };
+
+  window.requestPasswordRecovery = async function () {
+    const nick = document.getElementById("recoveryNick")?.value.trim() || "";
+    const button = document.getElementById("recoverySendButton");
+    if (nick.length < 2) return safeToast("Geçerli nickini gir.");
+    if (button) { button.disabled = true; button.textContent = "Gönderiliyor…"; }
+    try {
+      const result = await request("/functions/v1/request-password-reset", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${config.publishableKey}` },
+        body: JSON.stringify({ nick })
+      });
+      closeDetail();
+      safeToast(result.message || "Hesap uygunsa bağlantı e-posta adresine gönderildi.");
+    } catch (error) {
+      safeToast(error?.message || "Şifre yenileme isteği gönderilemedi.");
+    } finally { if (button) { button.disabled = false; button.textContent = "Bağlantıyı Gönder"; } }
+  };
+
+  let recoveryAccessToken = "";
+  window.finishPasswordRecovery = async function () {
+    const password = document.getElementById("recoveryPassword")?.value || "";
+    const repeat = document.getElementById("recoveryPasswordRepeat")?.value || "";
+    if (password.length < 8) return safeToast("Şifre en az 8 karakter olmalı.");
+    if (password !== repeat) return safeToast("Şifreler eşleşmiyor.");
+    try {
+      await request("/auth/v1/user", {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${recoveryAccessToken}` },
+        body: JSON.stringify({ password })
+      });
+      recoveryAccessToken = "";
+      history.replaceState({}, document.title, location.pathname);
+      closeDetail();
+      safeToast("Şifren yenilendi. Yeni şifrenle giriş yapabilirsin.");
+    } catch (error) { safeToast(error?.message || "Şifre yenilenemedi. Bağlantının süresi dolmuş olabilir."); }
+  };
+
+  function handleRecoveryRedirect() {
+    const hash = new URLSearchParams(location.hash.replace(/^#/, ""));
+    if (hash.get("type") !== "recovery" || !hash.get("access_token")) return;
+    recoveryAccessToken = hash.get("access_token") || "";
+    setTimeout(() => openDetail(`${pill("Güvenli Bağlantı")}<h3 style="font-size:28px;margin:14px 0">Yeni Şifre Belirle</h3><div class="fieldGroup"><input id="recoveryPassword" class="input" type="password" autocomplete="new-password" placeholder="Yeni şifre (en az 8 karakter)"><input id="recoveryPasswordRepeat" class="input" type="password" autocomplete="new-password" placeholder="Yeni şifreyi tekrar et"><button class="btn primary" onclick="finishPasswordRecovery()">Şifreyi Kaydet</button></div>`), 0);
+  }
+
   async function applicationRequest(path = "", options = {}) {
     const session = await authenticatedSession();
     return request(`/functions/v1/manage-member-applications${path}`, {
@@ -334,5 +392,6 @@
   if (help) help.textContent = "Onaylanmış üyeler nick ve kendilerine ait şifre ile güvenli giriş yapar.";
   const remember = document.getElementById("rememberMe");
   if (remember) remember.checked = localStorage.getItem("rdRememberMe") === "1";
+  handleRecoveryRedirect();
   restoreSession();
 })();

@@ -1,6 +1,7 @@
 {
   "name": "RainDogs App",
   "short_name": "RainDogs",
+  "id": "./",
   "description": "RainDogs kulüp yönetimi ve üye deneyimi demo uygulaması.",
   "lang": "tr",
   "start_url": "./",

@@ -1089,6 +1089,7 @@ html,body,.app{min-height:100%;min-height:100dvh}.header>div:first-child{min-wid
         </div>
         <label class="checkboxRow"><input id="rememberMe" type="checkbox"><span>Beni Hatırla</span></label>
         <button class="btn primary" style="width:100%" onclick="loginUser()">Gir</button>
+        <button class="btn ghost" style="width:100%" onclick="openPasswordRecovery()">Şifremi Unuttum</button>
       </div>
       <div class="helpText">Onaylı nicki olan üyeler nick ve şifre ile giriş yapar. Nicki olmayan üyeler kayıt olurken belirledikleri isim soyisim ve şifre ile giriş yapar.</div>
     </div>
@@ -4037,7 +4038,7 @@ enforceUniqueNationalRolesV69();
 /* v75 sade üye ekranı ve yalnızca uygulama adminine doğrudan üye ekleme */
 function openAdminMemberCreateV75(){
   if(!isApplicationAdmin(currentUser)){safeToast("Üye ekleme yalnızca uygulama adminine açıktır.");return}
-  openDetail(`${pill("Uygulama Admini")}<h3 style="font-size:28px;margin:14px 0">Yeni Üye Ekle</h3><p>Üye doğrudan aktif hesap olarak oluşturulur ve giriş yapabilir.</p><div class="fieldGroup"><input id="newMemberNameV75" class="input" placeholder="İsim soyisim"><input id="newMemberNickV75" class="input" placeholder="Nick"><input id="newMemberPasswordV75" class="input" type="password" placeholder="Geçici şifre"><input id="newMemberPhoneV75" class="input" inputmode="tel" placeholder="Telefon (isteğe bağlı)"><select id="newMemberChapterV75"><option value="">Charter seç</option>${chapters.map(ch=>`<option value="${escapeHtml(ch)}">${escapeHtml(ch)}</option>`).join("")}</select><label><span>Charter statüsü / görevi</span><select id="newMemberRoleV75">${RD_MEMBER_ROLES.map(r=>`<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join("")}</select></label><label><span>National görevi</span><select id="newMemberNationalV76"><option value="">National görev yok</option>${RD_NATIONAL_ROLES.map(r=>`<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join("")}</select></label><button class="btn primary" onclick="saveAdminMemberV75()">Üyeyi Ekle</button></div>`)
+  openDetail(`${pill("Uygulama Admini")}<h3 style="font-size:28px;margin:14px 0">Yeni Üye Ekle</h3><p>Üye doğrudan aktif hesap olarak oluşturulur ve giriş yapabilir.</p><div class="fieldGroup"><input id="newMemberNameV75" class="input" placeholder="İsim soyisim"><input id="newMemberNickV75" class="input" placeholder="Nick"><input id="newMemberEmailV75" class="input" type="email" autocomplete="email" placeholder="E-posta (hesap kurtarma için)"><input id="newMemberPasswordV75" class="input" type="password" placeholder="Geçici şifre"><input id="newMemberPhoneV75" class="input" inputmode="tel" placeholder="Telefon (isteğe bağlı)"><select id="newMemberChapterV75"><option value="">Charter seç</option>${chapters.map(ch=>`<option value="${escapeHtml(ch)}">${escapeHtml(ch)}</option>`).join("")}</select><label><span>Charter statüsü / görevi</span><select id="newMemberRoleV75">${RD_MEMBER_ROLES.map(r=>`<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join("")}</select></label><label><span>National görevi</span><select id="newMemberNationalV76"><option value="">National görev yok</option>${RD_NATIONAL_ROLES.map(r=>`<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join("")}</select></label><button class="btn primary" onclick="saveAdminMemberV75()">Üyeyi Ekle</button></div>`)
 }
 function saveAdminMemberV75(){
   if(!isApplicationAdmin(currentUser))return;
@@ -4312,6 +4313,7 @@ syncLoginType();syncRegisterNickMode();syncChapterOptions();boot();updateHeaderN
 </script>
 <script src="supabase-auth.js"></script>
 <script src="supabase-data.js"></script>
+<script src="push-client.js"></script>
 <div id="detailOverlay" class="detailOverlay" onclick="closeDetail()"><div id="detailPanel" class="detailPanel" onclick="event.stopPropagation()"></div></div>
 <input id="avatarUpload" type="file" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
 
