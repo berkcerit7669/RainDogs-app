@@ -1211,7 +1211,8 @@ if(new URLSearchParams(location.search).get("reset")==="1"){
   history.replaceState({}, "", location.pathname);
 }
 if((localStorage.getItem("rdTheme") || "dark") === "light") document.body.classList.add("light");
-let currentUser = localStorage.getItem("rdRememberMe")==="1" ? JSON.parse(localStorage.getItem("rdUser") || "null") : null;
+const hasBackendSession = Boolean(localStorage.getItem("rdSupabaseSession") || sessionStorage.getItem("rdSupabaseSession"));
+let currentUser = !hasBackendSession && localStorage.getItem("rdRememberMe")==="1" ? JSON.parse(localStorage.getItem("rdUser") || "null") : null;
 let accounts = JSON.parse(localStorage.getItem("rdAccounts") || "[]");
 let applications = JSON.parse(localStorage.getItem("rdApplications") || "[]");
 let kmEntries = JSON.parse(localStorage.getItem("rdKmEntries") || "null") || [

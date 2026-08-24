@@ -258,9 +258,15 @@
         body: JSON.stringify({ password })
       });
       recoveryAccessToken = "";
+      clearSession();
+      localStorage.removeItem("rdRememberMe");
+      localStorage.removeItem("rdUser");
+      sessionStorage.removeItem("rdUser");
+      currentUser = null;
       history.replaceState({}, document.title, location.pathname);
       closeDetail();
       safeToast("Şifren yenilendi. Yeni şifrenle giriş yapabilirsin.");
+      setTimeout(() => location.replace(`${location.pathname}?password-updated=1`), 450);
     } catch (error) { safeToast(error?.message || "Şifre yenilenemedi. Bağlantının süresi dolmuş olabilir."); }
   };
 
