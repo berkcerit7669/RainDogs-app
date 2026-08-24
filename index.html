@@ -1235,19 +1235,7 @@ let routeFavorites = JSON.parse(localStorage.getItem("rdRouteFavorites") || "[]"
 let memberStatusFilter = "Tümü";
 let chapterLeaderboardScope = "Türkiye";
 
-function resetDemoData(){
-  if(!confirm("Bu cihazdaki tüm RainDogs demo kayıtları temizlensin mi?")) return;
-  Object.keys(localStorage).filter(key=>key.startsWith("rd")).forEach(key=>localStorage.removeItem(key));
-  location.href = location.pathname;
-}
 
-function syncChapterOptions(){
-  const select = document.getElementById("regChapter");
-  if(!select) return;
-  const current = select.value;
-  select.innerHTML = `<option value="">Chapter / şehir seç</option>${chapters.map(c=>`<option>${c}</option>`).join("")}`;
-  if(chapters.includes(current)) select.value = current;
-}
 
 const builtInMembers = [];
 const baseNews = [];
@@ -1339,22 +1327,7 @@ function loginUser(){
   if(document.getElementById("rememberMe")?.checked){localStorage.setItem("rdRememberMe","1");localStorage.setItem("rdUser",JSON.stringify(currentUser))}else{localStorage.removeItem("rdRememberMe");localStorage.removeItem("rdUser")}boot();
 }
 function checkRegisterNick(){const nick=regNick.value.trim().toLowerCase(); if(nick.length<2){regNickResult.innerHTML="";return} regNickResult.innerHTML=allNickKeys().includes(nick)?`<div class="result bad">Bu nick alınmış veya başvuru bekliyor.</div>`:`<div class="result good">Bu nick kullanılabilir. Kayıt yine admin onayına gider.</div>`}
-function registerUser(){
-  const name=regName.value.trim(), password=regPassword.value, chapter=regChapter.value, phone=regPhone.value.trim(), role=regRole.value, noNick=regNickMode.value==="noNick", nick=noNick?"Atanmadı":regNick.value.trim();
-  if(!name||!password||!chapter||!phone){alert("İsim soyisim, şifre, chapter/şehir ve telefon alanlarını doldur.");return}
-  if(password.length<4){alert("Şifre en az 4 karakter olmalı.");return}
-  if(!noNick&&!nick){alert("Mevcut nickini gir ya da Henüz nickim yok seç.");return}
-  if(allNameKeys().includes(name.toLowerCase())){alert("Bu isim soyisim ile başvuru/kayıt var.");return}
-  if(!noNick&&allNickKeys().includes(nick.toLowerCase())){alert("Bu nick alınmış veya başvuru bekliyor.");return}
-  if(!kvkkCheck.checked||!termsCheck.checked||!contactCheck.checked){alert("Kayıt için KVKK, kullanım kuralları ve iletişim onay kutularını işaretlemelisin.");return}
-  const account={name,password,nick,nickType:noNick?"Nick Yok":"Mevcut Nick",chapter,phone,role,status:"Onay Bekliyor",km:0,events:0,joined:new Date().toLocaleDateString("tr-TR")};
-  if(isAdminIdentity(account)){account.status="Aktif";account.isAdmin=true;account.role="Admin";account.nick=account.nick&&account.nick!=="Atanmadı"?account.nick:"Sexist Dog";account.km=9999;account.events=99}
-  accounts.push(account); if(account.status!=="Aktif")applications.push(account);
-  localStorage.setItem("rdAccounts",JSON.stringify(accounts)); localStorage.setItem("rdApplications",JSON.stringify(applications));
-  currentUser=account; localStorage.setItem("rdUser",JSON.stringify(currentUser)); boot();
-}
 function logout(){localStorage.removeItem("rdRememberMe");localStorage.removeItem("rdUser");sessionStorage.removeItem("rdUser");location.reload()}
-function openDrawer(){const g=document.getElementById("adminMenuGroup"); if(g)g.style.display=currentUser&&currentUser.isAdmin?"block":"none"; drawer.classList.add("open")}
 function closeDrawer(){drawer.classList.remove("open")}
 function go(screen){const adminScreens=["nick","members","adminApplications","adminKm","adminCreate","adminPanel","adminLogs","chapterReports","memberNotes","readReport","adminExport"]; if(adminScreens.includes(screen)&&(!currentUser||!currentUser.isAdmin))screen="profile"; if(!isApproved(currentUser)){title.innerText="Onay Bekliyor";subtitle.innerText="Başvuru durumu";content.innerHTML=pendingScreen();return} const locked = getUnreadRequiredNews();
   if(locked.length && !["news","profile","notifications","settings"].includes(screen) && !currentUser.isAdmin){
@@ -1367,9 +1340,7 @@ function go(screen){const adminScreens=["nick","members","adminApplications","ad
 function render(screen){
   if(screen==="home")content.innerHTML=homeScreen(); if(screen==="guide")content.innerHTML=presentationGuideScreen(); if(screen==="news")content.innerHTML=newsScreen(); if(screen==="events")content.innerHTML=eventsScreen(); if(screen==="routes")content.innerHTML=routesScreen(); if(screen==="km")content.innerHTML=kmScreen(); if(screen==="leaderboard")content.innerHTML=leaderboardScreen(); if(screen==="nick")content.innerHTML=nickScreen(); if(screen==="culture")content.innerHTML=cultureScreen(); if(screen==="members")content.innerHTML=membersScreen(); if(screen==="profile")content.innerHTML=profileScreen(); if(screen==="appSettings")content.innerHTML=appSettingsScreen(); if(screen==="badges")content.innerHTML=badgesScreen(); if(screen==="readReport")content.innerHTML=readReportScreen(); if(screen==="search")content.innerHTML=searchScreen(); if(screen==="versions")content.innerHTML=versionsScreen(); if(screen==="adminExport")content.innerHTML=adminExportScreen(); if(screen==="settings")content.innerHTML=settingsScreen(); if(screen==="notifications")content.innerHTML=notificationsScreen(); if(screen==="chapters")content.innerHTML=chaptersScreen(); if(screen==="archive")content.innerHTML=archiveScreen(); if(screen==="media")content.innerHTML=mediaScreen(); if(screen==="security")content.innerHTML=securityScreen(); if(screen==="adminPanel")content.innerHTML=adminPanelScreen(); if(screen==="adminApplications")content.innerHTML=adminApplicationsScreen(); if(screen==="adminKm")content.innerHTML=adminKmScreen(); if(screen==="adminCreate")content.innerHTML=adminCreateScreen(); if(screen==="adminLogs")content.innerHTML=adminLogsScreen(); if(screen==="chapterReports")content.innerHTML=chapterReportsScreen(); if(screen==="memberNotes")content.innerHTML=memberNotesScreen();
 }
-function pendingScreen(){return `<div class="pendingWrap"><div class="pendingCard">${pill("Başvuru Alındı")}<h2>Onay<br>Bekliyor</h2><p>Başvurun ilgili Charter yönetimine iletildi. Onay verilene kadar uygulama içeriği kapalı kalır.</p><div class="result"><b>${currentUser.name}</b><br>${currentUser.nick} · ${currentUser.nickType||"Nick"}<br>${currentUser.chapter} · ${currentUser.role}</div>${isAdminIdentity(currentUser)?`<button class="btn primary" style="width:100%;margin-top:14px" onclick="activateSelfAdmin()">Admin Olarak Aktifleştir</button>`:``}<button class="btn ghost" style="width:100%;margin-top:10px" onclick="toggleTheme()">Gece / Gündüz Modu</button><button class="btn danger" style="width:100%;margin-top:10px" onclick="logout()">Çıkış</button></div></div>`}
 function activateSelfAdmin(){if(!isAdminIdentity(currentUser))return;currentUser.status="Aktif";currentUser.isAdmin=true;currentUser.role="Admin";currentUser.nick=currentUser.nick&&currentUser.nick!=="Atanmadı"?currentUser.nick:"Sexist Dog";currentUser.chapter=currentUser.chapter||"Denizli";currentUser.km=currentUser.km||9999;currentUser.events=currentUser.events||99;accounts=accounts.map(a=>(a.name||"").trim().toLowerCase()===(currentUser.name||"").trim().toLowerCase()?{...a,...currentUser}:a);applications=applications.filter(a=>(a.name||"").trim().toLowerCase()!==(currentUser.name||"").trim().toLowerCase());localStorage.setItem("rdUser",JSON.stringify(currentUser));localStorage.setItem("rdAccounts",JSON.stringify(accounts));localStorage.setItem("rdApplications",JSON.stringify(applications));boot()}
-function roleBadge(role){return `<span class="roleBadge">${role==="Admin"?"⚡ Admin":role==="Kurul Üyesi"?"◆ Kurul":role==="Member"?"● Member":role==="Prospect"?"◐ Prospect":"○ Hangaround"}</span>`}
 function guideStep(no,title,body){return card(`<div class="guideStep"><div class="guideNo">${no}</div><div><h3>${title}</h3><p>${body}</p></div></div>`)}
 function presentationGuideScreen(){
   return `<div class="guideIntro">${pill("Sunum Modu")}<h2>RainDogs Nasıl Kullanılır?</h2><p>Bu rehber, üye ve yönetim akışlarını doğru sırayla göstermen için hazırlandı. Menüden istediğin zaman yeniden açabilirsin.</p></div>`+
@@ -1461,31 +1432,18 @@ function homeScreen(){
   ${section("Yaklaşan Etkinlikler")}<div class="eventScroller">${sortedEvents.map(e=>`<div class="eventSlide">${card(`${pill(e.type)}<h3>${e.title}</h3><p>${e.date} · ${e.time}<br>${e.route}</p>`)}</div>`).join("")}</div>
   ${section("Son Duyuru")}${card(`${pill(lastNews.tag)}<h3>${lastNews.title}</h3><p>${lastNews.body}</p>`)}</div>`;
 }
-function profileScreen(){return section("Profil / Üyelik")+`<div class="profileBox"><div class="avatar">${(currentUser.nick||"RD").slice(0,2).toUpperCase()}</div><div><b>${currentUser.nick}</b><p>${currentUser.name||""}<br>${currentUser.chapter} · ${currentUser.role}</p>${roleBadge(currentUser.role)}</div></div>${card(`${pill(currentUser.nickType||"Onaylı Nick")}<h3>Üyelik Bilgileri</h3><p>İsim soyisim: ${currentUser.name||"-"}<br>Katılım: ${currentUser.joined||"-"}<br>Yetki: ${currentUser.isAdmin?"Sınırsız Admin Yetkisi":"Tam Erişim"}</p><button class="btn danger" style="width:100%;margin-top:12px" onclick="logout()">Çıkış</button>`)}`}
-function newsScreen(){return section("Haberler")+[...customNews,...baseNews].map(n=>card(`<div class="meta">${pill(n.tag)}<span>${n.date}</span></div><h3>${n.title}</h3><p>${n.body}</p>`)).join("")}
-function eventsScreen(){return section("Etkinlikler")+events.map((e,i)=>card(`<div class="meta">${pill(e.type)}<span>${e.attending} kişi</span></div><h3>${e.title}</h3><p>${e.date} · ${e.time}<br>Toplanma: ${e.location}<br>Rota: ${e.route}</p><div class="fieldGroup" style="margin-top:14px"><select onchange="setEventOption(${i},this.value)"><option>Katılım durumunu seç</option><option>Katılıyorum</option><option>Belki</option><option>Katılamıyorum</option><option>Artçı ile geliyorum</option><option>Konumda buluşacağım</option><option>Club house’tan çıkacağım</option></select><button class="btn ${e.status?'primary':'ghost'}" onclick="toggleEvent(${i})">${e.status?'Katılım İşaretlendi':'Katılıyorum'}</button></div>${e.options?.[currentUser.nick]?`<div class="result">Durumun: ${e.options[currentUser.nick]}</div>`:""}`)).join("")}
 function setEventOption(i,val){if(!events[i].options)events[i].options={};events[i].options[currentUser.nick]=val;render("events")}
 function toggleEvent(i){events[i].status=!events[i].status;events[i].attending+=events[i].status?1:-1;render("events")}
 function toggleRouteFavorite(name){routeFavorites=routeFavorites.includes(name)?routeFavorites.filter(n=>n!==name):[...routeFavorites,name];localStorage.setItem("rdRouteFavorites",JSON.stringify(routeFavorites));showToast(routeFavorites.includes(name)?"Rota kaydedildi.":"Rota favorilerden çıkarıldı.");render("routes")}
 function routesScreen(){const sorted=routes.slice().sort((a,b)=>Number(routeFavorites.includes(b.name))-Number(routeFavorites.includes(a.name)));return section("Rotalar")+sorted.map(r=>card(`<div class="meta">${pill(r.difficulty)}<span><b>${r.km} km</b></span></div><h3>${r.name}</h3><p>Süre: ${r.duration}<br>Zemin: ${r.surface}<br>Karakter: ${r.character}</p><div class="result">${r.notes}</div><button class="btn ${routeFavorites.includes(r.name)?'primary':'ghost'}" style="width:100%;margin-top:12px" onclick="toggleRouteFavorite('${r.name.replaceAll("'","\\'")}')">${routeFavorites.includes(r.name)?'Kaydedildi':'Rotayı Kaydet'}</button>`)).join("")}
 function kmScreen(){const my=kmEntries.filter(e=>e.memberNick===currentUser.nick);const total=my.filter(e=>e.status==="Onaylandı").reduce((s,e)=>s+Number(e.km||0),0);return `${section("Kilometre Günlüğü")}${card(`${pill("Bu Ay")}<div style="font-size:52px;font-weight:950;letter-spacing:-.055em;margin-top:14px">${total} km</div><p>Kayıtlar admin onayına gider. Kanıt alanına odometre fotoğrafı, rota ekran görüntüsü veya etkinlik bağlantısı yazılabilir.</p><div class="fieldGroup"><input id="routeInput" class="input" placeholder="Rota / açıklama"><input id="kmInput" class="input" type="number" placeholder="Kilometre"><input id="proofInput" class="input" placeholder="Kanıt / not"><button class="btn primary" onclick="addKm()">Kayıt Ekle</button></div>`)}${section("Kayıtlar")}${my.map(e=>`<div class="card kmLine"><div><b>${e.route}</b><p>${e.date} · ${e.type} · ${e.status}<br>Kanıt: ${e.proof||"-"}</p></div><b>${e.km} km</b></div>`).join("")||card("<h3>Kayıt yok</h3><p>İlk kilometre kaydını ekle.</p>")}`}
 function addKm(){const route=routeInput.value.trim(),km=Number(kmInput.value),proof=proofInput.value.trim();if(!route||!km){alert("Rota ve kilometre gir.");return}kmEntries.unshift({id:Date.now(),date:"Bugün",route,km,type:"Manuel",status:"Onay Bekliyor",memberNick:currentUser.nick,proof});localStorage.setItem("rdKmEntries",JSON.stringify(kmEntries));render("km")}
-function leaderboardScreen(){const list=allMembers().slice(); if(leaderboardMode==="km")list.sort((a,b)=>(b.km||0)-(a.km||0)); if(leaderboardMode==="event")list.sort((a,b)=>(b.events||0)-(a.events||0)); if(leaderboardMode==="rookie")list.sort((a,b)=>((["Hangaround","Prospect"].includes(b.role)?b.km:0))-((["Hangaround","Prospect"].includes(a.role)?a.km:0))); const max=Math.max(1,...list.map(m=>leaderboardMode==="event"?(m.events||0):(m.km||0)));return `<div class="segment"><button class="${leaderboardMode==="km"?"active":""}" onclick="leaderboardMode='km';render('leaderboard')">Road King</button><button class="${leaderboardMode==="event"?"active":""}" onclick="leaderboardMode='event';render('leaderboard')">Event Loyal</button><button class="${leaderboardMode==="rookie"?"active":""}" onclick="leaderboardMode='rookie';render('leaderboard')">Rookie Flame</button></div>${section("Leaderboard")}${list.map((m,i)=>{const val=leaderboardMode==="event"?(m.events||0):(m.km||0);return card(`<div class="rank"><div class="rankNo ${i===0?'first':''}">${i+1}</div><div style="flex:1"><b>${m.nick}${i===0?' 👑':''}</b><p>${m.name||""}<br>${m.chapter} · ${m.role}</p>${roleBadge(m.role)}<div class="progress"><div style="width:${val/max*100}%"></div></div></div><div style="text-align:right"><b>${val}</b><p>${leaderboardMode==="event"?"etkinlik":"km"}</p></div></div>`) }).join("")}`}
 function nickScreen(){return section("Nick Sorgu")+card(`<input id="nickInput" class="input" placeholder="Nick yaz" oninput="checkNick()"><div id="nickResult"></div>`)}
 function checkNick(){const v=nickInput.value.trim().toLowerCase();if(v.length<2){nickResult.innerHTML="";return}nickResult.innerHTML=allNickKeys().includes(v)?`<div class="result bad">Bu nick alınmış veya başvuru bekliyor.</div>`:`<div class="result good">Bu nick kullanılabilir. Talep admin onayına gönderilebilir.</div>`}
 function cultureScreen(){return section("Kültür")+culture.map(x=>card(`<h3>${x.title}</h3><p>${x.body}</p>`)).join("")}
-function membersScreen(){return section("Üyeler")+allMembers().map((m,i)=>card(`<div class="kmLine"><div><b>${m.nick}</b><p>${m.name||""}<br>${m.chapter} · ${m.role}</p>${roleBadge(m.role)}</div><div style="text-align:right;color:var(--muted);font-size:12px">${m.events||0} etkinlik<br>${m.km||0} km</div></div>${currentUser.isAdmin?`<div class="btnRow"><button class="btn ghost" onclick="assignNick(${i})">Ata</button><button class="btn ghost" onclick="editMember(${i})">Üye Düzenle</button></div>`:""}`)).join("")}
 function assignNick(i){const list=allMembers();const n=prompt("Yeni nick:",list[i].nick);if(!n)return;if(allNickKeys().includes(n.toLowerCase())&&n.toLowerCase()!==list[i].nick.toLowerCase()){alert("Bu nick alınmış.");return}list[i].nick=n;alert("Prototipte yerleşik üyeler kalıcı düzenlenmez. Backend aşamasında bu işlem kalıcı olacak.")}
 function editMember(i){alert("Üye düzenleme ekranı prototipte gösterim amaçlı. Backend aşamasında rol, chapter ve erişim güncellenebilir olacak.")}
-function settingsScreen(){return section("Bildirim Ayarları")+card(`<h3>Sadece Önemli Olan</h3><p>Bildirimler gereksiz kalabalık yaratmamalı. Önerilen ayar: sadece etkinlik, saat değişikliği, acil duyuru, başvuru onayı, km onayı ve yönetim mesajı.</p><label class="checkboxRow"><input type="checkbox" checked><span>Yeni etkinlik ve saat değişikliği</span></label><label class="checkboxRow"><input type="checkbox" checked><span>Başvuru / km onay bildirimleri</span></label><label class="checkboxRow"><input type="checkbox"><span>Tüm haberler için bildirim gönder</span></label>`)}
-function adminPanelScreen(){return section("Yönetim Paneli")+`<div class="grid2"><div class="statCard"><small>Başvuru</small><b>${applications.length}</b></div><div class="statCard"><small>Km Onayı</small><b>${kmEntries.filter(k=>k.status==="Onay Bekliyor").length}</b></div></div>`+card(`<h3>Operasyon Merkezi</h3><p>Onayları, km onayları, içerik oluşturma, nick sorgu ve üye bilgi erişimi bu panelden yönetilir.</p><div class="fieldGroup"><button class="btn primary" onclick="go('adminApplications')">Başvurular</button><button class="btn ghost" onclick="go('adminKm')">Onayları</button><button class="btn ghost" onclick="go('adminCreate')">İçerik Oluştur</button></div>`)}
-function adminApplicationsScreen(){if(!currentUser.isAdmin)return card("<h3>Yetkisiz</h3>");return section("Onayları")+(applications.map((a,i)=>card(`<div class="meta">${pill(a.status)}<span>${a.joined}</span></div><h3>${a.nick}</h3><p>${a.name}<br>${a.chapter} · ${a.role}<br>${a.phone}<br>${a.nickType}</p><div class="btnRow"><button class="btn primary" onclick="approveApplication(${i})">Onayla</button><button class="btn danger" onclick="rejectApplication(${i})">Reddet</button></div>`)).join("")||card("<h3>Bekleyen başvuru yok</h3><p>Yeni kayıt başvuruları burada görünür.</p>"))}
-function approveApplication(i){const app=applications[i];app.status="Aktif";const idx=accounts.findIndex(a=>a.name===app.name&&a.password===app.password);if(idx>=0)accounts[idx].status="Aktif";applications.splice(i,1);localStorage.setItem("rdAccounts",JSON.stringify(accounts));localStorage.setItem("rdApplications",JSON.stringify(applications));render("adminApplications")}
-function rejectApplication(i){const app=applications[i];applications.splice(i,1);accounts=accounts.filter(a=>!(a.name===app.name&&a.password===app.password));localStorage.setItem("rdAccounts",JSON.stringify(accounts));localStorage.setItem("rdApplications",JSON.stringify(applications));render("adminApplications")}
 function adminKmScreen(){const pending=kmEntries.filter(k=>k.status==="Onay Bekliyor");return section("Onayları")+(pending.map(k=>card(`<div class="meta">${pill(k.status)}<span>${k.date}</span></div><h3>${k.memberNick}</h3><p>${k.route}<br>${k.km} km · ${k.type}<br>Kanıt: ${k.proof||"-"}</p><button class="btn primary" style="width:100%;margin-top:12px" onclick="approveKm('${k.id}')">Onayla</button>`)).join("")||card("<h3>Bekleyen km kaydı yok</h3><p>Yeni kilometre kayıtları burada görünür.</p>"))}
-function approveKm(id){const k=kmEntries.find(x=>x.id==id);if(k){k.status="Onaylandı";const m=accounts.find(a=>a.nick===k.memberNick);if(m)m.km=(m.km||0)+Number(k.km||0);localStorage.setItem("rdKmEntries",JSON.stringify(kmEntries));localStorage.setItem("rdAccounts",JSON.stringify(accounts));render("adminKm")}}
-function adminCreateScreen(){return section("İçerik Oluştur")+card(`<h3>Haber Oluştur</h3><div class="fieldGroup"><input id="newsTitle" class="input" placeholder="Başlık"><input id="newsTag" class="input" placeholder="Kategori"><textarea id="newsBody" placeholder="Duyuru metni"></textarea><button class="btn primary" onclick="createNews()">Yayınla</button></div>`)+card(`<h3>Oluştur</h3><div class="fieldGroup"><input id="eventTitle" class="input" placeholder="Etkinlik adı"><input id="eventDate" class="input" placeholder="Tarih"><input id="eventTime" class="input" placeholder="Saat"><input id="eventRoute" class="input" placeholder="Rota"><button class="btn primary" onclick="createEvent()">Ekle</button></div>`)+card(`<h3>Chapter Yönetimi</h3><p>Mevcut chapterlar: ${chapters.join(", ")}</p><div class="fieldGroup"><input id="chapterName" class="input" placeholder="Yeni chapter / şehir"><button class="btn ghost" onclick="addChapter()">Ekle</button></div>`)}
-function createNews(){if(!newsTitle.value||!newsBody.value){alert("Başlık ve metin gir.");return}customNews.unshift({title:newsTitle.value,tag:newsTag.value||"Duyuru",date:"Bugün",body:newsBody.value});localStorage.setItem("rdNews",JSON.stringify(customNews));alert("Haber yayına alındı.");go("news")}
 function formatTurkishDate(value){if(!value)return "-";const d=new Date(value+"T00:00:00");return d.toLocaleDateString("tr-TR",{day:"2-digit",month:"long",year:"numeric"})}
 function createEvent(){if(!eventTitle.value||!eventDate.value){showToast("Etkinlik adı ve tarih zorunlu.");return}const locationValue=document.getElementById("eventLocation")?.value||"Belirlenecek";const distanceValue=document.getElementById("eventDistance")?.value||"Belirlenecek";const e={title:eventTitle.value.trim(),date:formatTurkishDate(eventDate.value),iso:eventDate.value,time:eventTime.value||"-",location:locationValue,route:eventRoute.value||"Rota belirlenecek",distance:distanceValue,type:"Etkinlik",attending:0,status:false,order:events.length+1,options:{}};customEvents.push(e);events.push(e);localStorage.setItem("rdEvents",JSON.stringify(customEvents));showToast("Etkinlik oluşturuldu.");go("events")}
 function addChapter(){const c=chapterName.value.trim();if(!c)return;if(chapters.some(x=>x.toLowerCase()===c.toLowerCase())){alert("Bu chapter zaten listede var.");return}chapters.push(c);chapters.sort((a,b)=>a.localeCompare(b,"tr"));localStorage.setItem("rdChapters",JSON.stringify(chapters));syncChapterOptions();alert("Chapter eklendi.")}
@@ -1516,81 +1474,6 @@ function setSelectedChapter(ch){
   selectedChapter = ch;
   chapterScope = "chapter";
   render("chapters");
-}
-function chaptersScreen(){
-  const data = getChapterData();
-  const totalMembers = allMembers().length;
-  const totalKm = allMembers().reduce((s,m)=>s+Number(m.km||0),0);
-  const activeChapters = data.filter(c=>c.members.length || chapters.includes(c.name));
-
-  const switcher = `<div class="scopeSwitch">
-    <button class="${chapterScope==="turkiye"?"active":""}" onclick="setChapterScope('turkiye')">Türkiye Geneli</button>
-    <button class="${chapterScope==="chapter"?"active":""}" onclick="setChapterScope('chapter')">Chapter Bazlı</button>
-  </div>`;
-
-  if(chapterScope === "turkiye"){
-    return switcher + section("Türkiye Özeti") + `
-      <div class="chapterHero">
-        ${pill("National View")}
-        <h3>RainDogs Türkiye</h3>
-        <p>Türkiye genelindeki chapter yapısı, toplam kilometre, aktif üyeler ve yaklaşan etkinlikler tek merkezde.</p>
-        <div class="chapterStats">
-          <div class="chapterStat"><small>Chapter</small><b>${chapters.length}</b></div>
-          <div class="chapterStat"><small>Üye</small><b>${totalMembers}</b></div>
-          <div class="chapterStat"><small>Km</small><b>${totalKm}</b></div>
-        </div>
-      </div>
-      ${section("Chapterlar")}
-      <div class="compactList">
-        ${activeChapters.map(c=>`
-          <div class="compactItem" onclick="setSelectedChapter('${c.name}')">
-            <div class="meta">${pill(c.name)}<span>${c.members.length} üye</span></div>
-            <h3 style="margin:10px 0 0">${c.name}</h3>
-            <p>Toplam km: ${c.totalKm}<br>Adminler: ${c.admins.map(a=>a.nick).join(", ") || "Atanmadı"}</p>
-          </div>
-        `).join("")}
-      </div>
-      ${section("Türkiye Yaklaşan Etkinlikleri")}
-      <div class="eventScroller">${events.slice().sort((a,b)=>(a.order||0)-(b.order||0)).map(e=>`<div class="eventSlide">${card(`${pill(e.type)}<h3>${e.title}</h3><p>${e.date} · ${e.time}<br>${e.route}</p>`)}</div>`).join("")}</div>
-    `;
-  }
-
-  const current = data.find(c=>c.name===selectedChapter) || data[0];
-  return switcher + section("Chapter Seç") + `
-    <select onchange="setSelectedChapter(this.value)">
-      ${chapters.map(ch=>`<option ${ch===current.name?"selected":""}>${ch}</option>`).join("")}
-    </select>
-    ${section("Chapter Özeti")}
-    <div class="chapterHero">
-      ${pill("Chapter View")}
-      <h3>${current.name}</h3>
-      <p>${current.name} chapter görünümü. Üyeler, toplam kilometre, yaklaşan etkinlikler ve son haberler burada toplanır.</p>
-      <div class="chapterStats">
-        <div class="chapterStat"><small>Üye</small><b>${current.members.length}</b></div>
-        <div class="chapterStat"><small>Km</small><b>${current.totalKm}</b></div>
-        <div class="chapterStat"><small>Etkinlik</small><b>${current.events.length}</b></div>
-      </div>
-    </div>
-    ${section("Chapter Adminleri")}
-    ${current.admins.map(a=>card(`<div class="kmLine"><div><b>${a.nick}</b><p>${a.name || ""}<br>${a.role}</p></div>${roleBadge(a.role)}</div>`)).join("") || card("<h3>Admin atanmadı</h3><p>Bu chapter için yönetici kaydı görünmüyor.</p>")}
-    ${section("Üyeler")}
-    ${current.members.map(m=>card(`<div class="kmLine"><div><b>${m.nick}</b><p>${m.name || ""}<br>${m.role}</p>${roleBadge(m.role)}</div><div style="text-align:right;color:var(--muted);font-size:12px">${m.events||0} etkinlik<br>${m.km||0} km</div></div>`)).join("") || card("<h3>Üye kaydı yok</h3><p>Bu chapter için aktif üye görünmüyor.</p>")}
-    ${section("Yaklaşan Etkinlikler")}
-    <div class="eventScroller">${current.events.map(e=>`<div class="eventSlide">${card(`${pill(e.type)}<h3>${e.title}</h3><p>${e.date} · ${e.time}<br>${e.route}</p>`)}</div>`).join("")}</div>
-    ${section("Son Haberler")}
-    ${current.news.map(n=>card(`<div class="meta">${pill(n.tag)}<span>${n.date}</span></div><h3>${n.title}</h3><p>${n.body}</p>`)).join("")}
-  `;
-}
-function archiveScreen(){
-  const docs = [
-    {title:"Kulüp Kuralları", tag:"Kural", body:"Genel disiplin, temsil ve davranış esasları."},
-    {title:"Toplantı Kararları", tag:"Karar", body:"Alınan kararlar, tarih ve uygulama notlarıyla arşivlenir."},
-    {title:"Prospect Süreci", tag:"Süreç", body:"Prospect döneminde beklentiler, görevler ve değerlendirme esasları."},
-    {title:"Sosyal Medya Yayın Disiplini", tag:"Dijital", body:"Resmi paylaşım onay zinciri ve gizlilik kuralları."},
-    {title:"Sponsorluk Dosyaları", tag:"Dosya", body:"Sponsor ilişkileri ve kullanılacak kurumsal materyaller."},
-    {title:"Festival Planları", tag:"Plan", body:"Motofest ve büyük organizasyon planları."}
-  ];
-  return section("Arşiv") + docs.map(d=>card(`${pill(d.tag)}<h3>${d.title}</h3><p>${d.body}</p>`)).join("");
 }
 function mediaScreen(){
   const galleries = [
@@ -1626,16 +1509,6 @@ function markNewsRead(id){
   saveList("rdReadNewsIds", readNewsIds);
   render("news");
 }
-function memberBadges(m){
-  const badges = [];
-  if((m.km||0) >= 1000) badges.push({title:"Road King", desc:"1000 km üzeri aktif sürüş"});
-  if((m.events||0) >= 10) badges.push({title:"Event Loyal", desc:"Etkinlik katılımı yüksek"});
-  if(["Hangaround","Prospect"].includes(m.role)) badges.push({title:"New Blood", desc:"Yeni süreçte aktif takip"});
-  if(m.role === "Admin" || m.role === "Kurul Üyesi") badges.push({title:"Old Guard", desc:"Yapı ve karar sorumluluğu"});
-  if(readNewsIds.length >= 3) badges.push({title:"Discipline", desc:"Duyuruları takip ediyor"});
-  if(!badges.length) badges.push({title:"On Road", desc:"Aktiflik oluşuyor"});
-  return badges;
-}
 function newsScreen(){
   return section("Haberler") + allNews().map(n=>{
     const unread = !isNewsRead(n.id);
@@ -1651,63 +1524,19 @@ function newsScreen(){
     `);
   }).join("");
 }
-function notificationsScreen(){
-  return section("Bildirim Merkezi") + (notifications.map((n,i)=>card(`
-    <div class="meta">${pill(n.type)}<span>${n.date}</span></div>
-    <h3>${n.title}</h3>
-    <p>${n.body}<br>Hedef: ${n.target}</p>
-    <button class="btn ghost" style="width:100%;margin-top:12px" onclick="notifications[${i}].read=true;saveList('rdNotifications',notifications);render('notifications')">${n.read ? 'Okundu' : 'Okundu'}</button>
-  `)).join("") || card("<h3>Bildirim yok</h3><p>Başvuru, km onayı, etkinlik ve yönetim bildirimleri burada görünür.</p>"));
-}
-function profileScreen(){
-  const badges = memberBadges(currentUser);
-  return section("Profil / Üyelik") + `
-    <div class="profileBox">
-      <div class="avatar">${(currentUser.nick||"RD").slice(0,2).toUpperCase()}</div>
-      <div><b>${currentUser.nick}</b><p>${currentUser.name||""}<br>${currentUser.chapter} · ${currentUser.role}</p>${roleBadge(currentUser.role)}</div>
-    </div>
-    ${card(`${pill(currentUser.nickType||"Onaylı Nick")}<h3>Üyelik Bilgileri</h3><p>İsim soyisim: ${currentUser.name||"-"}<br>Katılım: ${currentUser.joined||"-"}<br>Yetki: ${currentUser.isAdmin?"Sınırsız Admin Yetkisi":"Tam Erişim"}</p><button class="btn danger" style="width:100%;margin-top:12px" onclick="logout()">Çıkış</button>`)}
-    ${section("Rozetler")}
-    <div class="badgeGrid">${badges.map(b=>`<div class="achievement"><b>${b.title}</b><span>${b.desc}</span></div>`).join("")}</div>
-  `;
-}
-function approveApplication(i){
-  const app=applications[i];app.status="Aktif";const idx=accounts.findIndex(a=>a.name===app.name&&a.password===app.password);if(idx>=0)accounts[idx].status="Aktif";applications.splice(i,1);
-  localStorage.setItem("rdAccounts",JSON.stringify(accounts));localStorage.setItem("rdApplications",JSON.stringify(applications));
-  logAdmin("Onaylandı", app.nick + " / " + app.name);
-  pushNotification("Başvuru", "Başvurun onaylandı", "RainDogs App erişimin aktif edildi.", app.nick);
-  render("adminApplications");
-}
-function rejectApplication(i){
-  const app=applications[i];applications.splice(i,1);accounts=accounts.filter(a=>!(a.name===app.name&&a.password===app.password));
-  localStorage.setItem("rdAccounts",JSON.stringify(accounts));localStorage.setItem("rdApplications",JSON.stringify(applications));
-  logAdmin("Başvuru reddedildi", app.nick + " / " + app.name);
-  render("adminApplications");
-}
 function approveKm(id){
   const k=kmEntries.find(x=>x.id==id);if(k){k.status="Onaylandı";const m=accounts.find(a=>a.nick===k.memberNick);if(m)m.km=(m.km||0)+Number(k.km||0);localStorage.setItem("rdKmEntries",JSON.stringify(kmEntries));localStorage.setItem("rdAccounts",JSON.stringify(accounts));logAdmin("Onaylandı", k.memberNick + " - " + k.km + " km");pushNotification("Km Onayı", "Km kaydın onaylandı", k.route + " / " + k.km + " km", k.memberNick);render("adminKm")}
 }
 function createNews(){if(!newsTitle.value||!newsBody.value){alert("Başlık ve metin gir.");return}const item={id:"custom_"+Date.now(),title:newsTitle.value,tag:newsTag.value||"Duyuru",importance:newsImportance.value,required:newsRequired.checked,date:"Bugün",body:newsBody.value};customNews.unshift(item);localStorage.setItem("rdNews",JSON.stringify(customNews));logAdmin("Haber yayınlandı", item.title);pushNotification("Duyuru", item.title, item.body, "Genel");alert("Haber yayına alındı.");go("news")}
-function adminCreateScreen(){return section("İçerik Oluştur")+card(`<h3>Haber Oluştur</h3><div class="fieldGroup"><input id="newsTitle" class="input" placeholder="Başlık"><input id="newsTag" class="input" placeholder="Kategori"><select id="newsImportance"><option>Normal</option><option>Önemli</option><option>Zorunlu Okuma</option><option>Yönetim Kararı</option></select><textarea id="newsBody" placeholder="Duyuru metni"></textarea><label class="checkboxRow"><input id="newsRequired" type="checkbox"><span>Bu duyuru için “Okudum” onayı zorunlu olsun.</span></label><button class="btn primary" onclick="createNews()">Yayınla</button></div>`)+card(`<h3>Oluştur</h3><div class="fieldGroup"><input id="eventTitle" class="input" placeholder="Etkinlik adı"><input id="eventDate" class="input" placeholder="Tarih"><input id="eventTime" class="input" placeholder="Saat"><input id="eventRoute" class="input" placeholder="Rota"><button class="btn primary" onclick="createEvent()">Ekle</button></div>`)+card(`<h3>Chapter Yönetimi</h3><p>Mevcut chapterlar: ${chapters.join(", ")}</p><div class="fieldGroup"><input id="chapterName" class="input" placeholder="Yeni chapter / şehir"><button class="btn ghost" onclick="addChapter()">Ekle</button></div>`)}
 function adminLogsScreen(){
   return section("Admin Logları") + (adminLogs.map(l=>card(`<div class="logItem"><div class="meta">${pill(l.action)}<span>${l.date}</span></div><h3>${l.target}</h3><p>İşlem yapan: ${l.admin}</p></div>`)).join("") || card("<h3>Log yok</h3><p>Onay, red, km onayı, haber ve etkinlik işlemleri burada kayıt altına alınır.</p>"));
 }
-function chapterReportsScreen(){
-  return section("Chapter Raporları") + card(`<h3>Rapor Gir</h3><div class="fieldGroup"><select id="reportChapter">${chapters.map(c=>`<option>${c}</option>`).join("")}</select><input id="reportEvents" class="input" type="number" placeholder="Bu ay etkinlik sayısı"><input id="reportKm" class="input" type="number" placeholder="Bu ay toplam km"><textarea id="reportNotes" placeholder="Notlar / ihtiyaçlar"></textarea><button class="btn primary" onclick="addChapterReport()">Kaydet</button></div>`) + section("Kayıtlı Raporlar") + (chapterReports.map(r=>card(`<div class="meta">${pill(r.chapter)}<span>${r.date}</span></div><h3>${r.events} etkinlik · ${r.km} km</h3><p>${r.notes}</p>`)).join("") || card("<h3>Rapor yok</h3><p>Chapter Raporları burada listelenir.</p>"));
-}
 function addChapterReport(){const r={chapter:reportChapter.value,events:reportEvents.value||0,km:reportKm.value||0,notes:reportNotes.value||"-",date:"Bugün"};chapterReports.unshift(r);saveList("rdChapterReports",chapterReports);logAdmin("Chapter raporu eklendi", r.chapter);render("chapterReports")}
-function memberNotesScreen(){
-  const members=allMembers();
-  return section("Üye Notları") + card(`<h3>Yönetim Notu Ekle</h3><div class="fieldGroup"><select id="noteMember">${members.map(m=>`<option>${m.nick}</option>`).join("")}</select><select id="noteType"><option>Olumlu Katkı</option><option>Uyarı</option><option>Katılım Eksikliği</option><option>Görev Takibi</option><option>Disiplin Notu</option></select><textarea id="noteBody" placeholder="Yalnızca yönetim tarafından görülecek not"></textarea><button class="btn primary" onclick="addMemberNote()">Kaydet</button></div>`) + section("Kayıtlı Notlar") + (memberNotes.map(n=>card(`<div class="meta">${pill(n.type)}<span>${n.date}</span></div><h3>${n.member}</h3><p>${n.body}<br>Giren: ${n.admin}</p>`)).join("") || card("<h3>Not yok</h3><p>Üye Notları sadece yönetim panelinde görünür.</p>"));
-}
 function addMemberNote(){const n={member:noteMember.value,type:noteType.value,body:noteBody.value||"-",admin:currentUser.nick,date:"Bugün"};memberNotes.unshift(n);saveList("rdMemberNotes",memberNotes);logAdmin("Üye notu eklendi", n.member + " / " + n.type);render("memberNotes")}
 
 
 function getUnreadRequiredNews(){
   return allNews().filter(n => n.required && !isNewsRead(n.id));
-}
-function requiredLockScreen(n){
-  return `<div class="lockScreen"><div class="lockCard">${pill(n.importance || "Zorunlu Okuma")}<h2>Okunması Gereken<br>Duyuru Var</h2><p>${n.title}</p><div class="result">${n.body}</div><button class="btn primary" style="width:100%;margin-top:14px" onclick="go('news')">Oku</button></div></div>`;
 }
 function showOnboarding(){
   window.scrollTo(0,0);
@@ -1728,10 +1557,6 @@ function finishOnboarding(){
   bottomNav.style.display = "grid";
   go("home");
 }
-function badgesScreen(){
-  const badges = memberBadges(currentUser);
-  return section("Rozetler") + `<div class="badgeGrid">${badges.map(b=>`<div class="achievement"><b>${b.title}</b><span>${b.desc}</span></div>`).join("")}</div>` + section("Tüm Rozetler") + card(`<h3>Rozet Sistemi</h3><p>Road King, Event Loyal, Iron Rider, New Blood, Chapter Power, Old Guard ve Discipline rozetleri aktiflik, km, katılım ve okuma disiplinine göre oluşur.</p>`);
-}
 function memberStatusLabel(m){
   if(m.status === "Aktif") return "Aktif";
   if(m.status === "Onay Bekliyor") return "Onay Bekliyor";
@@ -1743,26 +1568,6 @@ function activityLevel(m){
   if(score > 60) return "Aktif";
   if(score > 25) return "Normal";
   return "Düşük";
-}
-function setMemberStatusFilter(f){
-  memberStatusFilter = f;
-  render("members");
-}
-function membersScreen(){
-  const listAll = [...allMembers(), ...accounts.filter(a=>a.status!=="Aktif")];
-  const filters = ["Tümü","Aktif","Pasif","Askıda","Ayrıldı","Onay Bekliyor"];
-  const list = memberStatusFilter==="Tümü" ? listAll : listAll.filter(m=>memberStatusLabel(m)===memberStatusFilter);
-  return `<div class="filterBar">${filters.map(f=>`<button class="${memberStatusFilter===f?'active':''}" onclick="setMemberStatusFilter('${f}')">${f}</button>`).join("")}</div>` + section("Üyeler") + (list.map((m,i)=>card(`
-    <div class="memberCardTop">
-      <div>
-        <div class="noticeRow"><b style="font-size:22px">${m.nick}</b><span class="statusPill">${memberStatusLabel(m)}</span></div>
-        <p>${m.name||""}<br>${m.chapter} · ${m.role}<br>Aktiflik: ${activityLevel(m)} · Son giriş: ${m.lastSeen || "-"}</p>
-        ${roleBadge(m.role)}
-      </div>
-      <div style="text-align:right;color:var(--muted);font-size:12px">${m.events||0} etkinlik<br>${m.km||0} km</div>
-    </div>
-    ${currentUser.isAdmin?`<div class="actionGrid"><button class="btn ghost" onclick="assignNick(${i})">Ata</button><button class="btn ghost" onclick="changeMemberStatus(${i})">Değiştir</button><button class="btn ghost" onclick="changeMemberRole(${i})">Değiştir</button><button class="btn ghost" onclick="quickMemberNote('${m.nick}')">Not Ekle</button></div>`:""}
-  `)).join("") || card("<h3>Kayıt yok</h3><p>Bu filtrede üye görünmüyor.</p>"));
 }
 function changeMemberStatus(i){
   const statuses = ["Aktif","Pasif","Askıda","Ayrıldı","Onay Bekliyor"];
@@ -1795,21 +1600,7 @@ function readReportScreen(){
     return card(`<div class="meta">${pill(n.importance || n.tag)}<span>${rate}%</span></div><h3>${n.title}</h3><p>Okuyan: ${readCount}<br>Okumayan: ${Math.max(0,members.length-readCount)}<br>Chapter bazlı oran backend aşamasında gerçek kullanıcı verisiyle hesaplanacak.</p><div class="progress"><div style="width:${rate}%"></div></div>`);
   }).join("");
 }
-function archiveScreen(){
-  const docs = [
-    {title:"Kulüp Kuralları", tag:"Kural", body:"Genel disiplin, temsil ve davranış esasları."},
-    {title:"Toplantı Kararları", tag:"Karar", body:"Alınan kararlar, tarih ve uygulama notlarıyla arşivlenir."},
-    {title:"Prospect Süreci", tag:"Süreç", body:"Prospect döneminde beklentiler, görevler ve değerlendirme esasları."},
-    {title:"Sosyal Medya Yayın Disiplini", tag:"Dijital", body:"Resmi paylaşım onay zinciri ve gizlilik kuralları."},
-    {title:"Sponsorluk Dosyaları", tag:"Dosya", body:"Sponsor ilişkileri ve kullanılacak kurumsal materyaller."},
-    {title:"Festival Planları", tag:"Plan", body:"Motofest ve büyük organizasyon planları."},
-    {title:"Chapter Raporları", tag:"Rapor", body:"Haftalık ve aylık chapter raporları burada arşivlenir."}
-  ];
-  const cats = ["Tümü","Kural","Karar","Süreç","Dijital","Dosya","Plan","Rapor"];
-  return `<div class="filterBar">${cats.map(c=>`<button onclick="filterArchive('${c}')">${c}</button>`).join("")}</div>` + section("Arşiv") + docs.map(d=>card(`${pill(d.tag)}<h3>${d.title}</h3><p>${d.body}</p>`)).join("");
-}
 function filterArchive(c){ alert("Filtre: " + c + ". Backend aşamasında liste dinamik filtrelenecek."); }
-function adminPanelScreen(){return section("Yönetim Paneli")+`<div class="grid2"><div class="statCard"><small>Başvuru</small><b>${applications.length}</b></div><div class="statCard"><small>Km Onayı</small><b>${kmEntries.filter(k=>k.status==="Onay Bekliyor").length}</b></div></div>`+card(`<h3>Operasyon Merkezi</h3><p>Başvurular, km onayları, raporlar, loglar ve üye yönetimi buradan takip edilir.</p><div class="fieldGroup"><button class="btn primary" onclick="go('adminApplications')">Başvurular</button><button class="btn ghost" onclick="go('adminKm')">Onayları</button><button class="btn ghost" onclick="go('members')">Üyeler</button><button class="btn ghost" onclick="go('readReport')">Okuma Raporu</button><button class="btn ghost" onclick="go('chapterReports')">Chapter Raporları</button></div>`)}
 
 
 window.addEventListener("load",()=>setTimeout(()=>splash.classList.add("hide"),850));
@@ -1823,9 +1614,6 @@ function closeDetail(){ detailOverlay.classList.remove("open"); }
 function openDetail(html){
   detailPanel.innerHTML = html + `<button class="btn ghost" style="width:100%;margin-top:14px" onclick="closeDetail()">Kapat</button>`;
   detailOverlay.classList.add("open");
-}
-function emptyState(title, body){
-  return `<div class="emptyState"><h3>${title}</h3><p>${body}</p></div>`;
 }
 function openMemberDetail(nick){
   const m = allMembers().find(x=>x.nick===nick) || {};
@@ -1889,17 +1677,6 @@ function versionsScreen(){
   ];
   return section("Sürüm Notları") + versions.map(v=>card(`<div class="versionLine"><div class="versionDot"></div><div><h3>${v[0]}</h3><p>${v[1]}</p></div></div>`)).join("");
 }
-function adminExportScreen(){
-  const data = {
-    members: allMembers().map(m=>({nick:m.nick,name:m.name,chapter:m.chapter,role:m.role,km:m.km,events:m.events,status:m.status})),
-    kmEntries,
-    events,
-    chapterReports,
-    applications,
-    adminLogs
-  };
-  return section("Dışa Aktar") + card(`<h3>Yönetim Çıktıları</h3><p>Üye listesi, km kayıtları, etkinlik katılımı, chapter raporları ve admin logları burada dışa aktarılır.</p><div class="fieldGroup"><button class="btn primary" onclick="copyExport()">Veriyi Kopyala</button><button class="btn ghost" onclick="downloadExport()">JSON İndir</button></div>`) + `<div id="exportData" class="exportBox">${JSON.stringify(data,null,2)}</div>`;
-}
 function copyExport(){
   navigator.clipboard?.writeText(exportData.textContent);
   showToast("Veri kopyalandı.");
@@ -1911,23 +1688,6 @@ function downloadExport(){
   a.href = url; a.download = "raindogs-export.json"; a.click();
   URL.revokeObjectURL(url);
   showToast("JSON dışa aktarıldı.");
-}
-function adminPanelScreen(){return section("Yönetim Paneli")+`<div class="grid2"><div class="statCard"><small>Başvuru</small><b>${applications.length}</b></div><div class="statCard"><small>Km Onayı</small><b>${kmEntries.filter(k=>k.status==="Onay Bekliyor").length}</b></div></div>`+section("Hızlı Aksiyonlar")+`<div class="quickGrid"><button class="quickBtn" onclick="go('adminApplications')"><span>✓</span>Onayla</button><button class="quickBtn" onclick="go('adminKm')"><span>KM</span>Onayla</button><button class="quickBtn" onclick="go('adminCreate')"><span>DU</span>Yayınla</button><button class="quickBtn" onclick="go('adminCreate')"><span>ET</span>Oluştur</button></div>`+card(`<h3>Operasyon Merkezi</h3><p>Başvurular, km onayları, raporlar, loglar, üye yönetimi ve dışa aktarım buradan takip edilir.</p><div class="fieldGroup"><button class="btn ghost" onclick="go('readReport')">Okuma Raporu</button><button class="btn ghost" onclick="go('adminExport')">Dışa Aktar</button></div>`)}
-function membersScreen(){
-  const listAll = [...allMembers(), ...accounts.filter(a=>a.status!=="Aktif")];
-  const filters = ["Tümü","Aktif","Pasif","Askıda","Ayrıldı","Onay Bekliyor"];
-  const list = memberStatusFilter==="Tümü" ? listAll : listAll.filter(m=>memberStatusLabel(m)===memberStatusFilter);
-  return `<div class="filterBar">${filters.map(f=>`<button class="${memberStatusFilter===f?'active':''}" onclick="setMemberStatusFilter('${f}')">${f}</button>`).join("")}</div>` + section("Üyeler") + (list.map((m,i)=>card(`
-    <div class="memberCardTop" onclick="openMemberDetail('${m.nick}')">
-      <div>
-        <div class="noticeRow"><b style="font-size:22px">${m.nick}</b><span class="statusPill">${memberStatusLabel(m)}</span></div>
-        <p>${m.name||""}<br>${m.chapter} · ${m.role}<br>Aktiflik: ${activityLevel(m)} · Son giriş: ${m.lastSeen || "-"}</p>
-        ${roleBadge(m.role)}
-      </div>
-      <div style="text-align:right;color:var(--muted);font-size:12px">${m.events||0} etkinlik<br>${m.km||0} km</div>
-    </div>
-    ${currentUser.isAdmin?`<div class="actionGrid"><button class="btn ghost" onclick="assignNick(${i})">Ata</button><button class="btn ghost" onclick="changeMemberStatus(${i})">Değiştir</button><button class="btn ghost" onclick="changeMemberRole(${i})">Değiştir</button><button class="btn ghost" onclick="quickMemberNote('${m.nick}')">Not Ekle</button></div>`:""}
-  `)).join("") || emptyState("Kayıt yok","Bu filtrede üye görünmüyor."));
 }
 function eventsScreen(){return section("Etkinlikler")+events.map((e,i)=>card(`<div class="meta">${pill(e.type)}<span>${e.attending} kişi</span></div><h3 onclick="openEventDetail(${i})">${e.title}</h3><p>${e.date} · ${e.time}<br>Toplanma: ${e.location}<br>Rota: ${e.route}</p><div class="eventFacts"><span class="eventFact">${e.distance||"Mesafe belirlenecek"}</span><span class="eventFact">${e.type}</span><span class="eventFact">${e.attending} katılımcı</span></div><div class="fieldGroup" style="margin-top:14px"><select onchange="setEventOption(${i},this.value)"><option>Katılım durumunu seç</option><option>Katılıyorum</option><option>Belki</option><option>Katılamıyorum</option><option>Artçı ile geliyorum</option><option>Konumda buluşacağım</option><option>Club house’tan çıkacağım</option></select><button class="btn ${e.status?'primary':'ghost'}" onclick="toggleEvent(${i})">${e.status?'Katılım İşaretlendi':'Katılıyorum'}</button><div class="btnRow"><button class="btn ghost" onclick="openEventDetail(${i})">Detayları Aç</button><button class="btn ghost" onclick="addEventToCalendar(${i})">Takvime Ekle</button></div></div>${e.options?.[currentUser.nick]?`<div class="result">Durumun: ${e.options[currentUser.nick]}</div>`:""}`)).join("")}
 function addEventToCalendar(index){const e=events[index];if(!e.iso){showToast("Etkinlik tarihi takvime uygun değil.");return}const start=e.iso.replaceAll("-","")+"T"+(e.time||"09:00").replace(":","")+"00";const ics=`BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nDTSTART:${start}\nSUMMARY:${e.title}\nLOCATION:${e.location}\nDESCRIPTION:${e.route}\nEND:VEVENT\nEND:VCALENDAR`;const blob=new Blob([ics],{type:"text/calendar"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="raindogs-etkinlik.ics";a.click();URL.revokeObjectURL(url);showToast("Takvim dosyası hazırlandı.")}
@@ -1956,35 +1716,6 @@ function openNotificationsSheet(){
     ${body}
     <button class="btn primary" style="width:100%;margin-top:14px" onclick="closeDetail();go('notifications')">Aç</button>
   `);
-}
-function profileScreen(){
-  const badges = memberBadges(currentUser);
-  const myEntries = kmEntries.filter(e => e.memberNick === currentUser.nick);
-  const approvedTotal = myEntries.filter(e=>e.status==="Onaylandı").reduce((s,e)=>s+Number(e.km||0),0);
-  const profileFields=[currentUser.name,currentUser.nick,currentUser.chapter,currentUser.role,currentUser.age,currentUser.motorcycle,currentUser.license,currentUser.blood,currentAvatar()];
-  const profileCompletion=Math.round(profileFields.filter(v=>v&&v!=="-").length/profileFields.length*100);
-  return section("Profil / Üyelik") + `
-    <div class="profileBox">
-      <div class="avatar">${(currentUser.nick||"RD").slice(0,2).toUpperCase()}</div>
-      <div><b>${currentUser.nick}</b><p>${currentUser.name||""}<br>${currentUser.chapter} · ${currentUser.role}</p>${roleBadge(currentUser.role)}</div>
-    </div>
-    ${card(`${pill(currentUser.nickType||"Onaylı Nick")}<h3>Üyelik Bilgileri</h3><p>İsim soyisim: ${currentUser.name||"-"}<br>Katılım: ${currentUser.joined||"-"}<br>Yetki: ${currentUser.isAdmin?"Sınırsız Admin Yetkisi":"Tam Erişim"}</p><button class="btn danger" style="width:100%;margin-top:12px" onclick="logout()">Çıkış</button>`)}
-    ${section("Km Günlüğü")}
-    ${card(`${pill("Bu Ay")}<div style="font-size:46px;font-weight:950;letter-spacing:-.055em;margin-top:12px">${approvedTotal} km</div><p>Kilometre kayıtları profilin altında tutulur. Yeni kayıtlar admin onayına gider.</p><div class="fieldGroup"><input id="profileRouteInput" class="input" placeholder="Rota / açıklama"><input id="profileKmInput" class="input" type="number" placeholder="Kilometre"><input id="profileProofInput" class="input" placeholder="Kanıt / not"><button class="btn primary" onclick="addProfileKm()">Kaydet</button></div>`)}
-    ${myEntries.map(e=>`<div class="card kmLine"><div><b>${e.route}</b><p>${e.date} · ${e.type} · ${e.status}<br>Kanıt: ${e.proof||"-"}</p></div><b>${e.km} km</b></div>`).join("") || emptyState("Km kaydı yok","Henüz yola düşen bir kayıt yok. İlk kilometreni ekle.")}
-    ${section("Rozetler")}
-    <div class="badgeGrid">${badges.map(b=>`<div class="achievement"><b>${b.title}</b><span>${b.desc}</span></div>`).join("")}</div>
-  `;
-}
-function addProfileKm(){
-  const route = profileRouteInput.value.trim();
-  const km = Number(profileKmInput.value);
-  const proof = profileProofInput.value.trim();
-  if(!route || !km){ showToast("Rota ve kilometre gir."); return; }
-  kmEntries.unshift({id:Date.now(),date:"Bugün",route,km,type:"Manuel",status:"Onay Bekliyor",memberNick:currentUser.nick,proof});
-  localStorage.setItem("rdKmEntries",JSON.stringify(kmEntries));
-  showToast("Km kaydı düştü. Admin onayı bekliyor.");
-  render("profile");
 }
 
 
@@ -2029,126 +1760,15 @@ function memberBadges(m){
   if(!badges.length) badges.push({title:"On Road", desc:"Aktiflik oluşuyor"});
   return badges;
 }
-function profileScreen(){
-  const badges = memberBadges(currentUser);
-  const myEntries = kmEntries.filter(e => e.memberNick === currentUser.nick);
-  const approvedTotal = myEntries.filter(e=>e.status==="Onaylandı").reduce((s,e)=>s+Number(e.km||0),0);
-  return section("Profil / Üyelik") + `
-    <div class="profileBox">
-      <div class="avatar">${(currentUser.nick||"RD").slice(0,2).toUpperCase()}</div>
-      <div><b>${currentUser.nick}</b><p>${currentUser.name||""}<br>${currentUser.chapter} · ${currentUser.role}</p>${roleBadge(currentUser.role)}</div>
-    </div>
-    ${card(`${pill(currentUser.nickType||"Onaylı Nick")}<h3>Üyelik Bilgileri</h3><p>İsim soyisim: ${currentUser.name||"-"}<br>Katılım: ${currentUser.joined||"-"}<br>Yetki: ${currentUser.isAdmin?"Sınırsız Admin Yetkisi":"Tam Erişim"}</p><button class="btn danger" style="width:100%;margin-top:12px" onclick="logout()">Çıkış</button>`)}
-    ${section("Km Günlüğü")}
-    ${card(`${pill("Bu Ay")}<div style="font-size:46px;font-weight:950;letter-spacing:-.055em;margin-top:12px">${approvedTotal} km</div><p>Kilometre kayıtları profilin altında tutulur. Yeni kayıtlar admin onayına gider.</p><div class="fieldGroup"><input id="profileRouteInput" class="input" placeholder="Rota / açıklama"><input id="profileKmInput" class="input" type="number" placeholder="Kilometre"><input id="profileProofInput" class="input" placeholder="Kanıt / not"><button class="btn primary" onclick="addProfileKm()">Kaydet</button></div>`)}
-    ${myEntries.map(e=>`<div class="card kmLine"><div><b>${e.route}</b><p>${e.date} · ${e.type} · ${e.status}<br>Kanıt: ${e.proof||"-"}</p></div><b>${e.km} km</b></div>`).join("") || emptyState("Km kaydı yok","Henüz yola düşen bir kayıt yok. İlk kilometreni ekle.")}
-    ${section("Rozetler")}
-    <div class="badgeGrid">${badges.map(b=>badgeTile(b)).join("")}</div>
-  `;
-}
 function badgesScreen(){
   const badges = Object.keys(badgeCatalog).map(k=>({title:k, desc:badgeCatalog[k]}));
   return section("Rozetler") + `<div class="badgeGrid">${badges.map(b=>badgeTile(b)).join("")}</div>` + section("Bilgi") + card(`<h3>Basılı Tut</h3><p>Rozetin anlamını görmek için rozetin üzerine basılı tutabilir veya dokunabilirsin.</p>`);
 }
 
 
-function appSettingsScreen(){
-  const themeName = document.body.classList.contains("light") ? "Gündüz Modu" : "Gece Modu";
-  return section("Uygulama Ayarları") +
-    card(`
-      ${pill("Tema")}
-      <h3>Gece / Gündüz Modu</h3>
-      <p>Aktif tema: ${themeName}. Arayüz karanlık veya açık kullanım için değiştirilebilir.</p>
-      <button class="btn primary" style="width:100%;margin-top:12px" onclick="toggleTheme();showToast('Tema değiştirildi.');render('appSettings')">Değiştir</button>
-    `) +
-    card(`
-      ${pill("Bildirim")}
-      <h3>Bildirim Tercihleri</h3>
-      <p>Sadece önemli işlemler için bildirim önerilir. Böylece uygulama kalabalık hissettirmez.</p>
-      <label class="checkboxRow"><input type="checkbox" checked><span>Yeni etkinlik ve saat değişikliği bildirimleri</span></label>
-      <label class="checkboxRow"><input type="checkbox" checked><span>Başvuru ve kilometre onay bildirimleri</span></label>
-      <label class="checkboxRow"><input type="checkbox"><span>Tüm haberler için bildirim gönder</span></label>
-    `) +
-    card(`
-      ${pill("Görünüm")}
-      <h3>Arayüz Tercihleri</h3>
-      <p>Logo, ikon seti, kart sertliği ve tema detayları gerçek uygulama aşamasında buradan yönetilebilir.</p>
-      <div class="result">Tasarım dili: siyah / beyaz, minimal, sert ve kulüp içi kullanıma uygun.</div>
-    `) +
-    card(`
-      ${pill("Sistem")}
-      <h3>Uygulama Bilgisi</h3>
-      <p>Sürüm: v18<br>Durum: Tasarım prototipi<br>Veri: cihaz içi geçici kayıt</p>
-      <button class="btn ghost" style="width:100%;margin-top:12px" onclick="go('versions')">Aç</button>
-    `);
-}
 
 
 let leaderboardBadgeFilter = "Tümü";
-function setLeaderboardBadgeFilter(b){
-  leaderboardBadgeFilter = b;
-  render("leaderboard");
-}
-function leaderboardScreen(){
-  let list = allMembers().slice();
-  if(leaderboardMode==="km") list.sort((a,b)=>(b.km||0)-(a.km||0));
-  if(leaderboardMode==="event") list.sort((a,b)=>(b.events||0)-(a.events||0));
-  if(leaderboardMode==="rookie") list.sort((a,b)=>((["Hangaround","Prospect"].includes(b.role)?b.km:0))-((["Hangaround","Prospect"].includes(a.role)?a.km:0)));
-
-  const totalKm = list.reduce((s,m)=>s+Number(m.km||0),0);
-  const avgKm = Math.round(totalKm / Math.max(1,list.length));
-  const topKm = Math.max(0,...list.map(m=>Number(m.km||0)));
-  const totalEvents = list.reduce((s,m)=>s+Number(m.events||0),0);
-
-  const badgeNames = ["Tümü","Road King","Event Loyal","Iron Rider","New Blood","Chapter Power","Old Guard","Discipline","Admin","Kurul","On Road"];
-  if(leaderboardBadgeFilter !== "Tümü"){
-    list = list.filter(m => memberBadges(m).some(b=>b.title === leaderboardBadgeFilter));
-  }
-
-  const max = Math.max(1,...list.map(m=>leaderboardMode==="event"?(m.events||0):(m.km||0)));
-  return `
-    <div class="segment">
-      <button class="${leaderboardMode==="km"?"active":""}" onclick="leaderboardMode='km';render('leaderboard')">Road King</button>
-      <button class="${leaderboardMode==="event"?"active":""}" onclick="leaderboardMode='event';render('leaderboard')">Event Loyal</button>
-      <button class="${leaderboardMode==="rookie"?"active":""}" onclick="leaderboardMode='rookie';render('leaderboard')">Rookie Flame</button>
-    </div>
-
-    ${section("Km İstatistikleri")}
-    <div class="lbStatsGrid">
-      <div class="lbStat"><small>Toplam Km</small><b>${totalKm}</b></div>
-      <div class="lbStat"><small>Ortalama</small><b>${avgKm}</b></div>
-      <div class="lbStat"><small>En Yüksek</small><b>${topKm}</b></div>
-      <div class="lbStat"><small>Etkinlik</small><b>${totalEvents}</b></div>
-      <div class="lbStat"><small>Üye</small><b>${allMembers().length}</b></div>
-      <div class="lbStat"><small>Rozet</small><b>${badgeNames.length-1}</b></div>
-    </div>
-
-    ${section("Rozet Filtreleri")}
-    <div class="badgeStrip">
-      ${badgeNames.map(b=>`<button class="badgeChip ${leaderboardBadgeFilter===b?'active':''}" onclick="setLeaderboardBadgeFilter('${b}')">${b}</button>`).join("")}
-    </div>
-
-    ${section("Leaderboard")}
-    ${list.map((m,i)=>{
-      const val = leaderboardMode==="event" ? (m.events||0) : (m.km||0);
-      const badges = memberBadges(m).slice(0,3);
-      return card(`
-        <div class="rank">
-          <div class="rankNo ${i===0?'first':''}">${i+1}</div>
-          <div style="flex:1">
-            <b>${m.nick}${i===0?' 👑':''}</b>
-            <p>${m.name||""}<br>${m.chapter} · ${m.role}</p>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-              ${badges.map(b=>`<span class="roleBadge badgeInfo" onclick="showBadgeInfo('${b.title}')">${b.title}</span>`).join("")}
-            </div>
-            <div class="progress"><div style="width:${val/max*100}%"></div></div>
-          </div>
-          <div style="text-align:right"><b>${val}</b><p>${leaderboardMode==="event"?"etkinlik":"km"}</p></div>
-        </div>
-      `);
-    }).join("") || emptyState("Sonuç yok","Bu rozet filtresinde üye bulunmuyor.")}
-  `;
-}
 
 
 /* v25 safe targeted fixes */
@@ -2168,59 +1788,6 @@ function handleAvatarUpload(event){
     render("profile");
   };
   reader.readAsDataURL(file);
-}
-function profileScreen(){
-  const badges = memberBadges(currentUser);
-  const myEntries = kmEntries.filter(e => e.memberNick === currentUser.nick);
-  const approvedTotal = myEntries.filter(e=>e.status==="Onaylandı").reduce((s,e)=>s+Number(e.km||0),0);
-  return section("Profil / Üyelik") + `
-    <div class="profileBox">
-      <div class="avatar" onclick="triggerAvatarUpload()" title="Profil fotoğrafı ekle">${avatarHTML()}</div>
-      <div>
-        <b>${currentUser.nick}</b>
-        <p>${currentUser.name||""}<br>${currentUser.chapter} · ${currentUser.role}</p>
-        ${roleBadge(currentUser.role)}
-        <div class="helpText">Profil fotoğrafı eklemek için avatar alanına dokun.</div>
-      </div>
-    </div>
-
-    ${card(`${pill("Profil Tamamlama")}<div class="kmLine" style="margin-top:12px"><b>${profileCompletion}%</b><span class="smallNote">Eksik bilgileri yönetimle birlikte tamamla.</span></div><div class="progress"><div style="width:${profileCompletion}%"></div></div>`)}
-
-    ${section("Üye Bilgileri")}
-    <div class="profileInfoCard">
-      <div class="profileInfoGrid">
-        <div class="profileInfoItem"><small>İsim</small><b>${currentUser.name||"-"}</b></div>
-        <div class="profileInfoItem"><small>Nick</small><b>${currentUser.nick||"-"}</b></div>
-        <div class="profileInfoItem"><small>Chapter</small><b>${currentUser.chapter||"-"}</b></div>
-        <div class="profileInfoItem"><small>Statü</small><b>${currentUser.role||"-"}</b></div>
-        <div class="profileInfoItem"><small>Yaş</small><b>${currentUser.age||"-"}</b></div>
-        <div class="profileInfoItem"><small>Motor</small><b>${currentUser.motorcycle||"-"}</b></div>
-        <div class="profileInfoItem"><small>Ehliyet</small><b>${currentUser.license||"-"}</b></div>
-        <div class="profileInfoItem"><small>Kan</small><b>${currentUser.blood||"-"}</b></div>
-        <div class="profileInfoItem"><small>Katılım</small><b>${currentUser.joined||"-"}</b></div>
-        <div class="profileInfoItem"><small>Yetki</small><b>${currentUser.isAdmin?"Sınırsız Admin":"Tam Erişim"}</b></div>
-      </div>
-    </div>
-
-    ${section("Km Günlüğü")}
-    ${card(`${pill("Bu Ay")}<div style="font-size:46px;font-weight:950;letter-spacing:-.055em;margin-top:12px">${approvedTotal} km</div><p>Kilometre kayıtları profilin altında tutulur. Yeni kayıtlar admin onayına gider.</p><div class="fieldGroup"><input id="profileRouteInput" class="input" placeholder="Rota / açıklama"><input id="profileKmInput" class="input" type="number" placeholder="Kilometre"><input id="profileProofInput" class="input" placeholder="Kanıt / not"><button class="btn primary" onclick="addProfileKm()">Kaydet</button></div>`)}
-    ${myEntries.map(e=>`<div class="card kmLine"><div><b>${e.route}</b><p>${e.date} · ${e.type} · ${e.status}<br>Kanıt: ${e.proof||"-"}</p></div><b>${e.km} km</b></div>`).join("") || emptyState("Km kaydı yok","Henüz yola düşen bir kayıt yok. İlk kilometreni ekle.")}
-
-    ${section("Rozetler")}
-    <div class="badgeGrid">${badges.map(b=>typeof badgeTile==="function" ? badgeTile(b) : `<div class="achievement"><b>${b.title}</b><span>${b.desc}</span></div>`).join("")}</div>
-
-    <button class="btn danger profileLogout" style="width:100%" onclick="logout()">Çıkış</button>
-  `;
-}
-function addProfileKm(){
-  const route = profileRouteInput.value.trim();
-  const km = Number(profileKmInput.value);
-  const proof = profileProofInput.value.trim();
-  if(!route || !km){ safeToast("Rota ve kilometre gir."); return; }
-  kmEntries.unshift({id:Date.now(),date:"Bugün",route,km,type:"Manuel",status:"Onay Bekliyor",memberNick:currentUser.nick,proof});
-  localStorage.setItem("rdKmEntries",JSON.stringify(kmEntries));
-  safeToast("Km kaydı düştü. Admin onayı bekliyor.");
-  render("profile");
 }
 function setLeaderboardBadgeFilter(b){
   leaderboardBadgeFilter = b;
@@ -2291,47 +1858,6 @@ function leaderboardScreen(){
     }).join("") || emptyState("Sonuç yok","Bu filtrede üye bulunmuyor.")}
   `;
 }
-function adminPanelScreen(){
-  return section("Yönetim Paneli")+
-  `<div class="grid2"><div class="statCard"><small>Başvuru</small><b>${applications.length}</b></div><div class="statCard"><small>Km onayı</small><b>${kmEntries.filter(k=>k.status==="Onay Bekliyor").length}</b></div></div>`+
-  section("Hızlı Aksiyonlar")+
-  `<div class="adminQuickGrid">
-    <button class="quickBtn" onclick="go('adminApplications')"><span>✓</span>Onayla</button>
-    <button class="quickBtn" onclick="go('adminKm')"><span>KM</span>Onayla</button>
-    <button class="quickBtn" onclick="go('adminCreate')"><span>DU</span>Yayınla</button>
-    <button class="quickBtn" onclick="go('adminCreate')"><span>ET</span>Oluştur</button>
-  </div>`+
-  card(`<h3>Operasyon Merkezi</h3><p>Başvurular, km onayları, raporlar, loglar, üye yönetimi ve dışa aktarım buradan takip edilir.</p><div class="fieldGroup"><button class="btn ghost" onclick="go('readReport')">Okuma Raporu</button><button class="btn ghost" onclick="go('adminExport')">Dışa Aktar</button></div>`);
-}
-function chapterReportsScreen(){
-  return section("Chapter Raporları") +
-  card(`<h3 class="formCardTitle">Rapor gir</h3><div class="fieldGroup"><select id="reportChapter">${chapters.map(c=>`<option>${c}</option>`).join("")}</select><input id="reportEvents" class="input" type="number" placeholder="Bu ay etkinlik sayısı"><input id="reportKm" class="input" type="number" placeholder="Bu ay toplam km"><textarea id="reportNotes" placeholder="Notlar / ihtiyaçlar"></textarea><button class="btn primary" onclick="addChapterReport()">Kaydet</button></div>`) +
-  section("Kayıtlı Raporlar") +
-  (chapterReports.map(r=>card(`<div class="meta">${pill(r.chapter)}<span>${r.date}</span></div><h3>${r.events} etkinlik · ${r.km} km</h3><p>${r.notes}</p>`)).join("") || emptyState("Rapor yok","Chapter Raporları burada listelenir."));
-}
-function memberNotesScreen(){
-  const members=allMembers();
-  return section("Üye Notları") +
-  card(`<h3 class="formCardTitle">Yönetim notu ekle</h3><div class="fieldGroup"><select id="noteMember">${members.map(m=>`<option>${m.nick}</option>`).join("")}</select><select id="noteType"><option>Olumlu Katkı</option><option>Uyarı</option><option>Katılım Eksikliği</option><option>Görev Takibi</option><option>Disiplin Notu</option></select><textarea id="noteBody" placeholder="Yalnızca yönetim tarafından görülecek not"></textarea><button class="btn primary" onclick="addMemberNote()">Kaydet</button></div>`) +
-  section("Kayıtlı Notlar") +
-  (memberNotes.map(n=>card(`<div class="meta">${pill(n.type)}<span>${n.date}</span></div><h3>${n.member}</h3><p>${n.body}<br>Giren: ${n.admin}</p>`)).join("") || emptyState("Not yok","Üye Notları sadece yönetim panelinde görünür."));
-}
-function membersScreen(){
-  const listAll = [...allMembers(), ...accounts.filter(a=>a.status!=="Aktif")];
-  const filters = ["Tümü","Aktif","Pasif","Askıda","Ayrıldı","Onay Bekliyor"];
-  const list = memberStatusFilter==="Tümü" ? listAll : listAll.filter(m=>memberStatusLabel(m)===memberStatusFilter);
-  return `<div class="filterBar">${filters.map(f=>`<button class="${memberStatusFilter===f?'active':''}" onclick="setMemberStatusFilter('${f}')">${f}</button>`).join("")}</div>` + section("Üyeler") + (list.map((m,i)=>card(`
-    <div class="memberCardTop" onclick="openMemberDetail('${m.nick}')">
-      <div>
-        <div class="noticeRow"><b style="font-size:22px">${m.nick}</b><span class="statusPill">${memberStatusLabel(m)}</span></div>
-        <p>${m.name||""}<br>${m.chapter} · ${m.role}<br>Aktiflik: ${activityLevel(m)} · Son giriş: ${m.lastSeen || "-"}</p>
-        ${roleBadge(m.role)}
-      </div>
-      <div style="text-align:right;color:var(--muted);font-size:12px">${m.events||0} etkinlik<br>${m.km||0} km</div>
-    </div>
-    ${currentUser.isAdmin?`<div class="actionGrid"><button class="btn ghost" onclick="assignNick(${i})">Ata</button><button class="btn ghost" onclick="changeMemberStatus(${i})">Değiştir</button><button class="btn ghost" onclick="changeMemberRole(${i})">Değiştir</button><button class="btn ghost" onclick="quickMemberNote('${m.nick}')">Not Ekle</button><button class="btn deleteBtn" onclick="deleteMember('${m.nick}')">Kaldır</button></div>`:""}
-  `)).join("") || emptyState("Kayıt yok","Bu filtrede üye görünmüyor."));
-}
 function deleteMember(nick){
   if(!currentUser.isAdmin){ safeToast("Yetki gerekli."); return; }
   if(!confirm(nick + " adlı üyeyi kaldırmak istediğine emin misin? Bu işlem prototipte kayıtlı kullanıcılar için uygulanır.")) return;
@@ -2386,58 +1912,6 @@ function appSettingsScreen(){
 }
 function settingsScreen(){
   return appSettingsScreen();
-}
-function adminPanelScreen(){
-  return section("Yönetim Paneli")+
-  `<div class="grid2">
-    <div class="statCard"><small>Başvuru</small><b>${applications.length}</b></div>
-    <div class="statCard"><small>Km onayı</small><b>${kmEntries.filter(k=>k.status==="Onay Bekliyor").length}</b></div>
-  </div>`+
-  section("Hızlı Aksiyonlar")+
-  `<div class="adminQuickGrid">
-    <button class="quickBtn" onclick="go('adminApplications')"><span>✓</span>Onayla</button>
-    <button class="quickBtn" onclick="go('adminKm')"><span>KM</span>Onayla</button>
-    <button class="quickBtn" onclick="go('adminCreate')"><span>DU</span>Yayınla</button>
-    <button class="quickBtn" onclick="go('adminCreate')"><span>ET</span>Oluştur</button>
-  </div>`+
-  `<div class="card adminPanelCard">
-    <h3>Operasyon Merkezi</h3>
-    <p>Başvurular, km onayları, raporlar, loglar, üye yönetimi ve dışa aktarım buradan takip edilir.</p>
-    <div class="fieldGroup">
-      <button class="btn ghost" onclick="go('readReport')">Okuma Raporu</button>
-      <button class="btn ghost" onclick="go('adminExport')">Dışa Aktar</button>
-    </div>
-  </div>`;
-}
-function chapterReportsScreen(){
-  return section("Chapter Raporları") +
-  `<div class="card formSectionCard">
-    <h3 class="formCardTitle">Rapor gir</h3>
-    <div class="fieldGroup">
-      <select id="reportChapter">${chapters.map(c=>`<option>${c}</option>`).join("")}</select>
-      <input id="reportEvents" class="input" type="number" placeholder="Bu ay etkinlik sayısı">
-      <input id="reportKm" class="input" type="number" placeholder="Bu ay toplam km">
-      <textarea id="reportNotes" placeholder="Notlar / ihtiyaçlar"></textarea>
-      <button class="btn primary" onclick="addChapterReport()">Kaydet</button>
-    </div>
-  </div>` +
-  section("Kayıtlı Raporlar") +
-  (chapterReports.map(r=>card(`<div class="meta">${pill(r.chapter)}<span>${r.date}</span></div><h3>${r.events} etkinlik · ${r.km} km</h3><p>${r.notes}</p>`)).join("") || emptyState("Rapor yok","Chapter Raporları burada listelenir."));
-}
-function memberNotesScreen(){
-  const members=allMembers();
-  return section("Üye Notları") +
-  `<div class="card formSectionCard">
-    <h3 class="formCardTitle">Yönetim notu ekle</h3>
-    <div class="fieldGroup">
-      <select id="noteMember">${members.map(m=>`<option>${m.nick}</option>`).join("")}</select>
-      <select id="noteType"><option>Olumlu Katkı</option><option>Uyarı</option><option>Katılım Eksikliği</option><option>Görev Takibi</option><option>Disiplin Notu</option></select>
-      <textarea id="noteBody" placeholder="Yalnızca yönetim tarafından görülecek not"></textarea>
-      <button class="btn primary" onclick="addMemberNote()">Kaydet</button>
-    </div>
-  </div>` +
-  section("Kayıtlı Notlar") +
-  (memberNotes.map(n=>card(`<div class="meta">${pill(n.type)}<span>${n.date}</span></div><h3>${n.member}</h3><p>${n.body}<br>Giren: ${n.admin}</p>`)).join("") || emptyState("Not yok","Üye Notları sadece yönetim panelinde görünür."));
 }
 
 
@@ -2543,77 +2017,6 @@ function setMemberSearchQuery(v){
   memberSearchQuery = v || "";
   render("members");
 }
-function setMemberChapterFilter(v){
-  memberChapterFilter = v || "Tümü";
-  render("members");
-}
-function resetMemberFilters(){
-  memberSearchQuery = "";
-  memberChapterFilter = "Tümü";
-  memberStatusFilter = "Tümü";
-  render("members");
-}
-function membersScreen(){
-  const listAll = [...allMembers(), ...accounts.filter(a=>a.status!=="Aktif")];
-  const filters = ["Tümü","Aktif","Pasif","Askıda","Ayrıldı","Onay Bekliyor"];
-  const chapterOptions = ["Tümü", ...Array.from(new Set(listAll.map(m => m.chapter).filter(Boolean))).sort((a,b)=>a.localeCompare(b,"tr"))];
-
-  const q = (memberSearchQuery || "").trim().toLowerCase();
-
-  let list = listAll;
-
-  if(memberStatusFilter !== "Tümü"){
-    list = list.filter(m => memberStatusLabel(m) === memberStatusFilter);
-  }
-
-  if(memberChapterFilter !== "Tümü"){
-    list = list.filter(m => (m.chapter || "") === memberChapterFilter);
-  }
-
-  if(q.length){
-    list = list.filter(m => [
-      m.nick,
-      m.name,
-      m.chapter,
-      m.role,
-      m.status,
-      m.motorcycle,
-      m.phone
-    ].join(" ").toLowerCase().includes(q));
-  }
-
-  return `
-    <div class="memberTools">
-      <div class="memberToolsGrid">
-        <input class="input" id="memberSearchInput" value="${memberSearchQuery.replaceAll('"','&quot;')}" placeholder="Üye, nick, isim, motor veya telefon ara" oninput="memberSearchQuery=this.value;render('members')">
-        <div class="memberToolsRow">
-          <select onchange="setMemberChapterFilter(this.value)">
-            ${chapterOptions.map(c=>`<option ${memberChapterFilter===c?'selected':''}>${c}</option>`).join("")}
-          </select>
-          <select onchange="setMemberStatusFilter(this.value)">
-            ${filters.map(f=>`<option ${memberStatusFilter===f?'selected':''}>${f}</option>`).join("")}
-          </select>
-        </div>
-        <button class="btn ghost" onclick="resetMemberFilters()">Temizle</button>
-      </div>
-    </div>
-
-    ${section("Üye Bilgi Erişimi")}
-    <div class="memberCountPill">${list.length} üye gösteriliyor</div>
-
-    ${list.map((m,i)=>card(`
-      <div class="memberCardTop" onclick="openMemberDetail('${m.nick}')">
-        <div>
-          <div class="noticeRow"><b style="font-size:22px">${m.nick}</b><span class="statusPill">${memberStatusLabel(m)}</span></div>
-          <p>${m.name||""}<br>${m.chapter} · ${m.role}<br>Aktiflik: ${activityLevel(m)} · Son giriş: ${m.lastSeen || "-"}</p>
-          ${roleBadge(m.role)}
-        </div>
-        <div style="text-align:right;color:var(--muted);font-size:12px">${m.events||0} etkinlik<br>${m.km||0} km</div>
-      </div>
-      ${currentUser.isAdmin?`<div class="actionGrid"><button class="btn ghost" onclick="assignNick(${i})">Ata</button><button class="btn ghost" onclick="changeMemberStatus(${i})">Değiştir</button><button class="btn ghost" onclick="changeMemberRole(${i})">Değiştir</button><button class="btn ghost" onclick="quickMemberNote('${m.nick}')">Not Ekle</button><button class="btn deleteBtn" onclick="deleteMember('${m.nick}')">Kaldır</button></div>`:""}
-    `)).join("") || emptyState("Sonuç yok","Arama veya filtreye uygun üye bulunamadı.")}
-  `;
-}
 
 
 /* v29 member search no-focus-loss */
@@ -2635,78 +2038,10 @@ function resetMemberFilters(){
   memberStatusFilter = "Tümü";
   render("members");
 }
-function getFilteredMembers(){
-  const listAll = [...allMembers(), ...accounts.filter(a=>a.status!=="Aktif")];
-  const q = (memberSearchQuery || "").trim().toLowerCase();
-  let list = listAll;
-
-  if(memberStatusFilter !== "Tümü"){
-    list = list.filter(m => memberStatusLabel(m) === memberStatusFilter);
-  }
-
-  if(memberChapterFilter !== "Tümü"){
-    list = list.filter(m => (m.chapter || "") === memberChapterFilter);
-  }
-
-  if(q.length){
-    list = list.filter(m => [
-      m.nick,
-      m.name,
-      m.chapter,
-      m.role,
-      m.status,
-      m.motorcycle,
-      m.phone
-    ].join(" ").toLowerCase().includes(q));
-  }
-  return list;
-}
-function memberCardsHTML(list){
-  return `
-    ${section("Üye Bilgi Erişimi")}
-    <div class="memberCountPill">${list.length} üye gösteriliyor</div>
-    ${list.map((m,i)=>card(`
-      <div class="memberCardTop" onclick="openMemberDetail('${m.nick}')">
-        <div>
-          <div class="noticeRow"><b style="font-size:22px">${m.nick}</b><span class="statusPill">${memberStatusLabel(m)}</span></div>
-          <p>${m.name||""}<br>${m.chapter} · ${m.role}<br>Aktiflik: ${activityLevel(m)} · Son giriş: ${m.lastSeen || "-"}</p>
-          ${roleBadge(m.role)}
-        </div>
-        <div style="text-align:right;color:var(--muted);font-size:12px">${m.events||0} etkinlik<br>${m.km||0} km</div>
-      </div>
-      ${currentUser.isAdmin?`<div class="actionGrid"><button class="btn ghost" onclick="assignNick(${i})">Ata</button><button class="btn ghost" onclick="changeMemberStatus(${i})">Değiştir</button><button class="btn ghost" onclick="changeMemberRole(${i})">Değiştir</button><button class="btn ghost" onclick="quickMemberNote('${m.nick}')">Not Ekle</button><button class="btn deleteBtn" onclick="deleteMember('${m.nick}')">Kaldır</button></div>`:""}
-    `)).join("") || emptyState("Sonuç yok","Arama veya filtreye uygun üye bulunamadı.")}
-  `;
-}
 function updateMembersListOnly(){
   const box = document.getElementById("memberResults");
   if(!box) return;
   box.innerHTML = memberCardsHTML(getFilteredMembers());
-}
-function membersScreen(){
-  const listAll = [...allMembers(), ...accounts.filter(a=>a.status!=="Aktif")];
-  const filters = ["Tümü","Aktif","Pasif","Askıda","Ayrıldı","Onay Bekliyor"];
-  const chapterOptions = ["Tümü", ...Array.from(new Set(listAll.map(m => m.chapter).filter(Boolean))).sort((a,b)=>a.localeCompare(b,"tr"))];
-
-  return `
-    <div class="memberTools">
-      <div class="memberToolsGrid">
-        <input class="input memberSearchInput" id="memberSearchInput" value="${(memberSearchQuery || "").replaceAll('"','&quot;')}" placeholder="Üye, nick, isim, motor veya telefon ara" oninput="setMemberSearchQueryLive(this.value)">
-        <div class="memberToolsRow">
-          <select onchange="setMemberChapterFilter(this.value)">
-            ${chapterOptions.map(c=>`<option ${memberChapterFilter===c?'selected':''}>${c}</option>`).join("")}
-          </select>
-          <select onchange="setMemberStatusFilter(this.value)">
-            ${filters.map(f=>`<option ${memberStatusFilter===f?'selected':''}>${f}</option>`).join("")}
-          </select>
-        </div>
-        <button class="btn ghost" onclick="resetMemberFilters()">Temizle</button>
-      </div>
-    </div>
-    <div id="memberResults" class="memberResults">
-      ${memberCardsHTML(getFilteredMembers())}
-    </div>
-  `;
 }
 
 
@@ -2814,7 +2149,6 @@ function isNationalUser(user){
   return !!user && ((user.nick||"").trim().toLowerCase()==="sexist dog" || user.accessLevel==="national" || RD_NATIONAL_ROLES.includes(user.nationalRole));
 }
 function isCharterManager(user){ return !!user && RD_CHARTER_MANAGEMENT_ROLES.includes(user.role); }
-function canUseManagement(user){ return isNationalUser(user) || isCharterManager(user); }
 function canSeeMember(user, member){
   if(!user || !member) return false;
   return isNationalUser(user) || user.chapter===member.chapter || user.nick===member.nick;
@@ -2823,11 +2157,6 @@ function effectiveTitle(user){
   if(!user) return "-";
   const local = user.role ? (RD_CHARTER_MANAGEMENT_ROLES.includes(user.role) ? `${user.chapter} ${user.role}` : user.role) : "-";
   return user.nationalRole ? `${local} · ${user.nationalRole}` : local;
-}
-function accessDescription(user){
-  if(isNationalUser(user)) return "Türkiye geneli görüntüleme · görev kapsamına göre yönetim";
-  if(isCharterManager(user)) return `${user.chapter} yönetimi`;
-  return `${user.chapter} üye erişimi`;
 }
 const rdV36EffectiveTitle=effectiveTitle;
 effectiveTitle=function(user){
@@ -3044,20 +2373,7 @@ function syncChapterOptions(){
   const select=document.getElementById("regChapter");if(!select)return;const current=select.value;
   select.innerHTML=`<option value="">Charter / şehir seç</option>${chapters.map(c=>`<option>${escapeHtml(c)}</option>`).join("")}`;if(chapters.includes(current))select.value=current;
 }
-function currentClubhouseState(ch=charterName()){
-  return clubhouseStates[ch]||{status:"Kapalı",note:"Henüz durum paylaşılmadı",updatedBy:"-",updatedAt:"-"};
-}
 function activeVisits(ch=charterName()){return clubhouseVisits.filter(v=>v.chapter===ch&&!v.exitAt)}
-function clubhouseStatusClass(status){return status==="Açık"?"open":status==="Meşgul / Kullanım Dışı"?"busy":"closed"}
-function clubhouseCard(ch=charterName()){
-  const state=currentClubhouseState(ch),inside=activeVisits(ch),mine=inside.find(v=>v.nick===currentUser.nick);
-  return `<div class="clubhouseStatus ${clubhouseStatusClass(state.status)}">${pill("Kulüp Evi")}<h2>${escapeHtml(state.status)}</h2><p>${escapeHtml(ch)} · ${escapeHtml(state.note||"")}<br>Son güncelleme: ${escapeHtml(state.updatedAt)} · ${escapeHtml(state.updatedBy)}</p><div class="chapterStats"><div class="chapterStat"><small>İçeride</small><b>${inside.length}</b></div><div class="chapterStat"><small>Durum</small><b>${state.status==="Açık"?"Müsait":state.status==="Meşgul / Kullanım Dışı"?"Özel":"Kapalı"}</b></div></div><div class="presenceList">${inside.map(v=>`<div class="presenceRow"><b>${escapeHtml(v.nick)}</b><span>${escapeHtml(v.entryTime)}</span></div>`).join("")||`<div class="scopeHint">Şu anda içeride olduğunu işaretleyen üye yok.</div>`}</div>${state.status==="Açık"||mine?`<button class="btn ${mine?"danger":"primary"}" style="width:100%;margin-top:14px" onclick="${mine?"leaveClubhouse()":"enterClubhouse()"}">${mine?"Kulüp Evinden Ayrıldım":"Kulüp Evindeyim"}</button>`:"<div class='result'>Kulüp evi şu anda girişe açık değil.</div>"}</div>`;
-}
-function enterClubhouse(){
-  if(currentClubhouseState().status!=="Açık"){safeToast("Kulüp evi girişe açık değil.");return}
-  if(activeVisits().some(v=>v.nick===currentUser.nick)){safeToast("Zaten içeride görünüyorsun.");return}
-  const now=new Date();clubhouseVisits.unshift({id:Date.now(),chapter:charterName(),nick:currentUser.nick,entryAt:now.toISOString(),entryDate:now.toLocaleDateString("tr-TR"),entryTime:now.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"}),exitAt:null,exitTime:null});saveCharterData();safeToast("Giriş saatin kaydedildi.");render("charterHub");
-}
 function leaveClubhouse(){
   const visit=activeVisits().find(v=>v.nick===currentUser.nick);if(!visit)return;
   const now=new Date();visit.exitAt=now.toISOString();visit.exitTime=now.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});saveCharterData();safeToast("Çıkış saatin kaydedildi.");render("charterHub");
@@ -3069,10 +2385,6 @@ function remindOpenClubhouseVisit(){
   }
 }
 function canManageClubhouse(user=currentUser){return isNationalUser(user)||isCharterManager(user)}
-function setClubhouseStatus(){
-  if(!canManageClubhouse())return;const status=document.getElementById("clubhouseStatusSelect")?.value,note=document.getElementById("clubhouseStatusNote")?.value.trim()||"Durum yönetim tarafından güncellendi";
-  clubhouseStates[charterName()]={status,note,updatedBy:currentUser.nick,updatedAt:new Date().toLocaleString("tr-TR")};saveCharterData();logAdmin("Kulüp evi durumu",`${charterName()} / ${status}`);safeToast("Kulüp evi durumu güncellendi.");render("charterAdmin");
-}
 function visibleLocalEvents(ch=charterName()){
   return charterEvents.filter(e=>e.ownerCharter===ch||(e.partnerCharters||[]).includes(ch)&&e.partnerStatus?.[ch]==="Onaylandı");
 }
@@ -3172,17 +2484,6 @@ function accessDescription(user){
   if(isCharterManager(user))return `${user.chapter} yönetimi`;
   return `${user.chapter} üye erişimi`;
 }
-function quickClubhouseStatus(status){
-  const manager=canManageClubhouse(),current=currentClubhouseState();
-  if(status==="Meşgul / Kullanım Dışı"&&!manager){safeToast("Meşgul durumunu yalnızca yönetim belirleyebilir.");return}
-  if(current.status==="Meşgul / Kullanım Dışı"&&!manager){safeToast("Kulüp evi yönetim tarafından meşgule alındı.");return}
-  const note=status==="Açık"?"Üyeler için açık":status==="Kapalı"?"Kulüp evi kapalı":"Özel kullanım nedeniyle girişe kapalı";
-  clubhouseStates[charterName()]={status,note,updatedBy:currentUser.nick,updatedAt:new Date().toLocaleString("tr-TR")};saveCharterData();logAdmin("Kulüp evi durumu",`${charterName()} / ${status}`);safeToast(`Kulüp evi: ${status}`);render("charterHub");
-}
-function clubhouseCard(ch=charterName()){
-  const state=currentClubhouseState(ch),inside=activeVisits(ch),mine=inside.find(v=>v.nick===currentUser.nick),manager=canManageClubhouse();
-  return `<div class="clubhouseStatus ${clubhouseStatusClass(state.status)}">${pill("Kulüp Evi")}<h2>${escapeHtml(state.status)}</h2><p>${escapeHtml(ch)} · ${escapeHtml(state.note||"")}<br><span class="smallNote">Son güncelleme: ${escapeHtml(state.updatedAt)} · ${escapeHtml(state.updatedBy)}</span></p><div class="chapterStats"><div class="chapterStat"><small>İçeride</small><b>${inside.length}</b></div><div class="chapterStat"><small>Kullanım</small><b>${state.status==="Açık"?"Müsait":state.status==="Meşgul / Kullanım Dışı"?"Meşgul":"Kapalı"}</b></div><div class="chapterStat"><small>Ben</small><b>${mine?"İçeride":"Dışarıda"}</b></div></div>${manager?`<div class="scopeHint">Yönetim hızlı durumu</div><div class="clubhouseQuickActions"><button class="btn ghost" onclick="quickClubhouseStatus('Açık')">Aç</button><button class="btn ghost" onclick="quickClubhouseStatus('Kapalı')">Kapat</button><button class="btn ghost" onclick="quickClubhouseStatus('Meşgul / Kullanım Dışı')">Meşgul</button></div>`:""}<div class="presenceList">${inside.map(v=>`<div class="presenceRow"><b>${escapeHtml(v.nick)}</b><span>${escapeHtml(v.entryTime)}</span></div>`).join("")||`<div class="scopeHint">Şu anda içeride olduğunu işaretleyen üye yok.</div>`}</div>${state.status==="Açık"||mine?`<button class="btn ${mine?"danger":"primary"}" style="width:100%;margin-top:14px" onclick="${mine?"leaveClubhouse()":"enterClubhouse()"}">${mine?"Çıkışımı Kaydet":"Kulüp Evindeyim · Giriş Yap"}</button>`:`<div class="result">Kulüp evi girişe kapalı. Yönetim yukarıdaki hızlı durum düğmelerinden açabilir.</div>`}</div>`;
-}
 function findEditableMember(nick){return [...builtInMembers,...accounts].find(m=>m.nick===nick)}
 function openMembershipEditor(nick){
   if(!isApplicationAdmin(currentUser)){safeToast("Bu alan yalnızca uygulama yöneticisine açık.");return}const m=findEditableMember(nick);if(!m)return;
@@ -3214,19 +2515,6 @@ clubhouseVisits.forEach(v=>{if(v.guests===undefined)v.guests=0});saveCharterData
 function clubhousePeopleSummary(ch=charterName()){
   const visits=activeVisits(ch),guests=visits.reduce((sum,v)=>sum+Number(v.guests||0),0);return {visits,members:visits.length,guests,total:visits.length+guests};
 }
-function enterClubhouse(){
-  if(currentClubhouseState().status!=="Açık"){safeToast("Kulüp evi girişe açık değil.");return}
-  if(activeVisits().some(v=>v.nick===currentUser.nick)){safeToast("Zaten içeride görünüyorsun.");return}
-  const guests=Math.max(0,Math.min(20,Number(document.getElementById("clubhouseGuestCount")?.value||0))),now=new Date();
-  clubhouseVisits.unshift({id:Date.now(),chapter:charterName(),nick:currentUser.nick,guests,entryAt:now.toISOString(),entryDate:now.toLocaleDateString("tr-TR"),entryTime:now.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"}),exitAt:null,exitTime:null});saveCharterData();safeToast(guests?`Girişin ve ${guests} misafirin kaydedildi.`:"Giriş saatin kaydedildi.");render("charterHub");
-}
-function updateVisitGuests(){
-  const visit=activeVisits().find(v=>v.nick===currentUser.nick);if(!visit)return;visit.guests=Math.max(0,Math.min(20,Number(document.getElementById("clubhouseGuestCount")?.value||0)));saveCharterData();safeToast("Misafir sayısı güncellendi.");render("charterHub");
-}
-function clubhouseCard(ch=charterName()){
-  const state=currentClubhouseState(ch),people=clubhousePeopleSummary(ch),inside=people.visits,mine=inside.find(v=>v.nick===currentUser.nick),manager=canManageClubhouse(),busyLocked=state.status==="Meşgul / Kullanım Dışı"&&!manager;
-  return `<div class="clubhouseStatus ${clubhouseStatusClass(state.status)}">${pill("Kulüp Evi")}<h2>${escapeHtml(state.status)}</h2><p>${escapeHtml(ch)} · ${escapeHtml(state.note||"")}<br><span class="smallNote">Son güncelleme: ${escapeHtml(state.updatedAt)} · ${escapeHtml(state.updatedBy)}</span></p><div class="chapterStats"><div class="chapterStat"><small>Toplam Kişi</small><b>${people.total}</b></div><div class="chapterStat"><small>Üye</small><b>${people.members}</b></div><div class="chapterStat"><small>Misafir</small><b>${people.guests}</b></div></div>${busyLocked?`<div class="result">Yönetim kulüp evini meşgule aldı. Bu durum yalnızca yönetim tarafından değiştirilebilir.</div>`:`<div class="scopeHint">Kulüp evi durumu</div><div class="clubhouseQuickActions"><button class="btn ghost" onclick="quickClubhouseStatus('Açık')">Aç</button><button class="btn ghost" onclick="quickClubhouseStatus('Kapalı')">Kapat</button>${manager?`<button class="btn ghost" onclick="quickClubhouseStatus('Meşgul / Kullanım Dışı')">Meşgul</button>`:""}</div>`}<div class="presenceList">${inside.map(v=>`<div class="presenceRow"><div><b>${escapeHtml(v.nick)}</b><small>Giriş ${escapeHtml(v.entryTime)}${Number(v.guests||0)?` · ${v.guests} misafir`:""}</small></div><span>${1+Number(v.guests||0)} kişi</span></div>`).join("")||`<div class="scopeHint">Şu anda içeride olduğunu işaretleyen üye yok.</div>`}</div>${inside.length?`<div class="presenceTotal"><b>Anlık toplam</b><span>${people.members} üye + ${people.guests} misafir = <b>${people.total} kişi</b></span></div>`:""}${state.status==="Açık"||mine?`<div class="guestEntryBox"><input id="clubhouseGuestCount" class="input" type="number" min="0" max="20" value="${mine?Number(mine.guests||0):0}" placeholder="Misafir sayısı"><button class="btn ghost" onclick="${mine?"updateVisitGuests()":"enterClubhouse()"}">${mine?"Misafiri Güncelle":"Giriş Yap"}</button></div><button class="btn ${mine?"danger":"primary"}" style="width:100%;margin-top:9px" onclick="${mine?"leaveClubhouse()":"enterClubhouse()"}">${mine?"Çıkışımı Kaydet":"Kulüp Evindeyim"}</button>`:`<div class="result">Kulüp evi girişe kapalı. Yukarıdaki durum düğmesinden açılabilir.</div>`}</div>`;
-}
 function alignScopeWithScreen(){
   if(!isApproved(currentUser)||!onboardingDone)return;
   const guideVisible=document.querySelector(".guideIntro,.onboarding,.tourOverlay[style*='block']");if(guideVisible)return;
@@ -3248,13 +2536,6 @@ saveV39();
 function eventKey(e,index,scope){return String(e.id??`${scope}_${index}`)}
 function participantMap(key){return eventParticipants[key]||{}}
 function participantRows(key){const map=participantMap(key);return Object.entries(map).map(([nick,data])=>({nick,...data}))}
-function setEventParticipation(key,status){
-  if(!eventParticipants[key])eventParticipants[key]={};if(status==="Katılmıyorum")delete eventParticipants[key][currentUser.nick];else eventParticipants[key][currentUser.nick]={status,chapter:currentUser.chapter,at:new Date().toLocaleString("tr-TR")};saveV39();safeToast(status==="Katılmıyorum"?"Katılım kaydın kaldırıldı.":"Katılım durumun kaydedildi.");render("events")
-}
-function renderParticipation(key){
-  const rows=participantRows(key),mine=participantMap(key)[currentUser.nick],byChapter={};rows.forEach(r=>byChapter[r.chapter]=(byChapter[r.chapter]||0)+1);
-  return `<div class="eventFacts"><span class="eventFact">${rows.length} katılımcı</span>${Object.entries(byChapter).map(([ch,count])=>`<span class="eventFact">${escapeHtml(ch)} ${count}</span>`).join("")}</div><div class="fieldGroup"><select onchange="setEventParticipation('${escapeHtml(key)}',this.value)"><option ${!mine?"selected":""} disabled>Katılım durumunu seç</option><option ${mine?.status==="Katılıyorum"?"selected":""}>Katılıyorum</option><option ${mine?.status==="Belki"?"selected":""}>Belki</option><option>Katılmıyorum</option></select></div>${rows.length?`<details><summary class="btn ghost" style="text-align:center">Katılımcı Listesi</summary><div class="eventRoster">${rows.map(r=>`<div class="eventRosterRow"><b>${escapeHtml(r.nick)}</b><span>${escapeHtml(r.chapter)} · ${escapeHtml(r.status)}</span></div>`).join("")}</div></details>`:""}`;
-}
 function renderEventCardV39(e,index,scope){
   const key=eventKey(e,index,scope),cancelled=e.status==="İptal";
   return card(`${e.poster?`<img class="eventPoster" src="${escapeHtml(e.poster)}" alt="${escapeHtml(e.title)} afişi">`:""}<div class="meta">${pill(cancelled?"İptal":e.type||e.kind||"Etkinlik")}<span>${escapeHtml(e.date||"-")}</span></div><h3>${escapeHtml(e.title)}</h3><p>${escapeHtml(e.time||"")} ${e.location?`· ${escapeHtml(e.location)}`:""}<br>${escapeHtml(e.route||"")}</p>${e.stages?`<div class="result">${e.stages.map(s=>`• ${escapeHtml(s)}`).join("<br>")}</div>`:""}${cancelled?`<div class="requiredBanner">Bu etkinlik iptal edildi.</div>`:renderParticipation(key)}${e.poster?`<button class="btn ghost" style="width:100%;margin-top:10px" onclick="openMotofestDetail()">Etkinlik Detayı</button>`:""}`)
@@ -3345,13 +2626,6 @@ function setClubhouseStatus(){
   if(!canManageClubhouse())return;
   const status=document.getElementById("clubhouseStatusSelect")?.value||"Müsait";
   quickClubhouseStatus(status);
-}
-function enterClubhouse(){
-  if(currentClubhouseState().status==="Meşgul / Kullanım Dışı"){safeToast("Kulüp evi yönetim tarafından meşgule alındı.");return}
-  if(activeVisits().some(v=>v.nick===currentUser.nick)){safeToast("Zaten içeride görünüyorsun.");return}
-  const guests=Math.max(0,Math.min(20,Number(document.getElementById("clubhouseGuestCount")?.value||0))),now=new Date();
-  clubhouseVisits.unshift({id:Date.now(),chapter:charterName(),nick:currentUser.nick,guests,entryAt:now.toISOString(),entryDate:now.toLocaleDateString("tr-TR"),entryTime:now.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"}),exitAt:null,exitTime:null});
-  saveCharterData();safeToast(guests?`Girişin ve ${guests} misafirin kaydedildi.`:"Giriş saatin kaydedildi.");render("charterHub");
 }
 function clubhouseCard(ch=charterName()){
   const state=currentClubhouseState(ch),people=clubhousePeopleSummary(ch),inside=people.visits,mine=inside.find(v=>v.nick===currentUser.nick),manager=canManageClubhouse(),busy=state.status==="Meşgul / Kullanım Dışı",liveLabel=busy?"Meşgul":inside.length?"Açık":"Kapalı";

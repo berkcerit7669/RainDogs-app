@@ -57,7 +57,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
       ctx.supabaseAdmin.from("announcements").select("*,charters:charter_id(name)").or(national?"id.not.is.null":`scope.in.(national,joint),charter_id.eq.${own}`).order("created_at",{ascending:false}),
       ctx.supabaseAdmin.from("routes").select("*,charters:charter_id(name)").or(national?"id.not.is.null":`scope.in.(national,joint),charter_id.eq.${own}`).order("created_at",{ascending:false}),
       ctx.supabaseAdmin.from("attendance").select("*,profiles:member_id(nick,charter_id)").or(management?"event_id.not.is.null":`member_id.eq.${actor.id}`),
-      ctx.supabaseAdmin.from("km_entries").select("*,profiles:member_id(nick,charter_id)").or(national?"member_id.not.is.null":`member_id.eq.${actor.id}`).order("created_at",{ascending:false}),
+      ctx.supabaseAdmin.from("km_entries").select("*,profiles:member_id(nick,charter_id)").or(management?"member_id.not.is.null":`member_id.eq.${actor.id}`).order("created_at",{ascending:false}),
       ctx.supabaseAdmin.from("clubhouse_visits").select("*,profiles:member_id(nick),charters:charter_id(name)").or(national?"id.not.is.null":`charter_id.eq.${own}`).order("entered_at",{ascending:false}),
       management?ctx.supabaseAdmin.from("member_notes").select("*,member:member_id(nick),creator:created_by(nick)").or(national?"id.not.is.null":`charter_id.eq.${own}`).order("created_at",{ascending:false}):Promise.resolve({data:[],error:null}),
       ctx.supabaseAdmin.from("notifications").select("*").eq("recipient_id",actor.id).order("created_at",{ascending:false}),
@@ -81,6 +81,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     const visibleEvents=national?(events.data||[]):(events.data||[]).filter((event:any)=>event.scope==="national"||event.owner_charter_id===own||(event.scope==="joint"&&approvedJointIds.has(event.id)));
     const visibleEventIds=new Set(visibleEvents.map((event:any)=>event.id));
     const visibleAttendance=national?(attendance.data||[]):management?(attendance.data||[]).filter((row:any)=>visibleEventIds.has(row.event_id)):(attendance.data||[]);
+    const visibleKm=national?(km.data||[]):management?(km.data||[]).filter((row:any)=>row.profiles?.charter_id===own):(km.data||[]);
     const visibleResponses=national?(eventResponses.data||[]):(eventResponses.data||[]).filter((row:any)=>visibleEventIds.has(row.event_id));
     const signed=async(bucket:string,path:string|null)=>path?(await ctx.supabaseAdmin.storage.from(bucket).createSignedUrl(path,3600)).data?.signedUrl||null:null;
     await Promise.all([
@@ -96,7 +97,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     const deletionRequests=await deletionQuery;
     if(deletionRequests.error)return out({error:deletionRequests.error.message},500);
     const ownDeletionRequest=actor.is_app_admin?(deletionRequests.data||[]).find((x:any)=>x.member_id===actor.id)||null:(deletionRequests.data||[])[0]||null;
-    return out({actor,charters:charters.data,events:visibleEvents,eventCharters:visibleEventCharters,announcements:announcements.data,routes:routes.data,attendance:visibleAttendance,kmEntries:km.data,clubhouseVisits:visits.data,memberNotes:notes.data,notifications:notifications.data,helpTickets:tickets.data,profiles:profiles.data,applications:applications.data,adminLogs:logs.data,clubhouseStates:clubhouseStates.data,announcementReads:announcementReads.data,eventResponses:visibleResponses,emergencyProfiles:emergency.data,charterFinance:finance.data,charterDiscipline:discipline.data,boardPolls:polls.data,boardPollVotes:pollVotes.data,approvalRequests:visibleApprovals,helpTicketMessages:ticketMessages.data,accountDeletionRequest:ownDeletionRequest,accountDeletionRequests:actor.is_app_admin?deletionRequests.data:[]});
+    return out({actor,charters:charters.data,events:visibleEvents,eventCharters:visibleEventCharters,announcements:announcements.data,routes:routes.data,attendance:visibleAttendance,kmEntries:visibleKm,clubhouseVisits:visits.data,memberNotes:notes.data,notifications:notifications.data,helpTickets:tickets.data,profiles:profiles.data,applications:applications.data,adminLogs:logs.data,clubhouseStates:clubhouseStates.data,announcementReads:announcementReads.data,eventResponses:visibleResponses,emergencyProfiles:emergency.data,charterFinance:finance.data,charterDiscipline:discipline.data,boardPolls:polls.data,boardPollVotes:pollVotes.data,approvalRequests:visibleApprovals,helpTicketMessages:ticketMessages.data,accountDeletionRequest:ownDeletionRequest,accountDeletionRequests:actor.is_app_admin?deletionRequests.data:[]});
   }
 
   if(action==="announcement.read"){
