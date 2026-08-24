@@ -50,7 +50,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     const own=actor.charter_id;
     const management=national||!!actor.charter_role;
     const managedMemberIds=national?[]:management?((await ctx.supabaseAdmin.from("profiles").select("id").eq("charter_id",own)).data||[]).map((x:any)=>x.id):[actor.id];
-    const [charters,events,eventCharters,announcements,routes,attendance,km,visits,notes,notifications,tickets,profiles,applications,logs,clubhouseStates,announcementReads,eventResponses,emergency,finance,discipline,polls,pollVotes,approvalRequests]=await Promise.all([
+    const [charters,events,eventCharters,announcements,routes,attendance,km,visits,notes,notifications,tickets,profiles,applications,logs,clubhouseStates,announcementReads,eventResponses,emergency,finance,discipline,polls,pollVotes,approvalRequests,kmTotals]=await Promise.all([
       ctx.supabaseAdmin.from("charters").select("id,name,active").eq("active",true),
       ctx.supabaseAdmin.from("events").select("*,charters:owner_charter_id(name)").order("starts_at"),
       ctx.supabaseAdmin.from("event_charters").select("event_id,charter_id,approval_status"),
@@ -74,9 +74,12 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
       ,boardMember?ctx.supabaseAdmin.from("board_polls").select("*").order("created_at",{ascending:false}):Promise.resolve({data:[],error:null})
       ,boardMember?ctx.supabaseAdmin.from("board_poll_votes").select("*"):Promise.resolve({data:[],error:null})
       ,management?ctx.supabaseAdmin.from("approval_requests").select("*,submitter:submitted_by(nick),decider:decided_by(nick),source:source_charter_id(name),target:target_charter_id(name)").order("created_at",{ascending:false}):Promise.resolve({data:[],error:null})
+      ,ctx.supabaseAdmin.from("km_entries").select("member_id,km").eq("status","active")
     ]);
     const ticketIds=(tickets.data||[]).map((x:any)=>x.id),ticketMessages=ticketIds.length?await ctx.supabaseAdmin.from("help_ticket_messages").select("*,profiles:sender_id(nick,is_app_admin)").in("ticket_id",ticketIds).order("created_at"):({data:[],error:null});
-    const failed=[charters,events,eventCharters,announcements,routes,attendance,km,visits,notes,notifications,tickets,profiles,applications,logs,clubhouseStates,announcementReads,eventResponses,emergency,finance,discipline,polls,pollVotes,approvalRequests,ticketMessages].find(x=>x.error);if(failed?.error)return out({error:failed.error.message},500);
+    const failed=[charters,events,eventCharters,announcements,routes,attendance,km,visits,notes,notifications,tickets,profiles,applications,logs,clubhouseStates,announcementReads,eventResponses,emergency,finance,discipline,polls,pollVotes,approvalRequests,ticketMessages,kmTotals].find(x=>x.error);if(failed?.error)return out({error:failed.error.message},500);
+    const kmByMember=new Map<string,number>();(kmTotals.data||[]).forEach((row:any)=>kmByMember.set(row.member_id,(kmByMember.get(row.member_id)||0)+Number(row.km||0)));
+    (profiles.data||[]).forEach((p:any)=>p.total_km=kmByMember.get(p.id)||0);
     const approvedJointIds=new Set((eventCharters.data||[]).filter((row:any)=>row.charter_id===own&&row.approval_status==="active").map((row:any)=>row.event_id));
     const visibleEvents=national?(events.data||[]):(events.data||[]).filter((event:any)=>event.scope==="national"||event.owner_charter_id===own||(event.scope==="joint"&&approvedJointIds.has(event.id)));
     const visibleEventIds=new Set(visibleEvents.map((event:any)=>event.id));
