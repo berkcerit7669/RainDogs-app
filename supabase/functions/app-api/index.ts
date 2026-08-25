@@ -315,6 +315,12 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     const {error}=await ctx.supabaseAdmin.from("member_notes").delete().eq("id",body.id);if(error)return out({error:error.message},400);
     await audit("Üye notu silindi","member_note",body.id);return out({ok:true});
   }
+  if(action==="note.update"){
+    const {data:note}=await ctx.supabaseAdmin.from("member_notes").select("id,charter_id").eq("id",body.id).maybeSingle();
+    if(!note||(!national&&note.charter_id!==actor.charter_id))return out({error:"Bu not için yetkin yok."},403);if(!national&&!actor.charter_role)return out({error:"Yönetim yetkisi gerekli."},403);
+    const {data:item,error}=await ctx.supabaseAdmin.from("member_notes").update({note_type:String(body.noteType||"Genel"),body:String(body.body||"")}).eq("id",body.id).select().single();if(error)return out({error:error.message},400);
+    await audit("Üye notu düzenlendi","member_note",body.id);return out({item});
+  }
   if(action==="note.create"){
     const {data:target}=await ctx.supabaseAdmin.from("profiles").select("id,charter_id").eq("id",body.memberId).maybeSingle();if(!target||(!national&&target.charter_id!==actor.charter_id))return out({error:"Bu üye için not yetkin yok."},403);if(!national&&!actor.charter_role)return out({error:"Yönetim yetkisi gerekli."},403);
     const {data:item,error}=await ctx.supabaseAdmin.from("member_notes").insert({member_id:target.id,charter_id:target.charter_id,note_type:String(body.noteType||"Genel"),body:String(body.body||""),created_by:actor.id}).select().single();if(error)return out({error:error.message},400);await audit("Üye notu eklendi","profile",target.id);return out({item});
