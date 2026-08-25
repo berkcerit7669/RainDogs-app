@@ -4,7 +4,7 @@ import { createClient } from "npm:@supabase/supabase-js@^2";
 const jsonHeaders = { "Content-Type": "application/json; charset=utf-8" };
 const memberRoles = ["Hangaround", "Prospect", "Member"];
 const charterRoles = ["President", "Vice President", "Sgt. at Arms", "Secretary", "Treasurer", "Road Captain", "Tail Gunner"];
-const nationalRoles = ["Amir", "NVP", "National Sgt. at Arms", "National Secretary", "National Treasurer", "National Road Captain", "National Tail Gunner"];
+const nationalRoles = ["Amir", "National Supervisor", "NVP", "National Sgt. at Arms", "National Secretary", "National Treasurer", "National Road Captain", "National Tail Gunner"];
 
 function publicKey(): string {
   const modern = Deno.env.get("SUPABASE_PUBLISHABLE_KEYS");

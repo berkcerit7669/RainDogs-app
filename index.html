@@ -2209,7 +2209,7 @@ function adminPanelScreen(){
 /* v34 verified club hierarchy and scoped access */
 const RD_CHARTER_MANAGEMENT_ROLES = ["President","Vice President","Sgt. at Arms","Secretary","Treasurer","Road Captain","Tail Gunner"];
 const RD_MEMBER_ROLES = ["Hangaround","Prospect","Member",...RD_CHARTER_MANAGEMENT_ROLES];
-const RD_NATIONAL_ROLES = ["Amir","NVP","National Sgt. at Arms","National Secretary","National Treasurer","National Road Captain","National Tail Gunner"];
+const RD_NATIONAL_ROLES = ["Amir","National Supervisor","NVP","National Sgt. at Arms","National Secretary","National Treasurer","National Road Captain","National Tail Gunner"];
 
 function escapeHtml(value){
   return String(value ?? "").replace(/[&<>"']/g, ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"})[ch]);

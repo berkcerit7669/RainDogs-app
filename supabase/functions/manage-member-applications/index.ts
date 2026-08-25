@@ -8,7 +8,7 @@ const cors = {
 };
 const levels = ["hangaround", "prospect", "member"];
 const charterRoles = ["President", "Vice President", "Sgt. at Arms", "Secretary", "Treasurer", "Road Captain", "Tail Gunner"];
-const nationalRoles = ["Amir", "NVP", "National Sgt. at Arms", "National Secretary", "National Treasurer", "National Road Captain", "National Tail Gunner"];
+const nationalRoles = ["Amir", "National Supervisor", "NVP", "National Sgt. at Arms", "National Secretary", "National Treasurer", "National Road Captain", "National Tail Gunner"];
 const nationalGrantors = ["Amir", "NVP", "National Sgt. at Arms", "National Secretary"];
 
 const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: cors });
