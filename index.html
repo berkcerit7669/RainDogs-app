@@ -1927,18 +1927,18 @@ function archiveScreen(){
     return section("Arşiv")+docs.map(d=>card(`${pill(d.tag)}<h3>${d.title}</h3><p>${d.body}</p>`)).join("");
   }
   const canUpload=currentUser.appAdmin||["Amir","NVP","National Secretary"].includes(currentUser.nationalRole||"");
-  const uploadForm=canUpload?card(`<h3>Belge Yükle (PDF)</h3><div class="fieldGroup"><input id="archiveDocTitle" class="input" placeholder="Belge başlığı"><textarea id="archiveDocDesc" placeholder="Açıklama (isteğe bağlı)"></textarea><select id="archiveDocLevel"><option value="hangaround">Herkes görebilir (Hangaround dahil)</option><option value="prospect">Prospect ve üzeri</option><option value="member" selected>Yalnızca Member ve üzeri</option></select><input id="archiveDocFile" type="file" accept="application/pdf"><button class="btn primary" onclick="uploadArchiveDoc()">Yükle</button></div>`):"";
-  const list=(window.rdArchiveDocs||[]).map(d=>card(`${pill(d.min_member_level==="member"?"Member+":d.min_member_level==="prospect"?"Prospect+":"Herkes")}<h3>${escapeHtml(d.title)}</h3><p>${escapeHtml(d.description||"")}<br>Yükleyen: ${escapeHtml(d.profiles?.nick||"-")} · ${new Date(d.created_at).toLocaleDateString("tr-TR")}</p><button class="btn ghost" style="width:100%;margin-top:8px" onclick="viewArchiveDoc('${escapeHtml(d.id)}')">Görüntüle</button>${canUpload?`<button class="btn danger" style="width:100%;margin-top:8px" onclick="deleteArchiveDoc('${escapeHtml(d.id)}')">Sil</button>`:""}`)).join("");
+  const uploadForm=canUpload?card(`<h3>Belge Yükle (PDF)</h3><div class="fieldGroup"><input id="archiveDocTitle" class="input" placeholder="Belge başlığı"><textarea id="archiveDocDesc" placeholder="Açıklama (isteğe bağlı)"></textarea><select id="archiveDocLevel"><option value="hangaround">Herkes görebilir</option><option value="member" selected>Member ve üzeri</option><option value="board">Sadece National Board ve Başkanlar Kurulu</option></select><input id="archiveDocFile" type="file" accept="application/pdf"><button class="btn primary" onclick="uploadArchiveDoc()">Yükle</button></div>`):"";
+  const list=(window.rdArchiveDocs||[]).map(d=>card(`${pill(d.board_only?"Kurul":d.min_member_level==="member"?"Member+":"Herkes")}<h3>${escapeHtml(d.title)}</h3><p>${escapeHtml(d.description||"")}<br>Yükleyen: ${escapeHtml(d.profiles?.nick||"-")} · ${new Date(d.created_at).toLocaleDateString("tr-TR")}</p><button class="btn ghost" style="width:100%;margin-top:8px" onclick="viewArchiveDoc('${escapeHtml(d.id)}')">Görüntüle</button>${canUpload?`<button class="btn danger" style="width:100%;margin-top:8px" onclick="deleteArchiveDoc('${escapeHtml(d.id)}')">Sil</button>`:""}`)).join("");
   return section("Arşiv")+uploadForm+(list||emptyState("Belge yok","Arşive henüz belge yüklenmedi."));
 }
 async function loadArchiveDocs(){try{const d=await call("archive.list",{});window.rdArchiveDocs=d.items||[];render("archive")}catch(e){safeToast(e.message)}}
 async function uploadArchiveDoc(){
-  const title=document.getElementById("archiveDocTitle")?.value.trim(),description=document.getElementById("archiveDocDesc")?.value.trim(),minMemberLevel=document.getElementById("archiveDocLevel")?.value||"member",file=document.getElementById("archiveDocFile")?.files?.[0];
+  const title=document.getElementById("archiveDocTitle")?.value.trim(),description=document.getElementById("archiveDocDesc")?.value.trim(),levelValue=document.getElementById("archiveDocLevel")?.value||"member",boardOnly=levelValue==="board",minMemberLevel=boardOnly?"member":levelValue,file=document.getElementById("archiveDocFile")?.files?.[0];
   if(!title||!file){safeToast("Başlık ve PDF dosyası zorunlu.");return}
   if(file.type!=="application/pdf"){safeToast("Yalnızca PDF dosyası yüklenebilir.");return}
   if(file.size>20*1024*1024){safeToast("Dosya 20 MB'tan küçük olmalı.");return}
   const reader=new FileReader();
-  reader.onload=async()=>{try{await call("archive.upload",{title,description,minMemberLevel,dataUrl:reader.result});safeToast("Belge yüklendi.");await loadArchiveDocs()}catch(e){safeToast(e.message)}};
+  reader.onload=async()=>{try{await call("archive.upload",{title,description,minMemberLevel,boardOnly,dataUrl:reader.result});safeToast("Belge yüklendi.");await loadArchiveDocs()}catch(e){safeToast(e.message)}};
   reader.readAsDataURL(file);
 }
 function viewArchiveDoc(id){const d=(window.rdArchiveDocs||[]).find(x=>String(x.id)===String(id));if(!d?.url)return;openDetail(`${pill("Arşiv")}<h3 style="font-size:24px;margin:14px 0">${escapeHtml(d.title)}</h3><p>${escapeHtml(d.description||"")}</p><iframe src="${escapeHtml(d.url)}" style="width:100%;height:70vh;border:1px solid var(--line);border-radius:14px;margin-top:10px" title="${escapeHtml(d.title)}"></iframe>`)}
@@ -3765,7 +3765,7 @@ cancelManagedEvent=function(key){const e=managedEvent(key);if(!e||(!canUseGlobal
 syncLoginType();syncRegisterNickMode();syncChapterOptions();boot();updateHeaderNotifDot();
 </script>
 <script src="supabase-auth.js?v=84"></script>
-<script src="supabase-data.js?v=93"></script>
+<script src="supabase-data.js?v=94"></script>
 <script src="push-client.js?v=81"></script>
 <div id="detailOverlay" class="detailOverlay" onclick="closeDetail()"><div id="detailPanel" class="detailPanel" onclick="event.stopPropagation()"></div></div>
 <input id="avatarUpload" type="file" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">

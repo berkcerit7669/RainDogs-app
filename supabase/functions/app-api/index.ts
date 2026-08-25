@@ -161,18 +161,19 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
   if(action==="archive.upload"){
     const canUpload=actor.is_app_admin||NATIONAL_DIRECT_PUBLISH.has(actor.national_role||"");if(!canUpload)return out({error:"Arşive belge yükleme yetkin yok."},403);
     const title=String(body.title||"").trim();if(!title)return out({error:"Belge başlığı zorunlu."},400);
-    const minLevel=["hangaround","prospect","member"].includes(body.minMemberLevel)?body.minMemberLevel:"hangaround";
+    const boardOnly=!!body.boardOnly;
+    const minLevel=["hangaround","member"].includes(body.minMemberLevel)?body.minMemberLevel:"hangaround";
     const match=String(body.dataUrl||"").match(/^data:application\/pdf;base64,(.+)$/);if(!match)return out({error:"Yalnızca PDF dosyası yüklenebilir."},400);
     const bytes=Uint8Array.from(atob(match[1]),c=>c.charCodeAt(0));if(bytes.byteLength>20971520)return out({error:"Dosya 20 MB'tan küçük olmalı."},413);
     const path=`${actor.id}/${crypto.randomUUID()}.pdf`;
     const {error:upErr}=await ctx.supabaseAdmin.storage.from("archive-docs").upload(path,bytes,{contentType:"application/pdf",upsert:false});if(upErr)return out({error:upErr.message},400);
-    const {data:item,error}=await ctx.supabaseAdmin.from("archive_documents").insert({title,description:String(body.description||"").trim(),storage_path:path,min_member_level:minLevel,created_by:actor.id}).select().single();if(error)return out({error:error.message},400);
+    const {data:item,error}=await ctx.supabaseAdmin.from("archive_documents").insert({title,description:String(body.description||"").trim(),storage_path:path,min_member_level:boardOnly?"member":minLevel,board_only:boardOnly,created_by:actor.id}).select().single();if(error)return out({error:error.message},400);
     await audit("Arşiv belgesi yüklendi","archive_document",item.id,{title});return out({item});
   }
   if(action==="archive.list"){
     const {data,error}=await ctx.supabaseAdmin.from("archive_documents").select("*,profiles:created_by(nick)").order("created_at",{ascending:false});if(error)return out({error:error.message},500);
     const myRank=LEVEL_RANK[actor.member_level||"hangaround"]??0;
-    const visible=(data||[]).filter((d:any)=>actor.is_app_admin||(LEVEL_RANK[d.min_member_level]??0)<=myRank);
+    const visible=(data||[]).filter((d:any)=>actor.is_app_admin||(d.board_only?boardMember:(LEVEL_RANK[d.min_member_level]??0)<=myRank));
     await Promise.all(visible.map(async(d:any)=>{const {data:signed}=await ctx.supabaseAdmin.storage.from("archive-docs").createSignedUrl(d.storage_path,300);d.url=signed?.signedUrl||null}));
     return out({items:visible});
   }
