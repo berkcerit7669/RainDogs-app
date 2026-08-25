@@ -1324,8 +1324,7 @@ function boot(){
     if(!isApproved(currentUser)){ bottomNav.style.display="none"; title.innerText="Onay Bekliyor"; subtitle.innerText="Başvuru durumu"; content.innerHTML=pendingScreen(); }
     else {
       bottomNav.style.display="grid";
-      if(!onboardingDone){ showOnboarding(); }
-      else { render("home"); }
+      render("home");
     }
   }
 }
@@ -2713,7 +2712,7 @@ function clubhousePeopleSummary(ch=charterName()){
   const visits=activeVisits(ch),guests=visits.reduce((sum,v)=>sum+Number(v.guests||0),0);return {visits,members:visits.length,guests,total:visits.length+guests};
 }
 function alignScopeWithScreen(){
-  if(!isApproved(currentUser)||!onboardingDone)return;
+  if(!isApproved(currentUser))return;
   const guideVisible=document.querySelector(".guideIntro,.onboarding,.tourOverlay[style*='block']");if(guideVisible)return;
   if(appScope==="charter"&&rdCurrentScreen!=="charterHub")go("charterHub");
 }
@@ -3136,7 +3135,7 @@ function showRequiredEmergencySetup(){title.innerText="Acil Durum Kartı";subtit
 const rdV45SaveEmergency=saveEmergencyProfile;
 saveEmergencyProfile=function(){rdV45SaveEmergency();if(currentUser?.requiresEmergencySetup&&emergencyProfiles[currentUser.nick]){currentUser.requiresEmergencySetup=false;const m=findEditableMember(currentUser.nick);if(m)m.requiresEmergencySetup=false;localStorage.setItem("rdUser",JSON.stringify(currentUser));localStorage.setItem("rdAccounts",JSON.stringify(accounts));bottomNav.style.display="grid";safeToast("Acil durum kartın tamamlandı.");render("home")}};
 const rdV45Boot=boot;
-boot=function(){rdV45Boot();setTimeout(()=>{if(isApproved(currentUser)&&onboardingDone&&!currentUser?.requiresAppGuide&&currentUser?.requiresEmergencySetup&&!emergencyProfiles[currentUser.nick])showRequiredEmergencySetup()},30)};
+boot=function(){rdV45Boot();setTimeout(()=>{if(isApproved(currentUser)&&!currentUser?.requiresAppGuide&&currentUser?.requiresEmergencySetup&&!emergencyProfiles[currentUser.nick])showRequiredEmergencySetup()},30)};
 const rdV45OpenDrawer=openDrawer;
 openDrawer=function(){rdV45OpenDrawer();setMenuVisibility("boardPollsMenu",isBoardMember());setMenuVisibility("charterApplicationsMenu",isApplicationAdmin(currentUser)||currentUser?.nationalRole==="National Sgt. at Arms"||currentUser?.role==="Sgt. at Arms")};
 const rdV45CharterAdminScreen=charterAdminScreen;
