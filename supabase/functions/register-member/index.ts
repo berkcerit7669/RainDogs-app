@@ -68,7 +68,7 @@ export default {
     if (notifyTargets?.length) {
       await ctx.supabaseAdmin.from("notifications").insert(notifyTargets.map((x: any) => ({
         recipient_id: x.id, type: "Başvuru", title: "Yeni üyelik başvurusu",
-        body: `${fullName} (${pendingNick}) ${charterRow.name} için başvurdu.`, action_path: "adminApplications"
+        body: `${fullName}${noNick ? "" : ` (${pendingNick})`} ${charterRow.name} için başvurdu.`, action_path: "adminApplications"
       })));
     }
     const client = createClient(Deno.env.get("SUPABASE_URL") ?? "", publicKey(), { auth: { persistSession: false, autoRefreshToken: false } });
