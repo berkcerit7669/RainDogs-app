@@ -2789,7 +2789,7 @@ function quickClubhouseStatus(status,panic){
   const busy=status==="Meşgul / Kullanım Dışı",normalized=busy?"Meşgul / Kullanım Dışı":"Müsait";
   const canTrigger=canManageClubhouse()||(busy&&currentUser?.chapter===charterName());
   if(!canTrigger){safeToast(busy?"Yalnızca kendi Charter'ının kulüp evini meşgule alabilirsin.":"Meşgul durumunu yalnızca yönetim kaldırabilir.");return}
-  if(panic&&busy&&!activeVisits().some(v=>v.nick===currentUser.nick))enterClubhouse();
+  if(panic&&busy&&!activeVisits().some(v=>v.nick===currentUser.nick)){const now=new Date();clubhouseVisits.unshift({id:Date.now(),chapter:charterName(),nick:currentUser.nick,guests:0,guestNames:[],entryAt:now.toISOString(),entryDate:now.toLocaleDateString("tr-TR"),entryTime:now.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"}),exitAt:null,exitTime:null});saveV41()}
   clubhouseStates[charterName()]={status:normalized,note:busy?(panic?"🚨 Red Light":"Yönetim tarafından geçici olarak kullanıma kapatıldı"):"Giriş için uygun",updatedBy:currentUser.nick,updatedAt:new Date().toLocaleString("tr-TR")};
   saveCharterData();logAdmin("Kulüp evi durumu",`${charterName()} / ${normalized}`);safeToast(busy?(panic?"Red Light":"Kulüp evi meşgule alındı."):"Kulüp evi yeniden girişe açıldı.");refreshClubhouseView();
 }
@@ -3854,7 +3854,7 @@ cancelManagedEvent=function(key){const e=managedEvent(key);if(!e||(!canUseGlobal
 syncLoginType();syncRegisterNickMode();syncChapterOptions();boot();updateHeaderNotifDot();
 </script>
 <script src="supabase-auth.js?v=84"></script>
-<script src="supabase-data.js?v=99"></script>
+<script src="supabase-data.js?v=100"></script>
 <script src="push-client.js?v=81"></script>
 <div id="detailOverlay" class="detailOverlay" onclick="closeDetail()"><div id="detailPanel" class="detailPanel" onclick="event.stopPropagation()"></div></div>
 <input id="avatarUpload" type="file" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">

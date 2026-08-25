@@ -279,6 +279,15 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     const charterId=requestedCharter;
     const {data:item,error}=await ctx.supabaseAdmin.from("clubhouse_states").upsert({charter_id:charterId,status,note:String(body.note||""),updated_by:actor.id,updated_at:new Date().toISOString()},{onConflict:"charter_id"}).select().single();if(error)return out({error:error.message},400);await audit("Kulüp evi durumu güncellendi","clubhouse",charterId,{status});return out({item});
   }
+  if(action==="clubhouse.panic"){
+    if(!actor.charter_id)return out({error:"Charter bilgin bulunamadı."},400);
+    const {data:open}=await ctx.supabaseAdmin.from("clubhouse_visits").select("id").eq("member_id",actor.id).is("exited_at",null).maybeSingle();
+    if(!open){const {error:visitErr}=await ctx.supabaseAdmin.from("clubhouse_visits").insert({charter_id:actor.charter_id,member_id:actor.id,guest_count:0});if(visitErr)return out({error:visitErr.message},400)}
+    const {data:item,error}=await ctx.supabaseAdmin.from("clubhouse_states").upsert({charter_id:actor.charter_id,status:"busy",note:"🚨 Red Light",updated_by:actor.id,updated_at:new Date().toISOString()},{onConflict:"charter_id"}).select().single();
+    if(error)return out({error:error.message},400);
+    await audit("Kulüp evi Red Light","clubhouse",actor.charter_id);
+    return out({item});
+  }
   if(action==="km.submit"){
     const km=Number(body.km);if(!Number.isFinite(km)||km<=0)return out({error:"Geçerli kilometre gir."},400);const {data:item,error}=await ctx.supabaseAdmin.from("km_entries").insert({member_id:actor.id,route_name:String(body.routeName||"Rota"),km,status:"pending",submitted_by:actor.id}).select().single();if(error)return out({error:error.message},400);return out({item});
   }
