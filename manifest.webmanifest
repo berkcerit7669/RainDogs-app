@@ -10,7 +10,7 @@
   "theme_color": "#050505",
   "icons": [
     {
-      "src": "icon-512.png",
+      "src": "rndgs-icon-black.png",
       "sizes": "596x596",
       "type": "image/png",
       "purpose": "any"
