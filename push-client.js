@@ -8,7 +8,7 @@
     const raw = atob((value + pad).replace(/-/g, "+").replace(/_/g, "/"));
     return Uint8Array.from(raw, (char) => char.charCodeAt(0));
   }
-  async function registration() { return navigator.serviceWorker.register("./service-worker.js?v=81", { scope: "./" }); }
+  async function registration() { return navigator.serviceWorker.register("./service-worker.js?v=82", { scope: "./" }); }
   async function subscription() { return supported() ? (await registration()).pushManager.getSubscription() : null; }
 
   window.enableDeviceNotifications = async function () {
@@ -55,4 +55,20 @@
     history.replaceState({}, document.title, `${location.pathname}${params.size ? `?${params}` : ""}${location.hash}`);
   });
   if (supported()) registration().catch(() => {});
+
+  if ("serviceWorker" in navigator) {
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing) return;
+      refreshing = true;
+      safeToast && safeToast("Yeni sürüm yüklendi, uygulama yenileniyor…");
+      setTimeout(() => location.reload(), 600);
+    });
+    navigator.serviceWorker.register("./service-worker.js?v=82", { scope: "./" }).then((reg) => {
+      const checkForUpdate = () => reg.update().catch(() => {});
+      setInterval(checkForUpdate, 5 * 60 * 1000);
+      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") checkForUpdate(); });
+      window.addEventListener("focus", checkForUpdate);
+    }).catch(() => {});
+  }
 })();
