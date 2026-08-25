@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="RNDGS" />
 <meta name="description" content="RainDogs kulüp yönetimi ve üye deneyimi uygulaması." />
 <meta name="referrer" content="strict-origin-when-cross-origin" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob: https://*.supabase.co; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob: https://*.supabase.co; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; frame-src https://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="raindogs-logo.png" />
@@ -73,7 +73,7 @@ main{padding:18px 18px 98px}
 .card h3{margin:14px 0 0;font-size:22px;letter-spacing:-.025em;line-height:1.22}
 .card+.card{margin-top:12px}.meta{display:flex;justify-content:space-between;align-items:center;gap:10px}.meta span:last-child{color:var(--soft);font-size:12px}
 .eventScroller{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 18px 8px;margin:0 -18px;-webkit-overflow-scrolling:touch}.eventScroller::-webkit-scrollbar{display:none}.eventSlide{min-width:84%;scroll-snap-align:center}
-.bottomNav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:10px 10px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(18px);border-top:1px solid var(--line);z-index:20}
+.bottomNav{position:-webkit-sticky;position:sticky;bottom:0;margin-left:auto;margin-right:auto;width:100%;max-width:430px;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:10px 10px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(18px);border-top:1px solid var(--line);z-index:20}
 .navItem{border:0;background:transparent;color:var(--soft);border-radius:18px;padding:8px 4px;font-weight:900;font-size:10px}.navItem.active{background:var(--button);color:var(--buttonText)}.navIcon{font-size:20px;display:flex;align-items:center;justify-content:center;margin-bottom:2px}.navIcon svg{display:block}
 .drawer{position:fixed;inset:0;background:rgba(0,0,0,.64);backdrop-filter:blur(8px);z-index:50;display:none}.drawer.open{display:block}.drawerPanel{position:absolute;right:0;top:0;height:100%;width:82%;max-width:350px;background:var(--app);border-left:1px solid var(--line);padding:18px;overflow:auto}
 .drawerHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.drawerHead h2{margin:0;font-size:28px;letter-spacing:-.05em}
