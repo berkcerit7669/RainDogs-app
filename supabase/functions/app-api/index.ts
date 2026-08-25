@@ -250,6 +250,12 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
   if(action==="push.unsubscribe"){
     const {error}=await ctx.supabaseAdmin.from("push_subscriptions").delete().eq("member_id",actor.id).eq("endpoint",String(body.endpoint||""));if(error)return out({error:error.message},400);return out({ok:true});
   }
+  if(action==="ticket.delete"){
+    const {data:ticket}=await ctx.supabaseAdmin.from("help_tickets").select("reporter_id").eq("id",body.id).maybeSingle();
+    if(!ticket||(!actor.is_app_admin&&ticket.reporter_id!==actor.id))return out({error:"Yetkisiz işlem."},403);
+    const {error}=await ctx.supabaseAdmin.from("help_tickets").delete().eq("id",body.id);if(error)return out({error:error.message},400);
+    return out({ok:true});
+  }
   if(action==="ticket.create"){
     const subject=String(body.subject||"").trim(),text=String(body.body||"").trim();if(!subject||!text)return out({error:"Başlık ve açıklama zorunlu."},400);
     const {data:item,error}=await ctx.supabaseAdmin.from("help_tickets").insert({reporter_id:actor.id,subject,body:text,status:"Yeni",screenshot_path:body.screenshotPath||null}).select().single();if(error)return out({error:error.message},400);
@@ -265,6 +271,12 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
       if(actor.is_app_admin&&ticket.reporter_id!==actor.id)await notify({recipient_id:ticket.reporter_id,type:"Destek",title:ticket.subject,body:"Destek kaydına yönetim yanıt verdi.",action_path:"help"});
       if(!actor.is_app_admin){const {data:admins}=await ctx.supabaseAdmin.from("profiles").select("id").eq("is_app_admin",true).eq("account_status","active");if(admins?.length)await notify(admins.map((x:any)=>({recipient_id:x.id,type:"Destek",title:ticket.subject,body:`${actor.nick} destek kaydına yanıt verdi.`,action_path:"helpAdmin"})))}return out({item})}
     if(!actor.is_app_admin)return out({error:"Durumu yalnızca uygulama admini değiştirebilir."},403);const status=String(body.status||"");if(!["Yeni","İnceleniyor","Çözüldü"].includes(status))return out({error:"Geçersiz durum."},400);const {data:item,error}=await ctx.supabaseAdmin.from("help_tickets").update({status,updated_at:new Date().toISOString()}).eq("id",ticket.id).select().single();if(error)return out({error:error.message},400);return out({item});
+  }
+  if(action==="note.delete"){
+    const {data:note}=await ctx.supabaseAdmin.from("member_notes").select("id,charter_id").eq("id",body.id).maybeSingle();
+    if(!note||(!national&&note.charter_id!==actor.charter_id))return out({error:"Bu not için yetkin yok."},403);if(!national&&!actor.charter_role)return out({error:"Yönetim yetkisi gerekli."},403);
+    const {error}=await ctx.supabaseAdmin.from("member_notes").delete().eq("id",body.id);if(error)return out({error:error.message},400);
+    await audit("Üye notu silindi","member_note",body.id);return out({ok:true});
   }
   if(action==="note.create"){
     const {data:target}=await ctx.supabaseAdmin.from("profiles").select("id,charter_id").eq("id",body.memberId).maybeSingle();if(!target||(!national&&target.charter_id!==actor.charter_id))return out({error:"Bu üye için not yetkin yok."},403);if(!national&&!actor.charter_role)return out({error:"Yönetim yetkisi gerekli."},403);
