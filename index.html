@@ -1762,6 +1762,7 @@ function markRoutesSeen(){if(typeof visibleRoutesV59!=="function")return;const s
 function updateBottomNavBadges(){
   const setBadge=(id,count)=>{const el=document.getElementById(id);if(!el)return;if(count>0){el.textContent=count>99?"99+":String(count);el.style.display="flex"}else{el.style.display="none"}};
   if(!currentUser||!isApproved(currentUser)){setBadge("navBadgeEvents",0);setBadge("navBadgeNews",0);setBadge("navBadgeRoutes",0);return}
+  if(currentUser.backend&&!window.__rdHydrated)return;
   try{setBadge("navBadgeEvents",pendingEventResponseCount())}catch(e){}
   try{setBadge("navBadgeNews",unreadNewsCount())}catch(e){}
   try{setBadge("navBadgeRoutes",unseenRouteKeys().length)}catch(e){}
@@ -3959,7 +3960,7 @@ cancelManagedEvent=function(key){const e=managedEvent(key);if(!e||(!canUseGlobal
 syncLoginType();syncRegisterNickMode();syncChapterOptions();boot();updateHeaderNotifDot();
 </script>
 <script src="supabase-auth.js?v=86"></script>
-<script src="supabase-data.js?v=106"></script>
+<script src="supabase-data.js?v=107"></script>
 <script src="push-client.js?v=84"></script>
 <div id="detailOverlay" class="detailOverlay" onclick="closeDetail()"><div id="detailPanel" class="detailPanel" onclick="event.stopPropagation()"></div></div>
 <input id="avatarUpload" type="file" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
