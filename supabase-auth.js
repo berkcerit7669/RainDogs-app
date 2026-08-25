@@ -195,13 +195,6 @@
     }
   };
 
-  let backendApplications = [];
-  let applicationsLoading = false;
-  let canGrantNationalApplicationRole = false;
-  const levelLabel = { hangaround: "Hangaround", prospect: "Prospect", member: "Member" };
-  const charterRoleOptions = ["", "President", "Vice President", "Sgt. at Arms", "Secretary", "Treasurer", "Road Captain", "Tail Gunner"];
-  const nationalRoleOptions = ["", "Amir", "NVP", "National Sgt. at Arms", "National Secretary", "National Treasurer", "National Road Captain", "National Tail Gunner"];
-
   async function authenticatedSession() {
     let session = readSession();
     if (!session) throw new Error("Oturum gerekli.");
@@ -295,65 +288,6 @@
       showRecoveryPanel();
     }
   }
-
-  async function applicationRequest(path = "", options = {}) {
-    const session = await authenticatedSession();
-    return request(`/functions/v1/manage-member-applications${path}`, {
-      ...options,
-      headers: { Authorization: `Bearer ${session.access_token}`, ...(options.headers || {}) }
-    });
-  }
-
-  async function loadBackendApplications(force = false) {
-    if (applicationsLoading || (backendApplications.length && !force)) return;
-    applicationsLoading = true;
-    try {
-      const result = await applicationRequest();
-      backendApplications = result.applications || [];
-      canGrantNationalApplicationRole = Boolean(result.canGrantNational);
-      if (typeof render === "function") render("adminApplications");
-    } catch (error) {
-      safeToast(error?.message || "Başvurular alınamadı.");
-    } finally { applicationsLoading = false; }
-  }
-
-  window.adminApplicationsScreen = function () {
-    if (!applicationsLoading && !backendApplications.length) setTimeout(() => loadBackendApplications(), 0);
-    const rows = backendApplications.map((app, index) => {
-      const charter = Array.isArray(app.charters) ? app.charters[0] : app.charters;
-      const requestedLevel = app.requested_member_level || app.member_level || "hangaround";
-      const levelSelect = ["hangaround", "prospect", "member"].map(value => `<option value="${value}" ${requestedLevel === value ? "selected" : ""}>${levelLabel[value]}</option>`).join("");
-      const charterSelect = charterRoleOptions.map(value => `<option value="${value}" ${String(app.requested_charter_role || "") === value ? "selected" : ""}>${value || "Charter görevi yok"}</option>`).join("");
-      const nationalSelect = nationalRoleOptions.map(value => `<option value="${value}" ${String(app.requested_national_role || "") === value ? "selected" : ""}>${value || "National görev yok"}</option>`).join("");
-      return card(`<div class="meta">${pill("Onay Bekliyor")}<span>${new Date(app.created_at).toLocaleDateString("tr-TR")}</span></div><h3>${escapeHtml(app.nick)}</h3><p>${escapeHtml(app.full_name)}<br>${escapeHtml(charter?.name || "-")} · Talep: ${escapeHtml(levelLabel[requestedLevel] || requestedLevel)}${app.requested_charter_role ? ` / ${escapeHtml(app.requested_charter_role)}` : ""}${app.requested_national_role ? `<br>National talebi: ${escapeHtml(app.requested_national_role)}` : ""}<br>${escapeHtml(app.phone || "")}</p><div class="fieldGroup"><select id="backendLevel_${index}">${levelSelect}</select><select id="backendCharterRole_${index}">${charterSelect}</select>${canGrantNationalApplicationRole ? `<select id="backendNationalRole_${index}">${nationalSelect}</select>` : ""}<div class="btnRow"><button class="btn primary" onclick="decideBackendApplication(${index},'approve')">Üyeliği Onayla</button><button class="btn danger" onclick="decideBackendApplication(${index},'reject')">Reddet</button></div></div>`);
-    }).join("");
-    return section("Charter Üyelik Başvuruları") + (applicationsLoading ? card("<h3>Başvurular yükleniyor…</h3>") : rows || emptyState("Bekleyen başvuru yok", "Yetki kapsamında bekleyen üyelik başvurusu bulunmuyor."));
-  };
-
-  window.decideBackendApplication = async function (index, action) {
-    const app = backendApplications[index];
-    if (!app) return;
-    if (action === "reject") {
-      appConfirm(`${app.nick} başvurusu reddedilsin mi?`, () => decideBackendApplication(index, "reject-confirmed"));
-      return;
-    }
-    const normalizedAction = action === "reject-confirmed" ? "reject" : action;
-    const payload = {
-      profileId: app.id,
-      action: normalizedAction,
-      memberLevel: document.getElementById(`backendLevel_${index}`)?.value,
-      charterRole: document.getElementById(`backendCharterRole_${index}`)?.value || "",
-      nationalRole: canGrantNationalApplicationRole ? (document.getElementById(`backendNationalRole_${index}`)?.value || "") : ""
-    };
-    try {
-      await applicationRequest("", { method: "POST", body: JSON.stringify(payload) });
-      backendApplications.splice(index, 1);
-      safeToast(normalizedAction === "approve" ? "Üyelik aktif edildi." : "Başvuru reddedildi.");
-      render("adminApplications");
-    } catch (error) { safeToast(error?.message || "Karar kaydedilemedi."); }
-  };
-
-  window.refreshBackendApplications = () => loadBackendApplications(true);
 
   window.changeOwnPassword = async function () {
     if (!currentUser?.backend) return;
