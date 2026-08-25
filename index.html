@@ -1078,8 +1078,13 @@ body.light .chapterMiniStats>div{border-color:rgba(0,0,0,.16);background:rgba(0,
 (function(){
   function setAppHeight(){const h=window.visualViewport?window.visualViewport.height:window.innerHeight;document.documentElement.style.setProperty("--app-height",h+"px")}
   setAppHeight();
+  setTimeout(setAppHeight,100);
+  setTimeout(setAppHeight,400);
+  setTimeout(setAppHeight,1200);
   window.addEventListener("resize",setAppHeight);
   window.addEventListener("orientationchange",setAppHeight);
+  window.addEventListener("pageshow",setAppHeight);
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")setAppHeight()});
   if(window.visualViewport){window.visualViewport.addEventListener("resize",setAppHeight);window.visualViewport.addEventListener("scroll",setAppHeight)}
 })();
 </script>
