@@ -2897,6 +2897,7 @@ function systemMaintenanceCard(){
       <label class="checkboxRow"><input type="checkbox" id="maintClearEvents" checked><span>Etkinlikler</span></label>
       <label class="checkboxRow"><input type="checkbox" id="maintClearNews" checked><span>Duyurular / Haberler</span></label>
       <label class="checkboxRow"><input type="checkbox" id="maintClearRoutes" checked><span>Rotalar</span></label>
+      <label class="checkboxRow"><input type="checkbox" id="maintClearClubhouse" checked><span>Kulüp Evi Kullanımı (giriş/çıkış geçmişi ve meşgul durumu)</span></label>
     </label>
     <button class="btn danger" style="width:100%;margin-top:8px" onclick="adminResetContent()">Seçilenleri Sıfırla</button>
   </div>`);
@@ -2908,6 +2909,7 @@ function adminResetContent(){
   if(document.getElementById("maintClearEvents")?.checked)targets.push("events");
   if(document.getElementById("maintClearNews")?.checked)targets.push("announcements");
   if(document.getElementById("maintClearRoutes")?.checked)targets.push("routes");
+  if(document.getElementById("maintClearClubhouse")?.checked)targets.push("clubhouse");
   if(!targets.length){safeToast("En az bir içerik türü seç.");return}
   appConfirm(`Seçilen içerikler (${targets.join(", ")}) tüm Charterlar için kalıcı olarak silinsin mi?`,()=>appPromptV85("Son Onay","Devam etmek için SIFIRLA yaz","",async word=>{
     if(word!=="SIFIRLA"){safeToast("İşlem iptal edildi.");return}
