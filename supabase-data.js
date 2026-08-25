@@ -3,6 +3,7 @@ const cfg=window.RAINDOGS_SUPABASE;if(!cfg)return;
 function stored(){try{return JSON.parse(localStorage.getItem("rdSupabaseSession")||sessionStorage.getItem("rdSupabaseSession")||"null")}catch{return null}}
 function storeBackendUser(){if(!currentUser?.backend)return;sessionStorage.setItem("rdUser",JSON.stringify(currentUser));if(localStorage.getItem("rdRememberMe")==="1")localStorage.setItem("rdUser",JSON.stringify(currentUser));else localStorage.removeItem("rdUser")}
 async function call(action,body){const s=stored();if(!s?.access_token)throw new Error("Oturum gerekli.");const r=await fetch(`${cfg.url}/functions/v1/app-api?action=${encodeURIComponent(action)}`,{method:body?"POST":"GET",headers:{"Content-Type":"application/json",apikey:cfg.publishableKey,Authorization:`Bearer ${s.access_token}`},body:body?JSON.stringify(body):undefined});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"İşlem tamamlanamadı.");if(action==="bootstrap"){window.rdLastBootstrap=d;window.rdLastBootstrapCharters=d.charters||[];window.rdApprovalRequests=d.approvalRequests||[]}return d}
+window.call=call;
 const scopeName=x=>x?.charters?.name||"";
 function eventRow(x){const d=new Date(x.starts_at);return {id:x.id,title:x.title,body:x.description||"",description:x.description||"",date:d.toLocaleDateString("tr-TR"),iso:x.starts_at?.slice(0,10),time:d.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"}),location:x.location||"",route:x.route_text||"",distance:x.distance_km||0,importance:x.importance,participationStatus:x.participation_status,status:x.status,ownerCharter:scopeName(x),kind:x.scope,poster:x.poster_url||"",posterPath:x.poster_path||null,backend:true}}
 function newsRow(x){return {id:x.id,title:x.title,body:x.body,date:new Date(x.created_at).toLocaleDateString("tr-TR"),importance:x.importance,required:x.required_read,status:x.status,charter:scopeName(x),publishScope:x.scope,photo:x.photo_url||"",photoPath:x.photo_path||null,backend:true}}
@@ -15,6 +16,7 @@ async function hydrate(){if(!currentUser?.backend)return;try{const d=await call(
 window.rdMilestones=(d.milestones||[]).map(x=>({memberId:x.member_id,milestone:x.milestone,date:x.occurred_on}));
 window.rdRoleHistory=(d.roleHistory||[]).map(x=>({memberId:x.member_id,scope:x.role_scope,role:x.role_name,startedAt:x.started_at,endedAt:x.ended_at}));
 window.rdMemberBadges=(d.memberBadges||[]).map(x=>({id:x.id,memberId:x.member_id,nick:x.profiles?.nick||"",badgeKey:x.badge_key,note:x.note,awardedAt:new Date(x.awarded_at).toLocaleDateString("tr-TR")}));if(Array.isArray(d.adminLogs)&&d.adminLogs.length)adminLogs=d.adminLogs.map(x=>({action:x.action,target:x.detail?.title||x.target_id||"",admin:x.profiles?.nick||"Sistem",date:new Date(x.created_at).toLocaleString("tr-TR")}));const me=window.rdBackendProfiles.find(x=>x.id===actorId);if(me){Object.assign(currentUser,me);storeBackendUser()}render("home");safeToast("Merkezi veriler güncellendi.")}catch(e){safeToast(e.message)}}
+window.hydrate=hydrate;
 const hydrateWithLegacyFallback=hydrate;
 hydrate=async function(){
   await hydrateWithLegacyFallback();
