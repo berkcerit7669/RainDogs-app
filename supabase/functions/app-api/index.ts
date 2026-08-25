@@ -62,7 +62,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
       management?ctx.supabaseAdmin.from("member_notes").select("*,member:member_id(nick),creator:created_by(nick)").or(national?"id.not.is.null":`charter_id.eq.${own}`).order("created_at",{ascending:false}):Promise.resolve({data:[],error:null}),
       ctx.supabaseAdmin.from("notifications").select("*").eq("recipient_id",actor.id).order("created_at",{ascending:false}),
       ctx.supabaseAdmin.from("help_tickets").select("*").or(actor.is_app_admin?"id.not.is.null":`reporter_id.eq.${actor.id}`).order("created_at",{ascending:false}),
-      ctx.supabaseAdmin.from("profiles").select("id,nick,full_name,phone,motorcycle,license_class,avatar_path,member_level,account_status,charter_id,charter_role,national_role,is_app_admin,created_at,charters:charter_id(name)").or(`account_status.eq.active,id.eq.${actor.id}`).order("nick"),
+      ctx.supabaseAdmin.from("profiles").select("id,nick,full_name,phone,motorcycle,license_class,avatar_path,member_level,account_status,charter_id,charter_role,national_role,is_app_admin,birthday,created_at,charters:charter_id(name)").or(`account_status.eq.active,id.eq.${actor.id}`).order("nick"),
       management?ctx.supabaseAdmin.from("profiles").select("id,nick,full_name,phone,motorcycle,member_level,account_status,charter_id,requested_member_level,requested_charter_role,requested_national_role,created_at,charters:charter_id(name)").eq("account_status","pending").or(fullNational?"id.not.is.null":`charter_id.eq.${own}`).order("created_at"):Promise.resolve({data:[],error:null}),
       national?ctx.supabaseAdmin.from("admin_logs").select("*,profiles:actor_id(nick)").order("created_at",{ascending:false}).limit(300):Promise.resolve({data:[],error:null}),
       ctx.supabaseAdmin.from("clubhouse_states").select("*").or(national?"charter_id.not.is.null":`charter_id.eq.${own}`)
@@ -332,7 +332,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     if(!self&&!fullNational&&!actor.is_app_admin&&!localManager)return out({error:"Bu üyeyi düzenleme yetkin yok."},403);
     if(localManager&&!fullNational&&!actor.is_app_admin&&(target.is_app_admin||target.national_role))return out({error:"Charter yönetimi National veya uygulama yöneticisi hesabını değiştiremez."},403);
     const patch:any={updated_at:new Date().toISOString()};
-    if(self){if(body.phone!==undefined)patch.phone=String(body.phone||"").replace(/\D/g,"");if(body.motorcycle!==undefined)patch.motorcycle=String(body.motorcycle||"").trim();if(body.licenseClass!==undefined)patch.license_class=String(body.licenseClass||"").trim();if(body.avatarPath!==undefined)patch.avatar_path=body.avatarPath||null}
+    if(self){if(body.phone!==undefined)patch.phone=String(body.phone||"").replace(/\D/g,"");if(body.motorcycle!==undefined)patch.motorcycle=String(body.motorcycle||"").trim();if(body.licenseClass!==undefined)patch.license_class=String(body.licenseClass||"").trim();if(body.avatarPath!==undefined)patch.avatar_path=body.avatarPath||null;if(body.birthday!==undefined)patch.birthday=/^\d{4}-\d{2}-\d{2}$/.test(String(body.birthday||""))?body.birthday:null}
     if(!self&&(actor.is_app_admin||fullNational||localManager)){if(body.phone!==undefined)patch.phone=String(body.phone||"").replace(/\D/g,"");if(body.motorcycle!==undefined)patch.motorcycle=String(body.motorcycle||"").trim()}
     if(body.fullName!==undefined||body.nick!==undefined||body.charterId!==undefined){if(!actor.is_app_admin&&!fullNational)return out({error:"Kimlik ve Charter bilgisini değiştirme yetkin yok."},403);if(body.fullName!==undefined){const fullName=String(body.fullName||"").trim();if(fullName.length<3)return out({error:"İsim soyisim geçerli değil."},400);patch.full_name=fullName}if(body.nick!==undefined){const nick=String(body.nick||"").trim();if(nick.length<2)return out({error:"Nick geçerli değil."},400);patch.nick=nick}if(body.charterId!==undefined)patch.charter_id=body.charterId}
     if(body.accountStatus){const allowed=actor.is_app_admin||fullNational||["President","Vice President","Secretary","Sgt. at Arms"].includes(actor.charter_role||"");if(!allowed)return out({error:"Üyelik durumu yetkin yok."},403);patch.account_status=body.accountStatus}
@@ -383,6 +383,24 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     if(approve){const {error:profileError}=await ctx.supabaseAdmin.from("profiles").update({account_status:"left",updated_at:now}).eq("id",request.member_id);if(profileError)return out({error:profileError.message},400);await ctx.supabaseAdmin.from("push_subscriptions").delete().eq("member_id",request.member_id)}
     const {data:item,error}=await ctx.supabaseAdmin.from("account_deletion_requests").update({status,decided_by:actor.id,decided_at:now,decision_note:String(body.note||"").trim()}).eq("id",request.id).select().single();
     if(error)return out({error:error.message},400);await audit(approve?"Hesap erişimi kapatıldı":"Hesap kapatma talebi reddedildi","account_deletion_request",request.id,{memberId:request.member_id});return out({item});
+  }
+  if(action==="admin.resetKm"){
+    if(!actor.is_app_admin)return out({error:"Bu işlem yalnızca uygulama admini tarafından yapılabilir."},403);
+    const {error}=body.charterId?await ctx.supabaseAdmin.from("km_entries").delete().in("member_id",((await ctx.supabaseAdmin.from("profiles").select("id").eq("charter_id",body.charterId)).data||[]).map((x:any)=>x.id)):await ctx.supabaseAdmin.from("km_entries").delete().not("id","is",null);
+    if(error)return out({error:error.message},400);
+    await audit("Kilometre kayıtları sıfırlandı","km_entries",body.charterId||"all",{charterId:body.charterId||null});
+    return out({ok:true});
+  }
+  if(action==="admin.deleteAccount"){
+    if(!actor.is_app_admin)return out({error:"Bu işlem yalnızca uygulama admini tarafından yapılabilir."},403);
+    const memberId=String(body.memberId||"");
+    if(!memberId||memberId===actor.id)return out({error:"Geçersiz hesap."},400);
+    const {data:target}=await ctx.supabaseAdmin.from("profiles").select("nick").eq("id",memberId).maybeSingle();
+    if(!target)return out({error:"Üye bulunamadı."},404);
+    const {error}=await ctx.supabaseAdmin.auth.admin.deleteUser(memberId);
+    if(error)return out({error:error.message},400);
+    await audit("Hesap kalıcı olarak silindi","profile",memberId,{nick:target.nick});
+    return out({ok:true});
   }
   return out({error:"Bilinmeyen işlem."},404);
 })};
