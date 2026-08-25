@@ -5,6 +5,7 @@ const H={"Content-Type":"application/json; charset=utf-8","Access-Control-Allow-
 const out=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:H});
 const NATIONAL_FULL=new Set(["Amir","NVP","National Secretary","National Sgt. at Arms"]);
 const NATIONAL_DIRECT_PUBLISH=new Set(["Amir","NVP","National Secretary"]);
+const LEVEL_RANK:{[key:string]:number}={hangaround:0,prospect:1,member:2};
 const LOCAL_CONTENT:{[key:string]:Set<string>}={
   event:new Set(["President","Vice President","Sgt. at Arms","Road Captain","Tail Gunner"]),
   announcement:new Set(["President","Vice President","Sgt. at Arms","Secretary","Road Captain","Tail Gunner"]),
@@ -23,7 +24,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
   const token=req.headers.get("authorization")?.replace(/^Bearer\s+/i,"");
   if(!token)return out({error:"Oturum gerekli."},401);
   const {data:auth}=await ctx.supabaseAdmin.auth.getUser(token);if(!auth.user)return out({error:"Oturum geçersiz."},401);
-  const {data:actor,error:actorErr}=await ctx.supabaseAdmin.from("profiles").select("id,nick,account_status,charter_id,charter_role,national_role,is_app_admin").eq("id",auth.user.id).maybeSingle();
+  const {data:actor,error:actorErr}=await ctx.supabaseAdmin.from("profiles").select("id,nick,account_status,charter_id,charter_role,national_role,is_app_admin,member_level").eq("id",auth.user.id).maybeSingle();
   if(actorErr||!actor||actor.account_status!=="active")return out({error:"Aktif üyelik gerekli."},403);
   const body=req.method==="GET"?{}:await req.json().catch(()=>({}));
   const url=new URL(req.url),action=url.searchParams.get("action")||body.action||"bootstrap";
@@ -155,6 +156,31 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
   if(action==="board.vote"){
     if(!boardMember)return out({error:"Kurul üyeliği gerekli."},403);const {data:poll}=await ctx.supabaseAdmin.from("board_polls").select("options,status,closes_at").eq("id",body.pollId).maybeSingle();if(!poll||poll.status!=="Açık"||(poll.closes_at&&new Date(poll.closes_at)<=new Date()))return out({error:"Oylama kapalı."},409);
     const option=String(body.option||"");if(!(poll.options||[]).includes(option))return out({error:"Geçersiz seçenek."},400);const {error}=await ctx.supabaseAdmin.from("board_poll_votes").upsert({poll_id:body.pollId,member_id:actor.id,option_value:option,voted_at:new Date().toISOString()},{onConflict:"poll_id,member_id"});if(error)return out({error:error.message},400);return out({ok:true});
+  }
+  if(action==="archive.upload"){
+    const canUpload=actor.is_app_admin||NATIONAL_DIRECT_PUBLISH.has(actor.national_role||"");if(!canUpload)return out({error:"Arşive belge yükleme yetkin yok."},403);
+    const title=String(body.title||"").trim();if(!title)return out({error:"Belge başlığı zorunlu."},400);
+    const minLevel=["hangaround","prospect","member"].includes(body.minMemberLevel)?body.minMemberLevel:"hangaround";
+    const match=String(body.dataUrl||"").match(/^data:application\/pdf;base64,(.+)$/);if(!match)return out({error:"Yalnızca PDF dosyası yüklenebilir."},400);
+    const bytes=Uint8Array.from(atob(match[1]),c=>c.charCodeAt(0));if(bytes.byteLength>20971520)return out({error:"Dosya 20 MB'tan küçük olmalı."},413);
+    const path=`${actor.id}/${crypto.randomUUID()}.pdf`;
+    const {error:upErr}=await ctx.supabaseAdmin.storage.from("archive-docs").upload(path,bytes,{contentType:"application/pdf",upsert:false});if(upErr)return out({error:upErr.message},400);
+    const {data:item,error}=await ctx.supabaseAdmin.from("archive_documents").insert({title,description:String(body.description||"").trim(),storage_path:path,min_member_level:minLevel,created_by:actor.id}).select().single();if(error)return out({error:error.message},400);
+    await audit("Arşiv belgesi yüklendi","archive_document",item.id,{title});return out({item});
+  }
+  if(action==="archive.list"){
+    const {data,error}=await ctx.supabaseAdmin.from("archive_documents").select("*,profiles:created_by(nick)").order("created_at",{ascending:false});if(error)return out({error:error.message},500);
+    const myRank=LEVEL_RANK[actor.member_level||"hangaround"]??0;
+    const visible=(data||[]).filter((d:any)=>actor.is_app_admin||(LEVEL_RANK[d.min_member_level]??0)<=myRank);
+    await Promise.all(visible.map(async(d:any)=>{const {data:signed}=await ctx.supabaseAdmin.storage.from("archive-docs").createSignedUrl(d.storage_path,300);d.url=signed?.signedUrl||null}));
+    return out({items:visible});
+  }
+  if(action==="archive.delete"){
+    const canDelete=actor.is_app_admin||NATIONAL_DIRECT_PUBLISH.has(actor.national_role||"");if(!canDelete)return out({error:"Arşiv belgesi silme yetkin yok."},403);
+    const {data:doc}=await ctx.supabaseAdmin.from("archive_documents").select("storage_path").eq("id",body.id).maybeSingle();if(!doc)return out({error:"Belge bulunamadı."},404);
+    await ctx.supabaseAdmin.storage.from("archive-docs").remove([doc.storage_path]);
+    const {error}=await ctx.supabaseAdmin.from("archive_documents").delete().eq("id",body.id);if(error)return out({error:error.message},400);
+    await audit("Arşiv belgesi silindi","archive_document",body.id);return out({ok:true});
   }
   if(action==="media.upload"){
     const purpose=String(body.purpose||"content"),match=String(body.dataUrl||"").match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/);if(!match)return out({error:"Geçersiz görsel."},400);const bytes=Uint8Array.from(atob(match[2]),c=>c.charCodeAt(0)),limit=purpose==="avatar"?5242880:10485760;if(bytes.byteLength>limit)return out({error:"Görsel dosyası çok büyük."},413);
