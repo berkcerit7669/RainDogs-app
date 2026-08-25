@@ -53,7 +53,7 @@ textarea{min-height:96px;resize:vertical;line-height:1.45}
 .result.good{color:var(--text)}.result.bad{border-color:rgba(255,80,80,.35);background:rgba(255,70,70,.08);color:#ff8c8c}
 .demoAccess{margin-top:14px;border:1px solid var(--line);background:var(--card);border-radius:22px;padding:14px;color:var(--muted);font-size:12px;line-height:1.55;font-weight:700}
 .demoAccess b{color:var(--text)}
-.header{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:18px;background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.header{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:18px;padding-top:max(18px,env(safe-area-inset-top));background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
 .header h1{margin:0;font-size:22px;letter-spacing:-.025em;font-weight:920;line-height:1.12}
 .header p{margin:4px 0 0;color:var(--soft);font-size:12px;font-weight:700}
 .headerActions{display:flex;align-items:center;gap:12px}.iconBtn{width:45px;height:45px;border-radius:18px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:20px}
@@ -742,7 +742,7 @@ body{overflow-x:hidden}
 main{padding:18px 18px 126px;overflow-x:hidden}
 .header{margin:10px 10px 0;border-radius:0 0 26px 26px}
 .headerActions{display:flex;align-items:center;gap:14px}
-.bottomNav{bottom:12px;width:calc(100% - 24px);max-width:406px;border:1px solid var(--line);border-radius:30px;padding:8px}
+.bottomNav{bottom:max(12px,env(safe-area-inset-bottom));width:calc(100% - 24px);max-width:406px;border:1px solid var(--line);border-radius:30px;padding:8px}
 .navItem.centerMain{transform:none!important;min-height:62px;border-radius:23px;box-shadow:none}
 .navItem.centerMain:active{transform:scale(.96)!important}
 .card,.profileBox,.statCard,.result,.chapterHero,.pendingCard,.lockCard{max-width:100%;overflow:hidden}
