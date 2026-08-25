@@ -2942,15 +2942,14 @@ function adminDeleteAccount(){
   const nick=document.getElementById("maintDeleteNick")?.value.trim()||"";
   const target=(window.rdBackendProfiles||[]).find(m=>m.nick===nick);
   if(!target){safeToast("Bu nick ile bir hesap bulunamadı.");return}
-  appConfirm(`${nick} hesabı ve bütün verileri kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`,()=>appPromptV85("Son Onay",`Devam etmek için ${nick} yaz`,"",async word=>{
-    if(word!==nick){safeToast("İşlem iptal edildi.");return}
+  appConfirm(`${nick} hesabı ve bütün verileri kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`,async()=>{
     try{
       await call("admin.deleteAccount",{memberId:target.id});
       await hydrate();
       safeToast(`${nick} hesabı kalıcı olarak silindi.`);
       render("appSettings");
     }catch(e){safeToast(e.message)}
-  }));
+  });
 }
 const rdV41AdminLogsScreen=adminLogsScreen;
 adminLogsScreen=function(){return `<div class="result">Bütün kayıtlar işlem yapan kişi, zaman, işlem türü ve hedef bilgisiyle tutulur.</div>`+rdV41AdminLogsScreen()};
