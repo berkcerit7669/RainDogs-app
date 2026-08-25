@@ -71,4 +71,11 @@
       window.addEventListener("focus", checkForUpdate);
     }).catch(() => {});
   }
+
+  function silentDataRefresh() {
+    if (typeof currentUser !== "undefined" && currentUser?.backend && typeof hydrate === "function") hydrate(true);
+  }
+  setInterval(silentDataRefresh, 2 * 60 * 1000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") silentDataRefresh(); });
+  window.addEventListener("focus", silentDataRefresh);
 })();
