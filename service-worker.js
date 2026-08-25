@@ -1,4 +1,4 @@
-const CACHE_NAME = "raindogs-shell-v39";
+const CACHE_NAME = "raindogs-shell-v40";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./supabase-config.js?v=81", "./supabase-auth.js?v=85", "./supabase-data.js?v=102", "./push-client.js?v=83"];
 
 self.addEventListener("install", (event) => {
