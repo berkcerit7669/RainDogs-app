@@ -103,14 +103,17 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     const visibleAttendance=national?(attendance.data||[]):management?(attendance.data||[]).filter((row:any)=>visibleEventIds.has(row.event_id)):(attendance.data||[]);
     const visibleKm=national?(km.data||[]):management?(km.data||[]).filter((row:any)=>row.profiles?.charter_id===own):(km.data||[]);
     const visibleResponses=national?(eventResponses.data||[]):(eventResponses.data||[]).filter((row:any)=>visibleEventIds.has(row.event_id));
-    const signed=async(bucket:string,path:string|null)=>path?(await ctx.supabaseAdmin.storage.from(bucket).createSignedUrl(path,3600)).data?.signedUrl||null:null;
-    await Promise.all([
-      ...visibleEvents.map(async(x:any)=>x.poster_url=await signed("content-media",x.poster_path)),
-      ...(announcements.data||[]).map(async(x:any)=>x.photo_url=await signed("content-media",x.photo_path)),
-      ...(routes.data||[]).map(async(x:any)=>x.photo_url=await signed("content-media",x.photo_path)),
-      ...(profiles.data||[]).map(async(x:any)=>x.avatar_url=await signed("profile-photos",x.avatar_path)),
-      ...(tickets.data||[]).map(async(x:any)=>x.screenshot_url=await signed("support-screenshots",x.screenshot_path))
-    ]);
+    const signGroups:{[bucket:string]:{row:any,field:string,path:string}[]}={"content-media":[],"profile-photos":[],"support-screenshots":[]};
+    const queueSign=(bucket:string,row:any,field:string,path:string|null)=>{if(!path){row[field]=null;return}signGroups[bucket].push({row,field,path})};
+    visibleEvents.forEach((x:any)=>queueSign("content-media",x,"poster_url",x.poster_path));
+    (announcements.data||[]).forEach((x:any)=>queueSign("content-media",x,"photo_url",x.photo_path));
+    (routes.data||[]).forEach((x:any)=>queueSign("content-media",x,"photo_url",x.photo_path));
+    (profiles.data||[]).forEach((x:any)=>queueSign("profile-photos",x,"avatar_url",x.avatar_path));
+    (tickets.data||[]).forEach((x:any)=>queueSign("support-screenshots",x,"screenshot_url",x.screenshot_path));
+    await Promise.all(Object.entries(signGroups).filter(([,items])=>items.length).map(async([bucket,items])=>{
+      const {data}=await ctx.supabaseAdmin.storage.from(bucket).createSignedUrls(items.map(i=>i.path),3600);
+      items.forEach((item,i)=>{item.row[item.field]=data?.[i]?.signedUrl||null});
+    }));
     const visibleApprovals=(approvalRequests.data||[]).filter((request:any)=>national||request.submitted_by===actor.id||request.source_charter_id===own||request.target_charter_id===own);
     const visibleEventCharters=national?(eventCharters.data||[]):(eventCharters.data||[]).filter((row:any)=>visibleEventIds.has(row.event_id));
     const deletionQuery=actor.is_app_admin?ctx.supabaseAdmin.from("account_deletion_requests").select("*,profiles:member_id(nick,full_name)").order("created_at",{ascending:false}):ctx.supabaseAdmin.from("account_deletion_requests").select("*").eq("member_id",actor.id).order("created_at",{ascending:false}).limit(1);
