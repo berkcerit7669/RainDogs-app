@@ -106,6 +106,7 @@
       currentUser = user;
       localStorage.removeItem("rdUser");
       sessionStorage.setItem("rdUser", JSON.stringify(user));
+      document.documentElement.classList.remove("rdRestoring");
       boot();
       window.dispatchEvent(new CustomEvent("raindogs:authenticated", { detail: { user } }));
     } catch (error) {
@@ -113,6 +114,7 @@
       localStorage.removeItem("rdRememberMe");
       localStorage.removeItem("rdUser");
       sessionStorage.removeItem("rdUser");
+      document.documentElement.classList.remove("rdRestoring");
       currentUser = null;
       boot();
     }

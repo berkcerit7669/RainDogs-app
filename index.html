@@ -35,7 +35,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
 #appShell{display:flex;flex-direction:column;height:100vh;height:-webkit-fill-available;height:100dvh;height:var(--app-height,100dvh)}
 #appShell main{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 #appShell .bottomNav{flex:0 0 auto;position:static}
-.loginWrap{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:32px 28px}
+.loginWrap{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:32px 28px}html.rdRestoring #login{display:none}
 .brandMark{width:74px;height:74px;border-radius:28px;border:1px solid var(--line);background:linear-gradient(145deg,var(--card2),var(--card));display:grid;place-items:center;margin-bottom:30px;overflow:hidden}
 .logoPlaceholder{font-weight:950;font-size:28px;letter-spacing:-0.04em}
 .loginTitle{font-size:48px;line-height:1.08;letter-spacing:-0.055em;font-weight:950;margin:0;max-width:340px}
@@ -748,7 +748,7 @@ body{overflow-x:hidden}
 main{padding:18px 18px 126px;overflow-x:hidden}
 .header{margin:10px 10px 0;border-radius:0 0 26px 26px}
 .headerActions{display:flex;align-items:center;gap:14px}
-.bottomNav{bottom:0;width:calc(100% - 24px);max-width:406px;border:1px solid var(--line);border-radius:30px;padding:8px 8px calc(8px + env(safe-area-inset-bottom) * 0.45);margin-bottom:6px}
+.bottomNav{bottom:0;width:calc(100% - 24px);max-width:406px;border:1px solid var(--line);border-radius:30px;padding:8px;margin-bottom:max(6px,env(safe-area-inset-bottom))}
 .navItem.centerMain{transform:none!important;min-height:62px;border-radius:23px;box-shadow:none}
 .navItem.centerMain:active{transform:scale(.96)!important}
 .card,.profileBox,.statCard,.result,.chapterHero,.pendingCard,.lockCard{max-width:100%;overflow:hidden}
@@ -1074,6 +1074,11 @@ body.light .chapterMiniStats>div{border-color:rgba(0,0,0,.16);background:rgba(0,
 </style>
 </head>
 <body>
+<script>
+(function(){
+  if(localStorage.getItem("rdSupabaseSession")||sessionStorage.getItem("rdSupabaseSession"))document.documentElement.classList.add("rdRestoring");
+})();
+</script>
 <script>
 (function(){
   function setAppHeight(){const h=window.visualViewport?window.visualViewport.height:window.innerHeight;document.documentElement.style.setProperty("--app-height",h+"px")}
@@ -3964,7 +3969,7 @@ cancelManagedEvent=function(key){const e=managedEvent(key);if(!e||(!canUseGlobal
 
 syncLoginType();syncRegisterNickMode();syncChapterOptions();boot();updateHeaderNotifDot();
 </script>
-<script src="supabase-auth.js?v=86"></script>
+<script src="supabase-auth.js?v=87"></script>
 <script src="supabase-data.js?v=107"></script>
 <script src="push-client.js?v=84"></script>
 <div id="detailOverlay" class="detailOverlay" onclick="closeDetail()"><div id="detailPanel" class="detailPanel" onclick="event.stopPropagation()"></div></div>
