@@ -50,7 +50,6 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
   if(action==="bootstrap"){
     const own=actor.charter_id;
     const management=national||!!actor.charter_role;
-    const managedMemberIds=national?[]:management?((await ctx.supabaseAdmin.from("profiles").select("id").eq("charter_id",own)).data||[]).map((x:any)=>x.id):[actor.id];
     const [charters,events,eventCharters,announcements,routes,attendance,km,visits,notes,notifications,tickets,profiles,applications,logs,clubhouseStates,announcementReads,eventResponses,emergency,finance,discipline,polls,pollVotes,approvalRequests,kmTotals]=await Promise.all([
       ctx.supabaseAdmin.from("charters").select("id,name,active").eq("active",true),
       ctx.supabaseAdmin.from("events").select("*,charters:owner_charter_id(name)").order("starts_at"),
@@ -63,13 +62,13 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
       management?ctx.supabaseAdmin.from("member_notes").select("*,member:member_id(nick),creator:created_by(nick)").or(national?"id.not.is.null":`charter_id.eq.${own}`).order("created_at",{ascending:false}):Promise.resolve({data:[],error:null}),
       ctx.supabaseAdmin.from("notifications").select("*").eq("recipient_id",actor.id).order("created_at",{ascending:false}),
       ctx.supabaseAdmin.from("help_tickets").select("*").or(actor.is_app_admin?"id.not.is.null":`reporter_id.eq.${actor.id}`).order("created_at",{ascending:false}),
-      ctx.supabaseAdmin.from("profiles").select("id,nick,full_name,phone,motorcycle,license_class,avatar_path,member_level,account_status,charter_id,charter_role,national_role,is_app_admin,created_at,charters:charter_id(name)").or(management?(national?"id.not.is.null":`charter_id.eq.${own}`):`id.eq.${actor.id}`).order("nick"),
+      ctx.supabaseAdmin.from("profiles").select("id,nick,full_name,phone,motorcycle,license_class,avatar_path,member_level,account_status,charter_id,charter_role,national_role,is_app_admin,created_at,charters:charter_id(name)").or(`account_status.eq.active,id.eq.${actor.id}`).order("nick"),
       management?ctx.supabaseAdmin.from("profiles").select("id,nick,full_name,phone,motorcycle,member_level,account_status,charter_id,requested_member_level,requested_charter_role,requested_national_role,created_at,charters:charter_id(name)").eq("account_status","pending").or(fullNational?"id.not.is.null":`charter_id.eq.${own}`).order("created_at"):Promise.resolve({data:[],error:null}),
       national?ctx.supabaseAdmin.from("admin_logs").select("*,profiles:actor_id(nick)").order("created_at",{ascending:false}).limit(300):Promise.resolve({data:[],error:null}),
       ctx.supabaseAdmin.from("clubhouse_states").select("*").or(national?"charter_id.not.is.null":`charter_id.eq.${own}`)
       ,ctx.supabaseAdmin.from("announcement_reads").select("*").eq("member_id",actor.id)
       ,ctx.supabaseAdmin.from("event_responses").select("*,profiles:member_id(nick,charter_id)").or(management?"event_id.not.is.null":`member_id.eq.${actor.id}`)
-      ,ctx.supabaseAdmin.from("emergency_profiles").select("*").or(national?"member_id.not.is.null":`member_id.in.(${(managedMemberIds.length?managedMemberIds:[actor.id]).join(",")})`)
+      ,ctx.supabaseAdmin.from("emergency_profiles").select("*").or(management?"member_id.not.is.null":`member_id.eq.${actor.id}`)
       ,canFinance?ctx.supabaseAdmin.from("charter_finance").select("*,charters:charter_id(name),profiles:created_by(nick)").or(national?"id.not.is.null":`charter_id.eq.${own}`).order("created_at",{ascending:false}):Promise.resolve({data:[],error:null})
       ,canDiscipline?ctx.supabaseAdmin.from("charter_discipline").select("*,charters:charter_id(name),member:member_id(nick),creator:created_by(nick)").or(national?"id.not.is.null":`charter_id.eq.${own}`).order("created_at",{ascending:false}):Promise.resolve({data:[],error:null})
       ,boardMember?ctx.supabaseAdmin.from("board_polls").select("*").order("created_at",{ascending:false}):Promise.resolve({data:[],error:null})
