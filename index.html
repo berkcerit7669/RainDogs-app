@@ -30,7 +30,7 @@ button,input,select,textarea{font:inherit}
 button:focus,input:focus,select:focus,textarea:focus{outline:none}
 body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Segoe UI",Arial,sans-serif}
 .app{max-width:430px;min-height:100vh;margin:0 auto;background:radial-gradient(circle at 88% 5%,var(--card2),transparent 30%),radial-gradient(circle at 18% 0%,var(--card),transparent 24%),linear-gradient(180deg,var(--app),var(--bg) 70%);border-left:1px solid var(--line);border-right:1px solid var(--line)}
-#appShell{display:flex;flex-direction:column;height:100vh;height:100dvh}
+#appShell{display:flex;flex-direction:column;height:100vh;height:100dvh;height:var(--app-height,100dvh)}
 #appShell main{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 #appShell .bottomNav{flex:0 0 auto;position:static}
 .loginWrap{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:32px 28px}
@@ -1072,6 +1072,15 @@ body.light .chapterMiniStats>div{border-color:rgba(0,0,0,.16);background:rgba(0,
 </style>
 </head>
 <body>
+<script>
+(function(){
+  function setAppHeight(){document.documentElement.style.setProperty("--app-height",window.innerHeight+"px")}
+  setAppHeight();
+  window.addEventListener("resize",setAppHeight);
+  window.addEventListener("orientationchange",setAppHeight);
+  if(window.visualViewport)window.visualViewport.addEventListener("resize",setAppHeight);
+})();
+</script>
 <div id="splash" class="splash"><div class="splashInner"><img class="splashBrand" src="raindogs-logo.png" alt="RainDogs"><div class="splashSub">If you don't ride in the rain you don't ride</div></div></div>
 <div id="toast" class="toast"></div>
 <div id="tourOverlay" class="tourOverlay"><div class="tourCoach"><div class="tourTop"><span id="tourProgress" class="tourProgress"></span><button class="btn ghost" style="padding:8px 11px;color:#fff;border-color:rgba(255,255,255,.18)" onclick="stopPresentationTour()">Atla</button></div><h3 id="tourTitle"></h3><p id="tourBody"></p><div class="tourActions"><button id="tourBack" class="btn ghost" style="color:#fff;border-color:rgba(255,255,255,.18)" onclick="previousTourStep()">Geri</button><button id="tourNext" class="btn primary" onclick="nextTourStep()">Devam</button></div></div></div>
