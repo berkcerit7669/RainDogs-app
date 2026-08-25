@@ -6,6 +6,7 @@ const out=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,h
 const NATIONAL_FULL=new Set(["Amir","NVP","National Secretary","National Sgt. at Arms"]);
 const NATIONAL_DIRECT_PUBLISH=new Set(["Amir","NVP","National Secretary"]);
 const LEVEL_RANK:{[key:string]:number}={hangaround:0,prospect:1,member:2};
+const MANUAL_BADGES=new Set(["Iron Butt","Iron Rider","Nomad","Lone Dog","Dogometer","Road King","Night Dog","Border Stray","Asphalt Scars","Grease & Blood"]);
 const LOCAL_CONTENT:{[key:string]:Set<string>}={
   event:new Set(["President","Vice President","Sgt. at Arms","Road Captain","Tail Gunner"]),
   announcement:new Set(["President","Vice President","Sgt. at Arms","Secretary","Road Captain","Tail Gunner"]),
@@ -50,7 +51,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
   if(action==="bootstrap"){
     const own=actor.charter_id;
     const management=national||!!actor.charter_role;
-    const [charters,events,eventCharters,announcements,routes,attendance,km,visits,notes,notifications,tickets,profiles,applications,logs,clubhouseStates,announcementReads,eventResponses,emergency,finance,discipline,polls,pollVotes,approvalRequests,kmTotals,cultureItems]=await Promise.all([
+    const [charters,events,eventCharters,announcements,routes,attendance,km,visits,notes,notifications,tickets,profiles,applications,logs,clubhouseStates,announcementReads,eventResponses,emergency,finance,discipline,polls,pollVotes,approvalRequests,kmTotals,cultureItems,milestones,roleHistory,memberBadges,attendanceAll,readsAll,requiredAnnouncements]=await Promise.all([
       ctx.supabaseAdmin.from("charters").select("id,name,active").eq("active",true),
       ctx.supabaseAdmin.from("events").select("*,charters:owner_charter_id(name)").order("starts_at"),
       ctx.supabaseAdmin.from("event_charters").select("event_id,charter_id,approval_status"),
@@ -76,11 +77,26 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
       ,management?ctx.supabaseAdmin.from("approval_requests").select("*,submitter:submitted_by(nick),decider:decided_by(nick),source:source_charter_id(name),target:target_charter_id(name)").order("created_at",{ascending:false}):Promise.resolve({data:[],error:null})
       ,ctx.supabaseAdmin.from("km_entries").select("member_id,km").eq("status","active")
       ,ctx.supabaseAdmin.from("culture_items").select("*").order("position").order("created_at")
+      ,ctx.supabaseAdmin.from("membership_milestones").select("member_id,milestone,occurred_on")
+      ,ctx.supabaseAdmin.from("role_history").select("member_id,role_scope,role_name,started_at,ended_at").order("started_at")
+      ,ctx.supabaseAdmin.from("member_badges").select("*,profiles:member_id(nick)").order("awarded_at",{ascending:false})
+      ,ctx.supabaseAdmin.from("attendance").select("member_id,status")
+      ,ctx.supabaseAdmin.from("announcement_reads").select("member_id,announcement_id")
+      ,ctx.supabaseAdmin.from("announcements").select("id,charter_id,scope,created_at").eq("required_read",true)
     ]);
     const ticketIds=(tickets.data||[]).map((x:any)=>x.id),ticketMessages=ticketIds.length?await ctx.supabaseAdmin.from("help_ticket_messages").select("*,profiles:sender_id(nick,is_app_admin)").in("ticket_id",ticketIds).order("created_at"):({data:[],error:null});
-    const failed=[charters,events,eventCharters,announcements,routes,attendance,km,visits,notes,notifications,tickets,profiles,applications,logs,clubhouseStates,announcementReads,eventResponses,emergency,finance,discipline,polls,pollVotes,approvalRequests,ticketMessages,kmTotals,cultureItems].find(x=>x.error);if(failed?.error)return out({error:failed.error.message},500);
+    const failed=[charters,events,eventCharters,announcements,routes,attendance,km,visits,notes,notifications,tickets,profiles,applications,logs,clubhouseStates,announcementReads,eventResponses,emergency,finance,discipline,polls,pollVotes,approvalRequests,ticketMessages,kmTotals,cultureItems,milestones,roleHistory,memberBadges,attendanceAll,readsAll,requiredAnnouncements].find(x=>x.error);if(failed?.error)return out({error:failed.error.message},500);
     const kmByMember=new Map<string,number>();(kmTotals.data||[]).forEach((row:any)=>kmByMember.set(row.member_id,(kmByMember.get(row.member_id)||0)+Number(row.km||0)));
     (profiles.data||[]).forEach((p:any)=>p.total_km=kmByMember.get(p.id)||0);
+    const attRate=new Map<string,{a:number,t:number}>();
+    (attendanceAll.data||[]).forEach((r:any)=>{if(!["attended","absent"].includes(r.status))return;const e=attRate.get(r.member_id)||{a:0,t:0};e.t++;if(r.status==="attended")e.a++;attRate.set(r.member_id,e)});
+    const readSet=new Set((readsAll.data||[]).map((r:any)=>`${r.member_id}:${r.announcement_id}`));
+    const requiredList=requiredAnnouncements.data||[];
+    (profiles.data||[]).forEach((p:any)=>{
+      const att=attRate.get(p.id);p.attendance_rate=att&&att.t?Math.round(att.a/att.t*100):null;
+      const applicable=requiredList.filter((a:any)=>new Date(a.created_at)>=new Date(p.created_at)&&(a.scope==="national"||a.charter_id===p.charter_id));
+      p.read_rate=applicable.length?Math.round(applicable.filter((a:any)=>readSet.has(`${p.id}:${a.id}`)).length/applicable.length*100):null;
+    });
     const approvedJointIds=new Set((eventCharters.data||[]).filter((row:any)=>row.charter_id===own&&row.approval_status==="active").map((row:any)=>row.event_id));
     const visibleEvents=national?(events.data||[]):(events.data||[]).filter((event:any)=>event.scope==="national"||event.owner_charter_id===own||(event.scope==="joint"&&approvedJointIds.has(event.id)));
     const visibleEventIds=new Set(visibleEvents.map((event:any)=>event.id));
@@ -101,7 +117,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     const deletionRequests=await deletionQuery;
     if(deletionRequests.error)return out({error:deletionRequests.error.message},500);
     const ownDeletionRequest=actor.is_app_admin?(deletionRequests.data||[]).find((x:any)=>x.member_id===actor.id)||null:(deletionRequests.data||[])[0]||null;
-    return out({actor,charters:charters.data,events:visibleEvents,eventCharters:visibleEventCharters,announcements:announcements.data,routes:routes.data,attendance:visibleAttendance,kmEntries:visibleKm,clubhouseVisits:visits.data,memberNotes:notes.data,notifications:notifications.data,helpTickets:tickets.data,profiles:profiles.data,applications:applications.data,adminLogs:logs.data,clubhouseStates:clubhouseStates.data,announcementReads:announcementReads.data,eventResponses:visibleResponses,emergencyProfiles:emergency.data,charterFinance:finance.data,charterDiscipline:discipline.data,boardPolls:polls.data,boardPollVotes:pollVotes.data,approvalRequests:visibleApprovals,helpTicketMessages:ticketMessages.data,accountDeletionRequest:ownDeletionRequest,accountDeletionRequests:actor.is_app_admin?deletionRequests.data:[],cultureItems:cultureItems.data});
+    return out({actor,charters:charters.data,events:visibleEvents,eventCharters:visibleEventCharters,announcements:announcements.data,routes:routes.data,attendance:visibleAttendance,kmEntries:visibleKm,clubhouseVisits:visits.data,memberNotes:notes.data,notifications:notifications.data,helpTickets:tickets.data,profiles:profiles.data,applications:applications.data,adminLogs:logs.data,clubhouseStates:clubhouseStates.data,announcementReads:announcementReads.data,eventResponses:visibleResponses,emergencyProfiles:emergency.data,charterFinance:finance.data,charterDiscipline:discipline.data,boardPolls:polls.data,boardPollVotes:pollVotes.data,approvalRequests:visibleApprovals,helpTicketMessages:ticketMessages.data,accountDeletionRequest:ownDeletionRequest,accountDeletionRequests:actor.is_app_admin?deletionRequests.data:[],cultureItems:cultureItems.data,milestones:milestones.data,roleHistory:roleHistory.data,memberBadges:memberBadges.data});
   }
 
   if(action==="announcement.read"){
@@ -344,7 +360,11 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     if(body.memberLevel){if(!actor.is_app_admin&&!fullNational&&!localManager)return out({error:"Üyelik seviyesi atama yetkin yok."},403);if(!["hangaround","prospect","member"].includes(body.memberLevel))return out({error:"Geçersiz üyelik seviyesi."},400);patch.member_level=body.memberLevel}
     if(body.charterRole!==undefined){if(!actor.is_app_admin&&!fullNational&&!["President","Vice President"].includes(actor.charter_role||""))return out({error:"Charter görevi atama yetkin yok."},403);if(body.charterRole==="President"&&!actor.is_app_admin&&!fullNational)return out({error:"Başkanlık ataması National onayı gerektirir."},403);patch.charter_role=body.charterRole||null}
     if(body.nationalRole!==undefined||body.isAppAdmin!==undefined){if(!actor.is_app_admin&&!NATIONAL_FULL.has(actor.national_role||""))return out({error:"National görev atama yetkin yok."},403);if(body.nationalRole!==undefined)patch.national_role=body.nationalRole||null;if(body.isAppAdmin!==undefined){if(!actor.is_app_admin)return out({error:"Uygulama admini atamasını yalnızca uygulama admini yapabilir."},403);patch.is_app_admin=!!body.isAppAdmin}}
-    const {data:item,error}=await ctx.supabaseAdmin.from("profiles").update(patch).eq("id",target.id).select().single();if(error)return out({error:error.message},400);await audit("Üye bilgisi güncellendi","profile",target.id,patch);return out({item});
+    const {data:item,error}=await ctx.supabaseAdmin.from("profiles").update(patch).eq("id",target.id).select().single();if(error)return out({error:error.message},400);await audit("Üye bilgisi güncellendi","profile",target.id,patch);
+    const today=new Date().toISOString().slice(0,10);
+    if(patch.charter_role!==undefined&&patch.charter_role!==target.charter_role){await ctx.supabaseAdmin.from("role_history").update({ended_at:today}).eq("member_id",target.id).eq("role_scope","charter").is("ended_at",null);if(patch.charter_role)await ctx.supabaseAdmin.from("role_history").insert({member_id:target.id,role_scope:"charter",role_name:patch.charter_role,started_at:today})}
+    if(patch.national_role!==undefined&&patch.national_role!==target.national_role){await ctx.supabaseAdmin.from("role_history").update({ended_at:today}).eq("member_id",target.id).eq("role_scope","national").is("ended_at",null);if(patch.national_role)await ctx.supabaseAdmin.from("role_history").insert({member_id:target.id,role_scope:"national",role_name:patch.national_role,started_at:today})}
+    return out({item});
   }
   if(action==="member.create"){
     if(!actor.is_app_admin)return out({error:"Üye ekleme yalnızca uygulama adminine açıktır."},403);
@@ -402,6 +422,41 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     if(!national)return out({error:"Kültür içeriği silme yetkin yok."},403);
     const {error}=await ctx.supabaseAdmin.from("culture_items").delete().eq("id",body.id);if(error)return out({error:error.message},400);
     await audit("Kültür içeriği silindi","culture_item",body.id);
+    return out({ok:true});
+  }
+  if(action==="milestone.save"){
+    const memberId=String(body.memberId||actor.id);
+    const {data:target}=await ctx.supabaseAdmin.from("profiles").select("id,charter_id").eq("id",memberId).maybeSingle();
+    if(!target)return out({error:"Üye bulunamadı."},404);
+    const self=target.id===actor.id,isSgt=actor.charter_role==="Sgt. at Arms"&&target.charter_id===actor.charter_id;
+    if(!self&&!isSgt&&!national)return out({error:"Bu bilgiyi düzenleme yetkin yok."},403);
+    const milestone=String(body.milestone||"");if(!["hangaround","prospect","member"].includes(milestone))return out({error:"Geçersiz aşama."},400);
+    const date=String(body.date||"");if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return out({error:"Geçerli bir tarih gir."},400);
+    const {data:item,error}=await ctx.supabaseAdmin.from("membership_milestones").upsert({member_id:target.id,milestone,occurred_on:date,recorded_by:actor.id,updated_at:new Date().toISOString()},{onConflict:"member_id,milestone"}).select().single();
+    if(error)return out({error:error.message},400);
+    await audit("Üyelik aşaması kaydedildi","membership_milestone",target.id,{milestone,date});
+    return out({item});
+  }
+  if(action==="badge.award"||action==="badge.revoke"){
+    if(action==="badge.award"){
+      const memberId=String(body.memberId||"");
+      const {data:target}=await ctx.supabaseAdmin.from("profiles").select("id,charter_id").eq("id",memberId).maybeSingle();
+      if(!target)return out({error:"Üye bulunamadı."},404);
+      const isSgt=actor.charter_role==="Sgt. at Arms"&&target.charter_id===actor.charter_id;
+      if(!isSgt&&!national)return out({error:"Rozet yönetimi yetkin yok."},403);
+      const badgeKey=String(body.badgeKey||"");if(!MANUAL_BADGES.has(badgeKey))return out({error:"Geçersiz rozet."},400);
+      const {data:item,error}=await ctx.supabaseAdmin.from("member_badges").insert({member_id:target.id,badge_key:badgeKey,note:String(body.note||"").trim(),awarded_by:actor.id}).select().single();
+      if(error)return out({error:error.message},400);
+      await audit("Rozet verildi","member_badge",item.id,{badgeKey,memberId:target.id});
+      await notify({recipient_id:target.id,type:"Rozet",title:"Yeni bir rozet kazandın!",body:`"${badgeKey}" rozetini kazandın.`,action_path:"profile"});
+      return out({item});
+    }
+    const {data:existing}=await ctx.supabaseAdmin.from("member_badges").select("member_id").eq("id",body.id).maybeSingle();if(!existing)return out({error:"Rozet bulunamadı."},404);
+    const {data:target}=await ctx.supabaseAdmin.from("profiles").select("charter_id").eq("id",existing.member_id).maybeSingle();
+    const isSgt=actor.charter_role==="Sgt. at Arms"&&target?.charter_id===actor.charter_id;
+    if(!isSgt&&!national)return out({error:"Rozet yönetimi yetkin yok."},403);
+    const {error}=await ctx.supabaseAdmin.from("member_badges").delete().eq("id",body.id);if(error)return out({error:error.message},400);
+    await audit("Rozet geri alındı","member_badge",body.id);
     return out({ok:true});
   }
   if(action==="admin.resetKm"){

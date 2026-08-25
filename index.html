@@ -1762,20 +1762,30 @@ function openNotificationsSheet(){
 
 
 const badgeCatalog = {
-  "Road King": "Ay içinde veya toplamda yüksek kilometre yapan üyeyi temsil eder. Yolda olanın emeği görünür.",
-  "Event Loyal": "Etkinliklere düzenli katılan ve organizasyon disiplinini koruyan üyeyi temsil eder.",
-  "Iron Rider": "Tek ay içinde 500 km ve üzeri onaylı sürüş yapan üyeyi temsil eder.",
-  "New Blood": "Hangaround veya Prospect sürecinde aktif takip ve katılım gösteren yeni üyeyi temsil eder.",
-  "Chapter Power": "Chapter toplam kilometre ve etkinlik katkısında öne çıkan üyeleri temsil eder.",
-  "Old Guard": "Kulüp yapısında uzun süreli sorumluluk, devamlılık ve temsil gücünü ifade eder.",
-  "Discipline": "Zorunlu duyuruları okuyup onaylayan, kulüp içi iletişim disiplinini takip eden üyeyi temsil eder.",
-  "On Road": "Aktiflik verisi oluşmaya başlayan üyeyi temsil eder.",
+  "New Blood": "Kulübe katılalı (Hangaround veya Prospect süreci) 150 günü doldurmamış üyeyi temsil eder.",
+  "On Road": "Hangaround veya Prospect sürecindeki üyeyi temsil eder.",
+  "Charter Power": "Charter içinde toplam km ve etkinlik katılımı en yüksek tek üyeye verilir (charter başına 1 kişi).",
+  "Old Guard": "Aynı charter veya national görevi kesintisiz 2 yıldan uzun süredir taşıyan üyeyi temsil eder.",
+  "Event Loyal": "Etkinlik katılım oranı %90 ve üzerinde olan üyeyi temsil eder.",
+  "Discipline": "Zorunlu duyuru okuma / uygulama içi katılım oranı %80 ve üzerinde olan üyeyi temsil eder.",
+  "Road Pup": "Kulüple birlikte katedilen ilk 5.000 km tamamlandığında verilir.",
   "Admin": "Sistem ve yönetim operasyonlarında sınırsız yetki taşıyan kullanıcıdır.",
-  "Kurul": "Karar süreçlerinde sorumluluk alan kurul üyesini temsil eder."
+  "Iron Butt": "24 saat içinde, yalnızca yakıt ve temel mola süreleri hariç, en az 1.000 mil (~1.610 km) kesintisiz sürüş yapana verilir.",
+  "Iron Rider": "Kar, don, yoğun yağmur veya aşırı sıcak gibi zorlu hava koşullarında kulüp sürüşünü tamamlayan ya da arıza yapan eski/klasik bir motosikletle rotayı pes etmeden bitiren üyeye verilir.",
+  "Nomad": "Belirli bir şehre/lokale bağlı kalmadan kulüp adına sürekli seyahat eden, diğer lokalleri düzenli ziyaret eden bağımsız üyeye verilir.",
+  "Lone Dog": "Tek başına en uzun sürüşü yapan üyeye verilir.",
+  "Dogometer": "Aynı motosikletle 100.000 km yapan üyeye verilir.",
+  "Road King": "Aynı motosiklet üzerinde 40.000 km yapan üyeye verilir.",
+  "Night Dog": "Gün batımından gün doğumuna kadar, yalnızca benzin molasıyla, bütün gece aralıksız süren sürüşü 5 kez tamamlayan üyeye verilir.",
+  "Border Stray": "Tek bir sürüşte en az 3 farklı ülke sınırını geçen üyeye verilir.",
+  "Asphalt Scars": "Ciddi bir kaza atlatıp motorunu toplayıp pes etmeden tekrar sele dönen üyeye verilir.",
+  "Grease & Blood": "Yolda arızalanan motorunu çekici çağırmadan kendi imkanlarıyla tamir edip rotayı tamamlayan üyeye verilir."
 };
+const RD_MANUAL_BADGE_KEYS = ["Iron Butt","Iron Rider","Nomad","Lone Dog","Dogometer","Road King","Night Dog","Border Stray","Asphalt Scars","Grease & Blood"];
+const RD_AUTO_BADGE_KEYS = ["New Blood","On Road","Charter Power","Old Guard","Event Loyal","Discipline","Road Pup","Admin"];
 function showBadgeInfo(title){
   const desc = badgeCatalog[title] || "Bu rozet kulüp içi aktiflik, disiplin veya katkı durumunu gösterir.";
-  openDetail(`${pill("Rozet Bilgisi")}<h3 style="font-size:30px;margin:14px 0 0">${title}</h3><p>${desc}</p><div class="result">Rozetler profil, leaderboard ve yönetim değerlendirmelerinde üyelerin aktiflik izini görünür kılar.</div>`);
+  openDetail(`${pill(RD_MANUAL_BADGE_KEYS.includes(title)?"Onur Rozeti":"Otomatik Rozet")}<h3 style="font-size:30px;margin:14px 0 0">${title}</h3><p>${desc}</p><div class="result">${RD_MANUAL_BADGE_KEYS.includes(title)?"Bu rozet otomatik hesaplanmaz, charter Sgt. at Arms'ı veya national board tarafından elle verilir.":"Bu rozet uygulama verilerine göre otomatik hesaplanır."}</div>`);
 }
 let badgeHoldTimer = null;
 function badgeHoldStart(title){
@@ -1788,23 +1798,75 @@ function badgeHoldEnd(){
 function badgeTile(b){
   return `<div class="achievement badgeInfo" onpointerdown="badgeHoldStart('${b.title}')" onpointerup="badgeHoldEnd()" onpointerleave="badgeHoldEnd()" onclick="showBadgeInfo('${b.title}')"><b>${b.title}</b><span>${b.desc}</span></div>`;
 }
+function memberProfileId(nick){return (window.rdBackendProfiles||[]).find(x=>x.nick===nick)?.id}
+function daysSince(dateStr){if(!dateStr)return null;return Math.floor((Date.now()-new Date(dateStr+"T00:00:00"))/86400000)}
+function milestoneDate(nick,type){const id=memberProfileId(nick);return (window.rdMilestones||[]).find(x=>x.memberId===id&&x.milestone===type)?.date||null}
+function currentRoleTenureDays(nick){const id=memberProfileId(nick),rows=(window.rdRoleHistory||[]).filter(x=>x.memberId===id&&!x.endedAt);if(!rows.length)return 0;const oldest=rows.reduce((a,b)=>new Date(a.startedAt)<new Date(b.startedAt)?a:b);return daysSince(oldest.startedAt)||0}
+function charterPowerHolder(chapter){
+  const list=allMembers().filter(x=>x.chapter===chapter&&(x.status||"Aktif")==="Aktif");
+  let best=null;
+  list.forEach(x=>{const score=(x.km||0)+((x.attendanceRate||0)*10);if(!best||score>best.score)best={nick:x.nick,score}});
+  return best?best.nick:null;
+}
 function memberBadges(m){
   const badges = [];
-  if((m.km||0) >= 1000) badges.push({title:"Road King", desc:"Yüksek km aktifliği"});
-  if((m.events||0) >= 10) badges.push({title:"Event Loyal", desc:"Etkinlik devamlılığı"});
-  if((m.km||0) >= 500) badges.push({title:"Iron Rider", desc:"500 km+ sürüş gücü"});
-  if(["Hangaround","Prospect"].includes(m.role)) badges.push({title:"New Blood", desc:"Yeni süreçte aktif takip"});
-  if((m.chapter||"") && (m.km||0) >= 700) badges.push({title:"Chapter Power", desc:"Chapter katkısı yüksek"});
-  if(m.role === "Admin" || m.role === "Kurul Üyesi") badges.push({title:"Old Guard", desc:"Yapı ve karar sorumluluğu"});
-  if(readNewsIds.length >= 3) badges.push({title:"Discipline", desc:"Duyuru takibi güçlü"});
-  if(m.role === "Admin") badges.push({title:"Admin", desc:"Sınırsız yönetim yetkisi"});
-  if(m.role === "Kurul Üyesi") badges.push({title:"Kurul", desc:"Kurul sorumluluğu"});
-  if(!badges.length) badges.push({title:"On Road", desc:"Aktiflik oluşuyor"});
+  const level=m.memberLevel||m.role,inNewProcess=["Hangaround","Prospect"].includes(level);
+  if(inNewProcess){
+    badges.push({title:"On Road", desc:badgeCatalog["On Road"]});
+    const start=milestoneDate(m.nick,level==="Hangaround"?"hangaround":"prospect"),d=daysSince(start);
+    if(d!==null&&d<150)badges.push({title:"New Blood", desc:badgeCatalog["New Blood"]});
+  }
+  if((m.km||0)>=5000)badges.push({title:"Road Pup", desc:badgeCatalog["Road Pup"]});
+  if(m.chapter&&charterPowerHolder(m.chapter)===m.nick)badges.push({title:"Charter Power", desc:badgeCatalog["Charter Power"]});
+  if(currentRoleTenureDays(m.nick)>=730)badges.push({title:"Old Guard", desc:badgeCatalog["Old Guard"]});
+  if(m.attendanceRate!=null&&m.attendanceRate>=90)badges.push({title:"Event Loyal", desc:badgeCatalog["Event Loyal"]});
+  if(m.readRate!=null&&m.readRate>=80)badges.push({title:"Discipline", desc:badgeCatalog["Discipline"]});
+  if(m.appAdmin)badges.push({title:"Admin", desc:badgeCatalog["Admin"]});
+  (window.rdMemberBadges||[]).filter(b=>b.nick===m.nick).forEach(b=>badges.push({title:b.badgeKey, desc:badgeCatalog[b.badgeKey]||"", manual:true, id:b.id, note:b.note, awardedAt:b.awardedAt}));
+  if(!badges.length) badges.push({title:"On Road", desc:badgeCatalog["On Road"]});
   return badges;
 }
 function badgesScreen(){
-  const badges = Object.keys(badgeCatalog).map(k=>({title:k, desc:badgeCatalog[k]}));
-  return section("Rozetler") + `<div class="badgeGrid">${badges.map(b=>badgeTile(b)).join("")}</div>` + section("Bilgi") + card(`<h3>Basılı Tut</h3><p>Rozetin anlamını görmek için rozetin üzerine basılı tutabilir veya dokunabilirsin.</p>`);
+  const auto=RD_AUTO_BADGE_KEYS.map(k=>({title:k, desc:badgeCatalog[k]})),manual=RD_MANUAL_BADGE_KEYS.map(k=>({title:k, desc:badgeCatalog[k]}));
+  return section("Otomatik Rozetler") + `<div class="badgeGrid">${auto.map(b=>badgeTile(b)).join("")}</div>` + section("Onur Rozetleri (Elle Verilir)") + `<div class="badgeGrid">${manual.map(b=>badgeTile(b)).join("")}</div>` + section("Bilgi") + card(`<h3>Basılı Tut</h3><p>Rozetin anlamını görmek için rozetin üzerine basılı tutabilir veya dokunabilirsin.</p>`) + (currentUser?.backend?card(`<h3>Rozet Rehberi (PDF)</h3><p>Bütün rozetlerin nasıl kazanıldığını gösteren dosya Arşiv bölümünde.</p><button class="btn ghost" style="width:100%;margin-top:10px" onclick="go('archive')">Arşive Git</button>`):"");
+}
+function canEditVestLog(m){
+  if(!currentUser||!m)return false;
+  if(currentUser.nick===m.nick)return true;
+  if(isNationalUser(currentUser))return true;
+  if(currentUser.role==="Sgt. at Arms"&&currentUser.chapter===m.chapter)return true;
+  return false;
+}
+function vestLogSection(m,canEdit){
+  const rows=["hangaround","prospect","member"].map(type=>{
+    const date=milestoneDate(m.nick,type),label=type==="hangaround"?"Hangaround":type==="prospect"?"Prospect":"Member",d=daysSince(date);
+    return card(`<b>${label}</b><p>${date?`${escapeHtml(new Date(date+"T00:00:00").toLocaleDateString("tr-TR"))} · ${d} gündür`:"Tarih girilmedi"}</p>${canEdit?`<div class="fieldGroup" style="margin-top:8px"><input id="vestDate_${type}_${escapeHtml(m.nick)}" class="input" type="date" value="${date||""}"><button class="btn ghost" onclick="saveVestMilestone('${escapeHtml(m.nick)}','${type}')">Kaydet</button></div>`:""}`);
+  }).join("");
+  const roleRows=(window.rdRoleHistory||[]).filter(x=>x.memberId===memberProfileId(m.nick)).sort((a,b)=>new Date(b.startedAt)-new Date(a.startedAt)).map(x=>{
+    const days=x.endedAt?Math.floor((new Date(x.endedAt)-new Date(x.startedAt))/86400000):daysSince(x.startedAt);
+    return card(`<b>${escapeHtml(x.role)}</b><p>${escapeHtml(new Date(x.startedAt).toLocaleDateString("tr-TR"))}${x.endedAt?` – ${escapeHtml(new Date(x.endedAt).toLocaleDateString("tr-TR"))}`:" – devam ediyor"} · ${days} gün</p>`);
+  }).join("")||emptyState("Görev geçmişi yok","Bu üye için kayıtlı görev geçmişi bulunmuyor.");
+  return section("Yelek Günlüğü")+rows+section("Görev Geçmişi")+roleRows;
+}
+async function saveVestMilestone(nick,type){
+  if(!currentUser?.backend){safeToast("Bu özellik yalnızca merkezi hesaplarda kullanılabilir.");return}
+  const memberId=memberProfileId(nick),date=document.getElementById(`vestDate_${type}_${nick}`)?.value;
+  if(!memberId||!date){safeToast("Tarih seç.");return}
+  await window.saveMilestoneBackend(memberId,type,date);
+  if(currentUser.nick===nick)render("profile");else openMemberDetail(nick);
+}
+function manualBadgeSection(m){
+  const canManage=(currentUser?.role==="Sgt. at Arms"&&currentUser.chapter===m.chapter)||isNationalUser(currentUser);
+  const held=(window.rdMemberBadges||[]).filter(b=>b.nick===m.nick);
+  const list=held.map(b=>card(`<b>${escapeHtml(b.badgeKey)}</b><p>${escapeHtml(badgeCatalog[b.badgeKey]||"")}<br>${b.awardedAt}${b.note?` · ${escapeHtml(b.note)}`:""}</p>${canManage?`<button class="btn danger" style="width:100%;margin-top:8px" onclick="revokeBadgeBackend('${b.id}')">Rozeti Geri Al</button>`:""}`)).join("")||emptyState("Onur rozeti yok","Bu üyeye henüz elle verilmiş bir rozet yok.");
+  const form=canManage?card(`<h3>Onur Rozeti Ver</h3><div class="fieldGroup"><select id="awardBadgeSelect_${escapeHtml(m.nick)}">${RD_MANUAL_BADGE_KEYS.map(k=>`<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join("")}</select><input id="awardBadgeNote_${escapeHtml(m.nick)}" class="input" placeholder="Not (isteğe bağlı)"><button class="btn primary" onclick="awardManualBadge('${escapeHtml(m.nick)}')">Rozeti Ver</button></div>`):"";
+  return section("Onur Rozetleri")+form+list;
+}
+async function awardManualBadge(nick){
+  const memberId=memberProfileId(nick),badgeKey=document.getElementById(`awardBadgeSelect_${nick}`)?.value,note=document.getElementById(`awardBadgeNote_${nick}`)?.value.trim()||"";
+  if(!memberId||!badgeKey)return;
+  await window.awardBadgeBackend(memberId,badgeKey,note);
+  openMemberDetail(nick);
 }
 
 
@@ -3406,7 +3468,7 @@ notificationVisible=function(n){if(n?.target==="Uygulama Admini")return isApplic
 function enforceUniqueNationalRolesV69(){const rows=[...builtInMembers,...accounts],groups=new Map();rows.forEach(m=>{if(m.nationalRole==="National President")m.nationalRole="Amir";if(m.nationalRole==="National Vice President")m.nationalRole="NVP";if(m.nationalRole){if(!groups.has(m.nationalRole))groups.set(m.nationalRole,[]);groups.get(m.nationalRole).push(m)}});groups.forEach(list=>{if(list.length<2)return;const keeper=list.find(m=>m.nick===currentUser?.nick)||list.find(m=>!String(m.nick||"").endsWith(" Test"))||list[0];list.forEach(m=>{if(m===keeper)return;m.nationalRole="";normalizeClubUser(m);memberOverrides[m.nick]={...(memberOverrides[m.nick]||{}),nationalRole:"",accessLevel:m.accessLevel,isAdmin:m.isAdmin}})});localStorage.setItem("rdAccounts",JSON.stringify(accounts));localStorage.setItem("rdMemberOverrides",JSON.stringify(memberOverrides))}
 enforceUniqueNationalRolesV69();
 const rdV69ProfileScreen=profileScreen;
-profileScreen=function(){let html=rdV69ProfileScreen(),primary=roleBadge(primaryMemberStatus(currentUser)),badges=statusBadgesV69(currentUser);return html.replaceAll(primary,badges)};
+profileScreen=function(){let html=rdV69ProfileScreen(),primary=roleBadge(primaryMemberStatus(currentUser)),badges=statusBadgesV69(currentUser);return html.replaceAll(primary,badges)+vestLogSection(currentUser,true)};
 let roleAssignmentQueryV69="",roleAssignmentChapterV69="";
 function roleAssignmentResultsV69(){if(!roleAssignmentQueryV69&&!roleAssignmentChapterV69)return [];const q=roleAssignmentQueryV69.toLocaleLowerCase("tr-TR");return getVisibleManagementMembers().filter(m=>(!roleAssignmentChapterV69||m.chapter===roleAssignmentChapterV69)&&(!q||`${m.nick} ${m.name||""}`.toLocaleLowerCase("tr-TR").includes(q))).slice(0,12)}
 function roleAssignmentPanelV69(){const rows=roleAssignmentResultsV69();return `${section("Statü / Görev Değiştir")}<div class="memberTools"><div class="memberToolsGrid"><input class="input" value="${escapeHtml(roleAssignmentQueryV69)}" placeholder="Nick veya isimle ara" oninput="roleAssignmentQueryV69=this.value;refreshRoleAssignmentV69()"><select onchange="roleAssignmentChapterV69=this.value;refreshRoleAssignmentV69()"><option value="">İl / Charter seç</option>${chapters.map(ch=>`<option value="${escapeHtml(ch)}" ${roleAssignmentChapterV69===ch?"selected":""}>${escapeHtml(ch)}</option>`).join("")}</select><button class="btn ghost" onclick="roleAssignmentQueryV69='';roleAssignmentChapterV69='';refreshRoleAssignmentV69()">Temizle</button></div></div><div id="roleAssignmentResultsV69">${rows.map(m=>`<div class="managementItem"><h4>${escapeHtml(m.nick)}</h4><p>${escapeHtml(m.chapter)} · ${escapeHtml(effectiveTitle(m))}</p><div class="btnRow"><select id="roleSelectV69_${escapeHtml(m.nick)}">${RD_MEMBER_ROLES.map(r=>`<option ${m.role===r?"selected":""}>${escapeHtml(r)}</option>`).join("")}</select><button class="btn primary" onclick="saveSelectedLocalRoleV69('${escapeHtml(m.nick)}')">Kaydet</button></div></div>`).join("")||emptyState("Üye ara veya Charter seç","Görev düzenlemek için bütün üyeleri listelemek yerine arama ya da il filtresini kullan.")}</div>`}
@@ -3647,7 +3709,7 @@ memberCardsHTML=function(list){return `${section("Üye Bilgi Erişimi")}<div cla
 openMemberDetail=function(nick){
   const m=findEditableMember(nick);if(!m)return;const canNotes=canViewMemberNotesFor(m),notes=canNotes?memberNotes.filter(n=>n.member===nick):[],kms=kmEntries.filter(k=>k.memberNick===nick),history=memberHistory.filter(h=>h.nick===nick),stats=memberAttendanceStats(nick),approvedKm=kms.filter(k=>k.status==="Onaylandı").reduce((sum,k)=>sum+Number(k.km||0),0)||(m.km||0);
   const badges=statusBadgesV69(m),attendance=`<div class="attendanceSummary"><div><b>${stats.joined}</b><small>Katıldı</small></div><div><b>${stats.missed}</b><small>Gelmedi</small></div><div><b>${stats.excused}</b><small>Mazeretli</small></div><div><b>%${stats.rate}</b><small>Katılım</small></div></div>`;
-  openDetail(`<div class="memberDetailHero">${pill(memberStatusLabel(m))}<h3>${escapeHtml(m.nick||nick)}</h3><p>${escapeHtml(m.name||"")}<br>${escapeHtml(m.chapter||"-")} · ${escapeHtml(effectiveTitle(m))}<br>Aktiflik: ${escapeHtml(activityLevel(m))}${m.phone?`<br>Tel: ${escapeHtml(formatPhoneTR(m.phone))}`:""}</p><div class="memberDetailBadges">${badges}</div></div><div class="memberMetricGrid"><div class="memberMetric"><small>Toplam kilometre</small><b>${approvedKm}</b></div><div class="memberMetric"><small>Katıldığı etkinlik</small><b>${stats.joined}</b></div><div class="memberMetric"><small>Katılım oranı</small><b>%${stats.rate}</b></div></div><div class="memberDetailSection">${section("Etkinlik Katılımı")}${attendance}</div><div class="memberDetailSection">${section("Kilometre Geçmişi")}${kms.map(k=>`<div class="compactItem"><b>${escapeHtml(k.route)}</b><p>${escapeHtml(k.date)} · ${k.km} km · ${escapeHtml(k.status)}</p></div>`).join("")||emptyState("Kilometre geçmişi yok","Bu üyeye ait kilometre kaydı bulunmuyor.")}</div>${canNotes?`<div class="memberDetailSection">${section("Yönetim Notları")}${notes.map(n=>`<div class="compactItem"><b>${escapeHtml(n.type)}</b><p>${escapeHtml(n.body)}<br>${escapeHtml(n.date)} · ${escapeHtml(n.admin)}</p></div>`).join("")||emptyState("Not yok","Bu üye için yönetim notu bulunmuyor.")}</div>`:""}${history.length?`<div class="memberDetailSection">${section("Üyelik Geçmişi")}${history.map(h=>`<div class="compactItem"><b>${escapeHtml(h.action)}</b><p>${escapeHtml(h.date)} · ${escapeHtml(h.by)}<br>${escapeHtml(h.detail)}</p></div>`).join("")}</div>`:""}<div class="memberDetailSection">${emergencyProfileView(m)}</div>`)
+  openDetail(`<div class="memberDetailHero">${pill(memberStatusLabel(m))}<h3>${escapeHtml(m.nick||nick)}</h3><p>${escapeHtml(m.name||"")}<br>${escapeHtml(m.chapter||"-")} · ${escapeHtml(effectiveTitle(m))}<br>Aktiflik: ${escapeHtml(activityLevel(m))}${m.phone?`<br>Tel: ${escapeHtml(formatPhoneTR(m.phone))}`:""}</p><div class="memberDetailBadges">${badges}</div></div><div class="memberMetricGrid"><div class="memberMetric"><small>Toplam kilometre</small><b>${approvedKm}</b></div><div class="memberMetric"><small>Katıldığı etkinlik</small><b>${stats.joined}</b></div><div class="memberMetric"><small>Katılım oranı</small><b>%${stats.rate}</b></div></div><div class="memberDetailSection">${section("Etkinlik Katılımı")}${attendance}</div><div class="memberDetailSection">${section("Kilometre Geçmişi")}${kms.map(k=>`<div class="compactItem"><b>${escapeHtml(k.route)}</b><p>${escapeHtml(k.date)} · ${k.km} km · ${escapeHtml(k.status)}</p></div>`).join("")||emptyState("Kilometre geçmişi yok","Bu üyeye ait kilometre kaydı bulunmuyor.")}</div>${canNotes?`<div class="memberDetailSection">${section("Yönetim Notları")}${notes.map(n=>`<div class="compactItem"><b>${escapeHtml(n.type)}</b><p>${escapeHtml(n.body)}<br>${escapeHtml(n.date)} · ${escapeHtml(n.admin)}</p></div>`).join("")||emptyState("Not yok","Bu üye için yönetim notu bulunmuyor.")}</div>`:""}${history.length?`<div class="memberDetailSection">${section("Üyelik Geçmişi")}${history.map(h=>`<div class="compactItem"><b>${escapeHtml(h.action)}</b><p>${escapeHtml(h.date)} · ${escapeHtml(h.by)}<br>${escapeHtml(h.detail)}</p></div>`).join("")}</div>`:""}<div class="memberDetailSection">${emergencyProfileView(m)}</div><div class="memberDetailSection">${vestLogSection(m,canEditVestLog(m))}</div><div class="memberDetailSection">${manualBadgeSection(m)}</div>`)
 };
 
 /* v80 Charter içinde içerik üretimi, ayrı içerik kontrolleri ve kesin yoklamadan km aktarımı */
@@ -3791,7 +3853,7 @@ cancelManagedEvent=function(key){const e=managedEvent(key);if(!e||(!canUseGlobal
 syncLoginType();syncRegisterNickMode();syncChapterOptions();boot();updateHeaderNotifDot();
 </script>
 <script src="supabase-auth.js?v=84"></script>
-<script src="supabase-data.js?v=95"></script>
+<script src="supabase-data.js?v=96"></script>
 <script src="push-client.js?v=81"></script>
 <div id="detailOverlay" class="detailOverlay" onclick="closeDetail()"><div id="detailPanel" class="detailPanel" onclick="event.stopPropagation()"></div></div>
 <input id="avatarUpload" type="file" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
