@@ -63,6 +63,14 @@ export default {
     };
     const { error: profileError } = await ctx.supabaseAdmin.from("profiles").insert(profile);
     if (profileError) { await ctx.supabaseAdmin.auth.admin.deleteUser(created.user.id); return fail("Başvuru kaydedilemedi.", 409); }
+    const { data: notifyTargets } = await ctx.supabaseAdmin.from("profiles").select("id").eq("account_status", "active")
+      .or(`is_app_admin.eq.true,national_role.in.("Amir","NVP","National Sgt. at Arms","National Secretary"),and(charter_id.eq.${charterRow.id},charter_role.eq."Sgt. at Arms")`);
+    if (notifyTargets?.length) {
+      await ctx.supabaseAdmin.from("notifications").insert(notifyTargets.map((x: any) => ({
+        recipient_id: x.id, type: "Başvuru", title: "Yeni üyelik başvurusu",
+        body: `${fullName} (${pendingNick}) ${charterRow.name} için başvurdu.`, action_path: "adminApplications"
+      })));
+    }
     const client = createClient(Deno.env.get("SUPABASE_URL") ?? "", publicKey(), { auth: { persistSession: false, autoRefreshToken: false } });
     const { data: signedIn, error: signInError } = await client.auth.signInWithPassword({ email, password });
     if (signInError || !signedIn.session) return fail("Başvuru alındı ancak oturum açılamadı.", 201);
