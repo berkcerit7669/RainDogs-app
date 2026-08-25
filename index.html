@@ -2891,7 +2891,33 @@ function systemMaintenanceCard(){
     <label style="display:grid;gap:8px">Hesabı kalıcı olarak sil<input list="maintMemberOptions" id="maintDeleteNick" class="input" placeholder="Nick ara...">
     <datalist id="maintMemberOptions">${members.map(m=>`<option value="${escapeHtml(m.nick)}">`).join("")}</datalist></label>
     <button class="btn danger" style="width:100%;margin-top:8px" onclick="adminDeleteAccount()">Hesabı Kalıcı Sil</button>
+  </div>
+  <div class="fieldGroup" style="margin-top:16px">
+    <label style="display:grid;gap:8px">İçerikleri sıfırla
+      <label class="checkboxRow"><input type="checkbox" id="maintClearEvents" checked><span>Etkinlikler</span></label>
+      <label class="checkboxRow"><input type="checkbox" id="maintClearNews" checked><span>Duyurular / Haberler</span></label>
+      <label class="checkboxRow"><input type="checkbox" id="maintClearRoutes" checked><span>Rotalar</span></label>
+    </label>
+    <button class="btn danger" style="width:100%;margin-top:8px" onclick="adminResetContent()">Seçilenleri Sıfırla</button>
   </div>`);
+}
+function adminResetContent(){
+  if(!currentUser.appAdmin)return;
+  if(!currentUser.backend){safeToast("Bu işlem yalnızca merkezi sistemde kullanılabilir.");return}
+  const targets=[];
+  if(document.getElementById("maintClearEvents")?.checked)targets.push("events");
+  if(document.getElementById("maintClearNews")?.checked)targets.push("announcements");
+  if(document.getElementById("maintClearRoutes")?.checked)targets.push("routes");
+  if(!targets.length){safeToast("En az bir içerik türü seç.");return}
+  appConfirm(`Seçilen içerikler (${targets.join(", ")}) tüm Charterlar için kalıcı olarak silinsin mi?`,()=>appPromptV85("Son Onay","Devam etmek için SIFIRLA yaz","",async word=>{
+    if(word!=="SIFIRLA"){safeToast("İşlem iptal edildi.");return}
+    try{
+      await call("admin.resetContent",{targets});
+      await hydrate();
+      safeToast("Seçilen içerikler sıfırlandı.");
+      render("appSettings");
+    }catch(e){safeToast(e.message)}
+  }));
 }
 function adminResetKm(){
   if(!currentUser.appAdmin)return;

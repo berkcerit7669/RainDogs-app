@@ -475,6 +475,19 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     await audit("Kilometre kayıtları sıfırlandı","km_entries",body.charterId||"all",{charterId:body.charterId||null});
     return out({ok:true});
   }
+  if(action==="admin.resetContent"){
+    if(!actor.is_app_admin)return out({error:"Bu işlem yalnızca uygulama admini tarafından yapılabilir."},403);
+    const targets=Array.isArray(body.targets)&&body.targets.length?body.targets:["events","announcements","routes"];
+    const tableByTarget:{[key:string]:string}={events:"events",announcements:"announcements",routes:"routes"};
+    if(targets.includes("events"))await ctx.supabaseAdmin.from("km_entries").update({event_id:null}).not("event_id","is",null);
+    for(const t of targets){
+      const table=tableByTarget[t];if(!table)continue;
+      const {error}=await ctx.supabaseAdmin.from(table).delete().not("id","is",null);
+      if(error)return out({error:error.message},400);
+    }
+    await audit("İçerik sıfırlandı (etkinlik/duyuru/rota)","content_reset","all",{targets});
+    return out({ok:true});
+  }
   if(action==="admin.deleteAccount"){
     if(!actor.is_app_admin)return out({error:"Bu işlem yalnızca uygulama admini tarafından yapılabilir."},403);
     const memberId=String(body.memberId||"");
