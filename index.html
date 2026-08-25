@@ -2790,7 +2790,7 @@ function quickClubhouseStatus(status,panic){
   const busy=status==="Meşgul / Kullanım Dışı",normalized=busy?"Meşgul / Kullanım Dışı":"Müsait";
   const canTrigger=canManageClubhouse()||(busy&&currentUser?.chapter===charterName());
   if(!canTrigger){safeToast(busy?"Yalnızca kendi Charter'ının kulüp evini meşgule alabilirsin.":"Meşgul durumunu yalnızca yönetim kaldırabilir.");return}
-  clubhouseStates[charterName()]={status:normalized,note:busy?"Yönetim tarafından geçici olarak kullanıma kapatıldı":"Giriş için uygun",updatedBy:currentUser.nick,updatedAt:new Date().toLocaleString("tr-TR")};
+  clubhouseStates[charterName()]={status:normalized,note:busy?(panic?"🚨 Red Light":"Yönetim tarafından geçici olarak kullanıma kapatıldı"):"Giriş için uygun",updatedBy:currentUser.nick,updatedAt:new Date().toLocaleString("tr-TR")};
   saveCharterData();logAdmin("Kulüp evi durumu",`${charterName()} / ${normalized}`);safeToast(busy?(panic?"Red Light":"Kulüp evi meşgule alındı."):"Kulüp evi yeniden girişe açıldı.");refreshClubhouseView();
 }
 function setClubhouseStatus(){
@@ -2799,7 +2799,7 @@ function setClubhouseStatus(){
   quickClubhouseStatus(status);
 }
 function clubhouseCard(ch=charterName()){
-  const state=currentClubhouseState(ch),people=clubhousePeopleSummary(ch),inside=people.visits,mine=inside.find(v=>v.nick===currentUser.nick),manager=canManageClubhouse(),busy=state.status==="Meşgul / Kullanım Dışı",liveLabel=busy?"Meşgul":inside.length?"Açık":"Kapalı";
+  const state=currentClubhouseState(ch),people=clubhousePeopleSummary(ch),inside=people.visits,mine=inside.find(v=>v.nick===currentUser.nick),manager=canManageClubhouse(),busy=state.status==="Meşgul / Kullanım Dışı",redLight=busy&&(state.note||"").includes("Red Light"),liveLabel=redLight?"Red Light":busy?"Meşgul":inside.length?"Açık":"Kapalı";
   const sameCharter=currentUser?.chapter===ch;
   const roster=inside.map(v=>`<div class="presenceRow"><div><b>${escapeHtml(v.nick)}</b><small>Giriş ${escapeHtml(v.entryTime)}${Number(v.guests||0)?` · ${v.guests} misafir`:""}</small></div><span>${1+Number(v.guests||0)} kişi</span></div>`).join("")||`<div class="scopeHint">Şu anda kulüp evinde kayıtlı üye veya misafir yok.</div>`;
   return `<div class="clubhouseStatus ${busy?"busy":inside.length?"open":"closed"}">${pill("Kulüp Evi")}<h2>${liveLabel}</h2><p>${escapeHtml(ch)} · <b>${busy?"Girişe kapalı":"Müsait"}</b><br><span class="smallNote">${busy?`${escapeHtml(state.note)} · ${escapeHtml(state.updatedBy)}`:"İlk üye giriş yaptığında durum otomatik olarak Açık görünür."}</span></p><div class="chapterStats"><div class="chapterStat"><small>Toplam Kişi</small><b>${people.total}</b></div><div class="chapterStat"><small>Üye</small><b>${people.members}</b></div><div class="chapterStat"><small>Misafir</small><b>${people.guests}</b></div></div>${manager||(sameCharter&&!busy)?`<div class="scopeHint">${manager?"Yönetim kullanım durumu":""}</div><div class="clubhouseQuickActions">${manager?`<button class="btn ${busy?"primary":"ghost"}" onclick="quickClubhouseStatus('${busy?"Müsait":"Meşgul / Kullanım Dışı"}')">${busy?"Meşgul Durumunu Kaldır":"Meşgule Al"}</button>`:""}${sameCharter&&!busy?`<button class="btn danger clubhouseAlertBtn" title="Kulüp Evini Meşgule Al" onclick="quickClubhouseStatus('Meşgul / Kullanım Dışı',true)">🚨</button>`:""}</div>`:""}<div class="scopeHint"><b>Şu Anda İçeridekiler</b></div><div class="presenceList">${roster}</div>${inside.length?`<div class="presenceTotal"><b>Anlık toplam</b><span>${people.members} üye + ${people.guests} misafir = <b>${people.total} kişi</b></span></div>`:""}${!busy||mine?`<div class="guestEntryBox"><input id="clubhouseGuestCount" class="input" type="number" min="0" max="20" value="${mine?Number(mine.guests||0):0}" placeholder="Misafir sayısı"><button class="btn ghost" onclick="${mine?"updateVisitGuests()":"enterClubhouse()"}">${mine?"Misafiri Güncelle":"Giriş Yap"}</button></div><button class="btn ${mine?"danger":"primary"}" style="width:100%;margin-top:9px" onclick="${mine?"leaveClubhouse()":"enterClubhouse()"}">${mine?"Çıkışımı Kaydet":"Kulüp Evindeyim"}</button>`:`<div class="result">Kulüp evi yönetim tarafından meşgule alındı. Yeni giriş yapılamaz.</div>`}</div>`;
@@ -3854,7 +3854,7 @@ cancelManagedEvent=function(key){const e=managedEvent(key);if(!e||(!canUseGlobal
 syncLoginType();syncRegisterNickMode();syncChapterOptions();boot();updateHeaderNotifDot();
 </script>
 <script src="supabase-auth.js?v=84"></script>
-<script src="supabase-data.js?v=97"></script>
+<script src="supabase-data.js?v=98"></script>
 <script src="push-client.js?v=81"></script>
 <div id="detailOverlay" class="detailOverlay" onclick="closeDetail()"><div id="detailPanel" class="detailPanel" onclick="event.stopPropagation()"></div></div>
 <input id="avatarUpload" type="file" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
