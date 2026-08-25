@@ -360,7 +360,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     const sameCharter=target.charter_id===actor.charter_id,localManager=!!actor.charter_role&&sameCharter;
     const self=target.id===actor.id;
     if(!self&&!fullNational&&!actor.is_app_admin&&!localManager)return out({error:"Bu üyeyi düzenleme yetkin yok."},403);
-    if(localManager&&!fullNational&&!actor.is_app_admin&&(target.is_app_admin||target.national_role))return out({error:"Charter yönetimi National veya uygulama yöneticisi hesabını değiştiremez."},403);
+    if(!self&&localManager&&!fullNational&&!actor.is_app_admin&&(target.is_app_admin||target.national_role))return out({error:"Charter yönetimi National veya uygulama yöneticisi hesabını değiştiremez."},403);
     const patch:any={updated_at:new Date().toISOString()};
     if(self){if(body.phone!==undefined)patch.phone=String(body.phone||"").replace(/\D/g,"");if(body.motorcycle!==undefined)patch.motorcycle=String(body.motorcycle||"").trim();if(body.licenseClass!==undefined)patch.license_class=String(body.licenseClass||"").trim();if(body.avatarPath!==undefined)patch.avatar_path=body.avatarPath||null;if(body.birthday!==undefined)patch.birthday=/^\d{4}-\d{2}-\d{2}$/.test(String(body.birthday||""))?body.birthday:null}
     if(!self&&(actor.is_app_admin||fullNational||localManager)){if(body.phone!==undefined)patch.phone=String(body.phone||"").replace(/\D/g,"");if(body.motorcycle!==undefined)patch.motorcycle=String(body.motorcycle||"").trim()}
