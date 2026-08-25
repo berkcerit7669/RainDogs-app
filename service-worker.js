@@ -1,4 +1,4 @@
-const CACHE_NAME = "raindogs-shell-v20";
+const CACHE_NAME = "raindogs-shell-v21";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./supabase-config.js?v=81", "./supabase-auth.js?v=84", "./supabase-data.js?v=96", "./push-client.js?v=81"];
 
 self.addEventListener("install", (event) => {
@@ -11,7 +11,9 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
-  event.respondWith(fetch(event.request).catch(() => caches.match(event.request).then((cached) => cached || caches.match("./index.html"))));
+  const isDocument = event.request.mode === "navigate" || event.request.destination === "document";
+  const req = isDocument ? new Request(event.request.url, { cache: "no-store" }) : event.request;
+  event.respondWith(fetch(req).catch(() => caches.match(event.request).then((cached) => cached || caches.match("./index.html"))));
 });
 
 self.addEventListener("push", (event) => {
