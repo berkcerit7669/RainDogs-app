@@ -61,8 +61,7 @@
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       if (refreshing) return;
       refreshing = true;
-      safeToast && safeToast("Yeni sürüm yüklendi, uygulama yenileniyor…");
-      setTimeout(() => location.reload(), 600);
+      if (document.visibilityState === "hidden") location.reload();
     });
     navigator.serviceWorker.register("./service-worker.js?v=82", { scope: "./" }).then((reg) => {
       const checkForUpdate = () => reg.update().catch(() => {});
