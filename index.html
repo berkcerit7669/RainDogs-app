@@ -30,7 +30,7 @@ button,input,select,textarea{font:inherit}
 button:focus,input:focus,select:focus,textarea:focus{outline:none}
 body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Segoe UI",Arial,sans-serif}
 .app{max-width:430px;min-height:100vh;margin:0 auto;background:radial-gradient(circle at 88% 5%,var(--card2),transparent 30%),radial-gradient(circle at 18% 0%,var(--card),transparent 24%),linear-gradient(180deg,var(--app),var(--bg) 70%);border-left:1px solid var(--line);border-right:1px solid var(--line)}
-#appShell{display:flex;flex-direction:column;height:100vh;height:100dvh;height:var(--app-height,100dvh)}
+#appShell{display:flex;flex-direction:column;height:100vh;height:-webkit-fill-available;height:100dvh;height:var(--app-height,100dvh)}
 #appShell main{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 #appShell .bottomNav{flex:0 0 auto;position:static}
 .loginWrap{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:32px 28px}
@@ -3117,7 +3117,7 @@ adminPanelScreen=function(){const base=rdV46AdminPanelScreen();if(!canUseGlobalM
 const rdV46OpenDrawer=openDrawer;
 openDrawer=function(){rdV46OpenDrawer();["globalAdminLogsMenu","helpAdminMenu","globalChapterReportsMenu","globalMemberNotesMenu","charterApplicationsMenu","charterNickMenu","charterMembersMenu","globalMembershipEditMenu","charterApprovalsMenu","charterExportMenu"].forEach(id=>setMenuVisibility(id,false));setMenuVisibility("globalAdminHomeMenu",canUseGlobalManagement());setMenuVisibility("charterAdminMenu",canUseManagement(currentUser))};
 const rdV46Go=go;
-go=function(screen){rdV46Go(screen);if(content)content.scrollTop=0;window.scrollTo(0,0)};
+go=function(screen){rdV46Go(screen);if(content)content.scrollTop=0;window.scrollTo(0,0);if(bottomNav&&isApproved(currentUser)&&bottomNav.style.display==="none")bottomNav.style.display="grid"};
 const rdV47Boot=boot;
 boot=function(){if(currentUser&&isApproved(currentUser)){appScope="national";localStorage.setItem("rdAppScope","national")}rdV47Boot()};
 
