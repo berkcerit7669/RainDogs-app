@@ -155,9 +155,8 @@
     try {
       const result = await registerMember({ fullName, email, password, charter, phone, requestedRole, requestedNationalRole, nick, noNick });
       const user = await appUser(result.profile, result.session);
-      saveSession(result.session, false);
-      localStorage.removeItem("rdRememberMe");
-      localStorage.removeItem("rdUser");
+      saveSession(result.session, true);
+      localStorage.setItem("rdRememberMe", "1");
       sessionStorage.setItem("rdUser", JSON.stringify(user));
       currentUser = user;
       boot();
@@ -174,7 +173,7 @@
     const button = document.querySelector("#loginForm .btn.primary");
     const identifier = document.getElementById("loginNick")?.value.trim();
     const password = document.getElementById("loginNickPassword")?.value || "";
-    const remember = Boolean(document.getElementById("rememberMe")?.checked);
+    const remember = Boolean(document.getElementById("rememberMe")?.checked) || window.matchMedia?.("(display-mode: standalone)").matches;
     if (!identifier || !password) { safeToast("Nick, e-posta veya isim soyisim ile şifreni gir."); return; }
 
     if (button) { button.disabled = true; button.textContent = "Giriş yapılıyor…"; }

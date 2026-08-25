@@ -1101,7 +1101,7 @@ body.light .chapterMiniStats>div{border-color:rgba(0,0,0,.16);background:rgba(0,
           <input id="loginPassword" class="input" type="password" placeholder="Şifre">
           <button type="button" class="eyeBtn" onclick="togglePassword('loginPassword', this)">👁</button>
         </div>
-        <label class="checkboxRow"><input id="rememberMe" type="checkbox"><span>Beni Hatırla</span></label>
+        <label class="checkboxRow"><input id="rememberMe" type="checkbox" checked><span>Beni Hatırla</span></label>
         <button class="btn primary" style="width:100%" onclick="loginUser()">Gir</button>
         <button class="btn ghost" style="width:100%" onclick="openPasswordRecovery()">Şifremi Unuttum</button>
       </div>
@@ -3854,7 +3854,7 @@ cancelManagedEvent=function(key){const e=managedEvent(key);if(!e||(!canUseGlobal
 
 syncLoginType();syncRegisterNickMode();syncChapterOptions();boot();updateHeaderNotifDot();
 </script>
-<script src="supabase-auth.js?v=84"></script>
+<script src="supabase-auth.js?v=85"></script>
 <script src="supabase-data.js?v=100"></script>
 <script src="push-client.js?v=81"></script>
 <div id="detailOverlay" class="detailOverlay" onclick="closeDetail()"><div id="detailPanel" class="detailPanel" onclick="event.stopPropagation()"></div></div>
