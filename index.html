@@ -1890,9 +1890,15 @@ function memberBadges(m){
   if(!badges.length) badges.push({title:"On Road", desc:badgeCatalog["On Road"]});
   return badges;
 }
+function openBadgeGuidePdf(){
+  const w=window.open("","_blank");if(!w){safeToast("PDF görünümü için açılır pencereye izin ver.");return}
+  const rows=keys=>keys.map(k=>`<tr><td>${escapeHtml(k)}</td><td>${escapeHtml(badgeCatalog[k]||"")}</td></tr>`).join("");
+  w.document.write(`<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>RainDogs Rozet Rehberi</title><style>body{font:12px Arial;padding:28px;color:#111}h1{font-size:22px}h2{font-size:16px;margin-top:24px}p{color:#555}table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border:1px solid #bbb;padding:7px;text-align:left;vertical-align:top}th{background:#eee}@media print{button{display:none}}</style></head><body><h1>RainDogs Rozet Rehberi</h1><p>Oluşturma: ${new Date().toLocaleString("tr-TR")}</p><button onclick="print()">PDF Olarak Kaydet / Yazdır</button><h2>Otomatik Rozetler (${RD_AUTO_BADGE_KEYS.length})</h2><table><thead><tr><th>Rozet</th><th>Açıklama</th></tr></thead><tbody>${rows(RD_AUTO_BADGE_KEYS)}</tbody></table><h2>Onur Rozetleri – Elle Verilir (${RD_MANUAL_BADGE_KEYS.length})</h2><table><thead><tr><th>Rozet</th><th>Açıklama</th></tr></thead><tbody>${rows(RD_MANUAL_BADGE_KEYS)}</tbody></table></body></html>`);
+  w.document.close();
+}
 function badgesScreen(){
   const auto=RD_AUTO_BADGE_KEYS.map(k=>({title:k, desc:badgeCatalog[k]})),manual=RD_MANUAL_BADGE_KEYS.map(k=>({title:k, desc:badgeCatalog[k]}));
-  return section("Otomatik Rozetler") + `<div class="badgeGrid">${auto.map(b=>badgeTile(b)).join("")}</div>` + section("Onur Rozetleri (Elle Verilir)") + `<div class="badgeGrid">${manual.map(b=>badgeTile(b)).join("")}</div>` + section("Bilgi") + card(`<h3>Basılı Tut</h3><p>Rozetin anlamını görmek için rozetin üzerine basılı tutabilir veya dokunabilirsin.</p>`) + (currentUser?.backend?card(`<h3>Rozet Rehberi (PDF)</h3><p>Bütün rozetlerin nasıl kazanıldığını gösteren dosya Arşiv bölümünde.</p><button class="btn ghost" style="width:100%;margin-top:10px" onclick="go('archive')">Arşive Git</button>`):"");
+  return section("Otomatik Rozetler") + `<div class="badgeGrid">${auto.map(b=>badgeTile(b)).join("")}</div>` + section("Onur Rozetleri (Elle Verilir)") + `<div class="badgeGrid">${manual.map(b=>badgeTile(b)).join("")}</div>` + section("Bilgi") + card(`<h3>Basılı Tut</h3><p>Rozetin anlamını görmek için rozetin üzerine basılı tutabilir veya dokunabilirsin.</p>`) + card(`<h3>Rozet Rehberi (PDF)</h3><p>Uygulamadaki bütün rozetlerin güncel listesi ve nasıl kazanıldığı.</p><button class="btn ghost" style="width:100%;margin-top:10px" onclick="openBadgeGuidePdf()">Rehberi Görüntüle / Yazdır</button>`);
 }
 function canEditVestLog(m){
   if(!currentUser||!m)return false;
