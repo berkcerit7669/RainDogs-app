@@ -51,7 +51,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
   if(action==="bootstrap"){
     const own=actor.charter_id;
     const management=national||!!actor.charter_role;
-    const [charters,events,eventCharters,announcements,routes,attendance,km,visits,notes,notifications,tickets,profiles,applications,logs,clubhouseStates,announcementReads,eventResponses,emergency,finance,discipline,polls,pollVotes,approvalRequests,kmTotals,cultureItems,milestones,roleHistory,memberBadges,attendanceAll,readsAll,requiredAnnouncements]=await Promise.all([
+    const [charters,events,eventCharters,announcements,routes,attendance,km,visits,notes,notifications,tickets,profiles,applications,logs,clubhouseStates,announcementReads,eventResponses,emergency,finance,discipline,polls,pollVotes,approvalRequests,kmTotals,cultureItems,milestones,roleHistory,memberBadges,attendanceAll,readsAll,requiredAnnouncements,eventReads]=await Promise.all([
       ctx.supabaseAdmin.from("charters").select("id,name,active").eq("active",true),
       ctx.supabaseAdmin.from("events").select("*,charters:owner_charter_id(name)").order("starts_at"),
       ctx.supabaseAdmin.from("event_charters").select("event_id,charter_id,approval_status"),
@@ -83,9 +83,10 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
       ,ctx.supabaseAdmin.from("attendance").select("member_id,status")
       ,ctx.supabaseAdmin.from("announcement_reads").select("member_id,announcement_id")
       ,ctx.supabaseAdmin.from("announcements").select("id,charter_id,scope,created_at").eq("required_read",true)
+      ,ctx.supabaseAdmin.from("event_reads").select("event_id,member_id").or(management?"event_id.not.is.null":`member_id.eq.${actor.id}`)
     ]);
     const ticketIds=(tickets.data||[]).map((x:any)=>x.id),ticketMessages=ticketIds.length?await ctx.supabaseAdmin.from("help_ticket_messages").select("*,profiles:sender_id(nick,is_app_admin)").in("ticket_id",ticketIds).order("created_at"):({data:[],error:null});
-    const failed=[charters,events,eventCharters,announcements,routes,attendance,km,visits,notes,notifications,tickets,profiles,applications,logs,clubhouseStates,announcementReads,eventResponses,emergency,finance,discipline,polls,pollVotes,approvalRequests,ticketMessages,kmTotals,cultureItems,milestones,roleHistory,memberBadges,attendanceAll,readsAll,requiredAnnouncements].find(x=>x.error);if(failed?.error)return out({error:failed.error.message},500);
+    const failed=[charters,events,eventCharters,announcements,routes,attendance,km,visits,notes,notifications,tickets,profiles,applications,logs,clubhouseStates,announcementReads,eventResponses,emergency,finance,discipline,polls,pollVotes,approvalRequests,ticketMessages,kmTotals,cultureItems,milestones,roleHistory,memberBadges,attendanceAll,readsAll,requiredAnnouncements,eventReads].find(x=>x.error);if(failed?.error)return out({error:failed.error.message},500);
     const kmByMember=new Map<string,number>();(kmTotals.data||[]).forEach((row:any)=>kmByMember.set(row.member_id,(kmByMember.get(row.member_id)||0)+Number(row.km||0)));
     (profiles.data||[]).forEach((p:any)=>p.total_km=kmByMember.get(p.id)||0);
     const attRate=new Map<string,{a:number,t:number}>();
@@ -133,7 +134,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
         }
       }
     }
-    return out({actor,charters:charters.data,events:visibleEvents,eventCharters:visibleEventCharters,announcements:announcements.data,routes:routes.data,attendance:visibleAttendance,kmEntries:visibleKm,clubhouseVisits:visits.data,memberNotes:notes.data,notifications:notifications.data,helpTickets:tickets.data,profiles:profiles.data,applications:applications.data,adminLogs:logs.data,clubhouseStates:clubhouseStates.data,announcementReads:announcementReads.data,eventResponses:visibleResponses,emergencyProfiles:emergency.data,charterFinance:finance.data,charterDiscipline:discipline.data,boardPolls:polls.data,boardPollVotes:pollVotes.data,approvalRequests:visibleApprovals,helpTicketMessages:ticketMessages.data,accountDeletionRequest:ownDeletionRequest,accountDeletionRequests:actor.is_app_admin?deletionRequests.data:[],cultureItems:cultureItems.data,milestones:milestones.data,roleHistory:roleHistory.data,memberBadges:memberBadges.data});
+    return out({actor,charters:charters.data,events:visibleEvents,eventCharters:visibleEventCharters,announcements:announcements.data,routes:routes.data,attendance:visibleAttendance,kmEntries:visibleKm,clubhouseVisits:visits.data,memberNotes:notes.data,notifications:notifications.data,helpTickets:tickets.data,profiles:profiles.data,applications:applications.data,adminLogs:logs.data,clubhouseStates:clubhouseStates.data,announcementReads:announcementReads.data,eventResponses:visibleResponses,emergencyProfiles:emergency.data,charterFinance:finance.data,charterDiscipline:discipline.data,boardPolls:polls.data,boardPollVotes:pollVotes.data,approvalRequests:visibleApprovals,helpTicketMessages:ticketMessages.data,accountDeletionRequest:ownDeletionRequest,accountDeletionRequests:actor.is_app_admin?deletionRequests.data:[],cultureItems:cultureItems.data,milestones:milestones.data,roleHistory:roleHistory.data,memberBadges:memberBadges.data,eventReads:eventReads.data});
   }
 
   if(action==="announcement.read"){
@@ -149,7 +150,14 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     if(!event||event.status!=="active"||(!national&&event.scope==="charter"&&event.owner_charter_id!==actor.charter_id)||!jointVisible)return out({error:"Etkinliğe erişim yok."},403);
     if(!["Açık","open","Katılıma Açık"].includes(event.participation_status||""))return out({error:"Etkinlik katılıma açık değil."},409);
     const {data:item,error}=await ctx.supabaseAdmin.from("event_responses").upsert({event_id:body.eventId,member_id:actor.id,response,responded_at:new Date().toISOString()},{onConflict:"event_id,member_id"}).select().single();
-    if(error)return out({error:error.message},400);return out({item});
+    if(error)return out({error:error.message},400);
+    await ctx.supabaseAdmin.from("event_reads").upsert({event_id:body.eventId,member_id:actor.id},{onConflict:"event_id,member_id",ignoreDuplicates:true});
+    return out({item});
+  }
+  if(action==="event.markRead"){
+    const {data:event}=await ctx.supabaseAdmin.from("events").select("id,participation_status,status").eq("id",body.eventId).maybeSingle();if(!event)return out({error:"Etkinlik bulunamadı."},404);
+    if(["Açık","open","Katılıma Açık"].includes(event.participation_status||"")&&event.status==="active")return out({ok:true,skipped:true});
+    const {error}=await ctx.supabaseAdmin.from("event_reads").upsert({event_id:body.eventId,member_id:actor.id},{onConflict:"event_id,member_id",ignoreDuplicates:true});if(error)return out({error:error.message},400);return out({ok:true});
   }
   if(action==="emergency.save"){
     const data={member_id:actor.id,blood_group:String(body.bloodGroup||""),contact_name:String(body.contactName||"").trim(),contact_phone:String(body.contactPhone||"").replace(/\D/g,""),medical_notes:String(body.medicalNotes||"").trim(),updated_at:new Date().toISOString()};
@@ -312,12 +320,12 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     const {data:saved,error}=await ctx.supabaseAdmin.from("km_entries").update({status:body.approve===false?"rejected":"active",approved_by:actor.id}).eq("id",body.id).select().single();if(error)return out({error:error.message},400);await audit(body.approve===false?"Kilometre reddedildi":"Kilometre onaylandı","km",body.id,{km:item.km});await notify({recipient_id:item.member_id,type:"Kilometre",title:body.approve===false?"Kilometre reddedildi":"Kilometre onaylandı",body:`${item.route_name} · ${item.km} km`,action_path:"km"});return out({item:saved});
   }
   if(action==="attendance.set"){
-    const {data:event}=await ctx.supabaseAdmin.from("events").select("owner_charter_id").eq("id",body.eventId).maybeSingle();if(!event)return out({error:"Etkinlik bulunamadı."},404);const canManageAttendance=manages("event",event.owner_charter_id)||(!event.owner_charter_id&&actor.national_role==="National Road Captain");if(!canManageAttendance)return out({error:"Yoklama yönetimi yetkin yok."},403);
+    const {data:event}=await ctx.supabaseAdmin.from("events").select("owner_charter_id").eq("id",body.eventId).maybeSingle();if(!event)return out({error:"Etkinlik bulunamadı."},404);const canManageAttendance=manages("event",event.owner_charter_id)||actor.national_role==="National Road Captain";if(!canManageAttendance)return out({error:"Yoklama yönetimi yetkin yok."},403);
     const status=String(body.status||"waiting");if(!["waiting","attended","absent","excused"].includes(status))return out({error:"Geçersiz yoklama durumu."},400);
     const {data:item,error}=await ctx.supabaseAdmin.from("attendance").upsert({event_id:body.eventId,member_id:body.memberId,status,marked_by:actor.id,marked_at:new Date().toISOString()},{onConflict:"event_id,member_id"}).select().single();if(error)return out({error:error.message},400);return out({item});
   }
   if(action==="attendance.finalize"){
-    const {data:event}=await ctx.supabaseAdmin.from("events").select("owner_charter_id").eq("id",body.eventId).maybeSingle();if(!event)return out({error:"Etkinlik bulunamadı."},404);const canFinalize=manages("event",event.owner_charter_id)||(!event.owner_charter_id&&actor.national_role==="National Road Captain");if(!canFinalize)return out({error:"Yetkisiz işlem."},403);const {data,error}=await ctx.supabaseAdmin.rpc("finalize_event_attendance",{p_event_id:body.eventId,p_actor_id:actor.id});if(error)return out({error:error.message},400);return out({credited:data});
+    const {data:event}=await ctx.supabaseAdmin.from("events").select("owner_charter_id").eq("id",body.eventId).maybeSingle();if(!event)return out({error:"Etkinlik bulunamadı."},404);const canFinalize=manages("event",event.owner_charter_id)||actor.national_role==="National Road Captain";if(!canFinalize)return out({error:"Yetkisiz işlem."},403);const {data,error}=await ctx.supabaseAdmin.rpc("finalize_event_attendance",{p_event_id:body.eventId,p_actor_id:actor.id});if(error)return out({error:error.message},400);return out({credited:data});
   }
   if(action==="notification.read"||action==="notification.delete"){
     const query=action.endsWith("delete")?ctx.supabaseAdmin.from("notifications").delete():ctx.supabaseAdmin.from("notifications").update({read_at:new Date().toISOString()});
