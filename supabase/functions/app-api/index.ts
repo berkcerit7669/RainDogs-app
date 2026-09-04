@@ -93,10 +93,17 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     (attendanceAll.data||[]).forEach((r:any)=>{if(!["attended","absent"].includes(r.status))return;const e=attRate.get(r.member_id)||{a:0,t:0};e.t++;if(r.status==="attended")e.a++;attRate.set(r.member_id,e)});
     const readSet=new Set((readsAll.data||[]).map((r:any)=>`${r.member_id}:${r.announcement_id}`));
     const requiredList=requiredAnnouncements.data||[];
+    const eventReadSet=new Set((eventReads.data||[]).map((r:any)=>`${r.member_id}:${r.event_id}`));
+    const eventsWithAttendance=new Set((attendance.data||[]).map((a:any)=>a.event_id));
+    const finalizedEventIds=new Set((attendance.data||[]).filter((a:any)=>a.finalized).map((a:any)=>a.event_id));
+    const pastEvents=(events.data||[]).filter((e:any)=>e.status==="active"&&e.starts_at&&new Date(e.starts_at)<=new Date());
     (profiles.data||[]).forEach((p:any)=>{
       const att=attRate.get(p.id);p.attendance_rate=att&&att.t?Math.round(att.a/att.t*100):null;
       const applicable=requiredList.filter((a:any)=>new Date(a.created_at)>=new Date(p.created_at)&&(a.scope==="national"||a.charter_id===p.charter_id));
-      p.read_rate=applicable.length?Math.round(applicable.filter((a:any)=>readSet.has(`${p.id}:${a.id}`)).length/applicable.length*100):null;
+      const eventsApplicable=pastEvents.filter((e:any)=>new Date(e.starts_at)>=new Date(p.created_at)&&(e.scope==="national"||e.owner_charter_id===p.charter_id));
+      const eventsRead=eventsApplicable.filter((e:any)=>eventsWithAttendance.has(e.id)?finalizedEventIds.has(e.id)&&eventReadSet.has(`${p.id}:${e.id}`):eventReadSet.has(`${p.id}:${e.id}`));
+      const combinedApplicable=applicable.length+eventsApplicable.length,combinedRead=applicable.filter((a:any)=>readSet.has(`${p.id}:${a.id}`)).length+eventsRead.length;
+      p.read_rate=combinedApplicable?Math.round(combinedRead/combinedApplicable*100):null;
     });
     const approvedJointIds=new Set((eventCharters.data||[]).filter((row:any)=>row.charter_id===own&&row.approval_status==="active").map((row:any)=>row.event_id));
     const visibleEvents=national?(events.data||[]):(events.data||[]).filter((event:any)=>event.scope==="national"||event.owner_charter_id===own||(event.scope==="joint"&&approvedJointIds.has(event.id)));
@@ -260,6 +267,15 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     }
     await audit(approved?"Talep onaylandı":"Talep reddedildi","approval_request",request.id,{publishedId});return out({item,publishedId});
   }
+  if(action==="approval.delete"){
+    const {data:request}=await ctx.supabaseAdmin.from("approval_requests").select("*").eq("id",body.id).eq("status","pending").maybeSingle();if(!request)return out({error:"Bekleyen talep bulunamadı."},404);
+    const own=request.submitted_by===actor.id;
+    const nationalApprover=!!actor.is_app_admin||NATIONAL_DIRECT_PUBLISH.has(actor.national_role||"");const jointApprover=request.target_charter_id===actor.charter_id&&!!actor.charter_role;
+    const canManage=request.request_type==="national_content"?nationalApprover:(fullNational||jointApprover);
+    if(!own&&!canManage)return out({error:"Yetkisiz işlem."},403);
+    const {error}=await ctx.supabaseAdmin.from("approval_requests").delete().eq("id",body.id);if(error)return out({error:error.message},400);
+    await audit("Onay talebi silindi","approval_request",body.id,{requestType:request.request_type,kind:request.content_kind});return out({ok:true});
+  }
 
   if(action==="content.save"){
     const kind=String(body.kind||""),table=kind==="event"?"events":kind==="announcement"?"announcements":kind==="route"?"routes":"";if(!table)return out({error:"Geçersiz içerik."},400);
@@ -318,6 +334,14 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
   if(action==="km.approve"){
     const {data:item}=await ctx.supabaseAdmin.from("km_entries").select("*,profiles:member_id(charter_id)").eq("id",body.id).maybeSingle();if(!item||(!fullNational&&item.profiles?.charter_id!==actor.charter_id))return out({error:"Yetkisiz işlem."},403);
     const {data:saved,error}=await ctx.supabaseAdmin.from("km_entries").update({status:body.approve===false?"rejected":"active",approved_by:actor.id}).eq("id",body.id).select().single();if(error)return out({error:error.message},400);await audit(body.approve===false?"Kilometre reddedildi":"Kilometre onaylandı","km",body.id,{km:item.km});await notify({recipient_id:item.member_id,type:"Kilometre",title:body.approve===false?"Kilometre reddedildi":"Kilometre onaylandı",body:`${item.route_name} · ${item.km} km`,action_path:"km"});return out({item:saved});
+  }
+  if(action==="km.delete"){
+    const {data:item}=await ctx.supabaseAdmin.from("km_entries").select("*,profiles:member_id(charter_id)").eq("id",body.id).maybeSingle();if(!item)return out({error:"Kayıt bulunamadı."},404);
+    const own=item.member_id===actor.id,manager=fullNational||item.profiles?.charter_id===actor.charter_id;
+    if(!own&&!manager)return out({error:"Yetkisiz işlem."},403);
+    if(item.status!=="pending")return out({error:"Yalnızca onay bekleyen kayıt silinebilir."},400);
+    const {error}=await ctx.supabaseAdmin.from("km_entries").delete().eq("id",body.id);if(error)return out({error:error.message},400);
+    await audit("Kilometre talebi silindi","km",body.id,{km:item.km});return out({ok:true});
   }
   if(action==="attendance.set"){
     const {data:event}=await ctx.supabaseAdmin.from("events").select("owner_charter_id").eq("id",body.eventId).maybeSingle();if(!event)return out({error:"Etkinlik bulunamadı."},404);const canManageAttendance=manages("event",event.owner_charter_id)||actor.national_role==="National Road Captain";if(!canManageAttendance)return out({error:"Yoklama yönetimi yetkin yok."},403);
