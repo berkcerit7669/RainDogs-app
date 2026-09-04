@@ -124,9 +124,13 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
       const now=new Date();
       const pendingNationalEvents=(events.data||[]).filter((e:any)=>!e.owner_charter_id&&e.status==="active"&&e.starts_at&&new Date(e.starts_at)<now&&!(attendance.data||[]).some((a:any)=>a.event_id===e.id&&a.finalized));
       if(pendingNationalEvents.length){
-        const already=new Set((notifications.data||[]).map((n:any)=>n.action_path));
-        const toNotify=pendingNationalEvents.filter((e:any)=>!already.has(`events:national:${e.id}`));
-        if(toNotify.length)await notify(toNotify.map((e:any)=>({recipient_id:actor.id,type:"Yoklama",title:"Yoklama kapatılmayı bekliyor",body:`${e.title} etkinliğinin yoklaması hâlâ kapatılmadı.`,action_path:`events:national:${e.id}`})));
+        const {data:sentLogs}=await ctx.supabaseAdmin.from("admin_logs").select("target_id").eq("action","Yoklama hatırlatması gönderildi").eq("actor_id",actor.id).in("target_id",pendingNationalEvents.map((e:any)=>e.id));
+        const already=new Set((sentLogs||[]).map((r:any)=>r.target_id));
+        const toNotify=pendingNationalEvents.filter((e:any)=>!already.has(e.id));
+        if(toNotify.length){
+          await notify(toNotify.map((e:any)=>({recipient_id:actor.id,type:"Yoklama",title:"Yoklama kapatılmayı bekliyor",body:`${e.title} etkinliğinin yoklaması hâlâ kapatılmadı.`,action_path:`events:national:${e.id}`})));
+          await ctx.supabaseAdmin.from("admin_logs").insert(toNotify.map((e:any)=>({actor_id:actor.id,action:"Yoklama hatırlatması gönderildi",target_type:"event",target_id:e.id,detail:{title:e.title}})));
+        }
       }
     }
     return out({actor,charters:charters.data,events:visibleEvents,eventCharters:visibleEventCharters,announcements:announcements.data,routes:routes.data,attendance:visibleAttendance,kmEntries:visibleKm,clubhouseVisits:visits.data,memberNotes:notes.data,notifications:notifications.data,helpTickets:tickets.data,profiles:profiles.data,applications:applications.data,adminLogs:logs.data,clubhouseStates:clubhouseStates.data,announcementReads:announcementReads.data,eventResponses:visibleResponses,emergencyProfiles:emergency.data,charterFinance:finance.data,charterDiscipline:discipline.data,boardPolls:polls.data,boardPollVotes:pollVotes.data,approvalRequests:visibleApprovals,helpTicketMessages:ticketMessages.data,accountDeletionRequest:ownDeletionRequest,accountDeletionRequests:actor.is_app_admin?deletionRequests.data:[],cultureItems:cultureItems.data,milestones:milestones.data,roleHistory:roleHistory.data,memberBadges:memberBadges.data});
