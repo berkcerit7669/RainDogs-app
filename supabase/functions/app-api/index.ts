@@ -78,7 +78,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
       ,ctx.supabaseAdmin.from("km_entries").select("member_id,km").eq("status","active")
       ,ctx.supabaseAdmin.from("culture_items").select("*").order("position").order("created_at")
       ,ctx.supabaseAdmin.from("membership_milestones").select("member_id,milestone,occurred_on")
-      ,ctx.supabaseAdmin.from("role_history").select("member_id,role_scope,role_name,started_at,ended_at").order("started_at")
+      ,ctx.supabaseAdmin.from("role_history").select("id,member_id,role_scope,role_name,started_at,ended_at").order("started_at")
       ,ctx.supabaseAdmin.from("member_badges").select("*,profiles:member_id(nick)").order("awarded_at",{ascending:false})
       ,ctx.supabaseAdmin.from("attendance").select("member_id,status")
       ,ctx.supabaseAdmin.from("announcement_reads").select("member_id,announcement_id")
@@ -387,9 +387,25 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     if(body.nationalRole!==undefined||body.isAppAdmin!==undefined){if(!actor.is_app_admin&&!NATIONAL_FULL.has(actor.national_role||""))return out({error:"National görev atama yetkin yok."},403);if(body.nationalRole!==undefined)patch.national_role=body.nationalRole||null;if(body.isAppAdmin!==undefined){if(!actor.is_app_admin)return out({error:"Uygulama admini atamasını yalnızca uygulama admini yapabilir."},403);patch.is_app_admin=!!body.isAppAdmin}}
     const {data:item,error}=await ctx.supabaseAdmin.from("profiles").update(patch).eq("id",target.id).select().single();if(error)return out({error:error.message},400);await audit("Üye bilgisi güncellendi","profile",target.id,patch);
     const today=new Date().toISOString().slice(0,10);
-    if(patch.charter_role!==undefined&&patch.charter_role!==target.charter_role){await ctx.supabaseAdmin.from("role_history").update({ended_at:today}).eq("member_id",target.id).eq("role_scope","charter").is("ended_at",null);if(patch.charter_role)await ctx.supabaseAdmin.from("role_history").insert({member_id:target.id,role_scope:"charter",role_name:patch.charter_role,started_at:today})}
-    if(patch.national_role!==undefined&&patch.national_role!==target.national_role){await ctx.supabaseAdmin.from("role_history").update({ended_at:today}).eq("member_id",target.id).eq("role_scope","national").is("ended_at",null);if(patch.national_role)await ctx.supabaseAdmin.from("role_history").insert({member_id:target.id,role_scope:"national",role_name:patch.national_role,started_at:today})}
+    const closeRoleHistory=async(scope:string,oldRole:string|null)=>{
+      if(!oldRole)return;
+      const {data:open}=await ctx.supabaseAdmin.from("role_history").select("id").eq("member_id",target.id).eq("role_scope",scope).is("ended_at",null).maybeSingle();
+      if(open)await ctx.supabaseAdmin.from("role_history").update({ended_at:today}).eq("id",open.id);
+      else await ctx.supabaseAdmin.from("role_history").insert({member_id:target.id,role_scope:scope,role_name:oldRole,started_at:String(target.approved_at||target.created_at||today).slice(0,10),ended_at:today});
+    };
+    if(patch.charter_role!==undefined&&patch.charter_role!==target.charter_role){await closeRoleHistory("charter",target.charter_role);if(patch.charter_role)await ctx.supabaseAdmin.from("role_history").insert({member_id:target.id,role_scope:"charter",role_name:patch.charter_role,started_at:today})}
+    if(patch.national_role!==undefined&&patch.national_role!==target.national_role){await closeRoleHistory("national",target.national_role);if(patch.national_role)await ctx.supabaseAdmin.from("role_history").insert({member_id:target.id,role_scope:"national",role_name:patch.national_role,started_at:today})}
     return out({item});
+  }
+  if(action==="role_history.update"){
+    const {data:row}=await ctx.supabaseAdmin.from("role_history").select("*,profiles:member_id(charter_id)").eq("id",body.id).maybeSingle();if(!row)return out({error:"Görev kaydı bulunamadı."},404);
+    const localManager=!!actor.charter_role&&row.profiles?.charter_id===actor.charter_id;
+    if(!actor.is_app_admin&&!fullNational&&!localManager)return out({error:"Görev geçmişini düzenleme yetkin yok."},403);
+    const patch:any={};
+    if(body.startedAt!==undefined){if(!/^\d{4}-\d{2}-\d{2}$/.test(String(body.startedAt||"")))return out({error:"Başlangıç tarihi geçersiz."},400);patch.started_at=body.startedAt}
+    if(body.endedAt!==undefined)patch.ended_at=body.endedAt?(/^\d{4}-\d{2}-\d{2}$/.test(String(body.endedAt))?body.endedAt:null):null;
+    if(!Object.keys(patch).length)return out({error:"Güncellenecek alan yok."},400);
+    const {data:item,error}=await ctx.supabaseAdmin.from("role_history").update(patch).eq("id",body.id).select().single();if(error)return out({error:error.message},400);await audit("Görev geçmişi düzenlendi","role_history",body.id,patch);return out({item});
   }
   if(action==="member.create"){
     if(!actor.is_app_admin)return out({error:"Üye ekleme yalnızca uygulama adminine açıktır."},403);

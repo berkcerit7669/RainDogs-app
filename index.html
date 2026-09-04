@@ -1885,9 +1885,21 @@ function vestLogSection(m,canEdit){
   }).join("");
   const roleRows=(window.rdRoleHistory||[]).filter(x=>x.memberId===memberProfileId(m.nick)).sort((a,b)=>new Date(b.startedAt)-new Date(a.startedAt)).map(x=>{
     const days=x.endedAt?Math.floor((new Date(x.endedAt)-new Date(x.startedAt))/86400000):daysSince(x.startedAt);
-    return card(`<b>${escapeHtml(x.role)}</b><p>${escapeHtml(new Date(x.startedAt).toLocaleDateString("tr-TR"))}${x.endedAt?` – ${escapeHtml(new Date(x.endedAt).toLocaleDateString("tr-TR"))}`:" – devam ediyor"} · ${days} gün</p>`);
+    return card(`<b>${escapeHtml(x.role)}</b><p>${escapeHtml(new Date(x.startedAt).toLocaleDateString("tr-TR"))}${x.endedAt?` – ${escapeHtml(new Date(x.endedAt).toLocaleDateString("tr-TR"))}`:" – devam ediyor"} · ${days} gün</p>${canEdit&&x.id?`<button class="btn ghost" style="width:100%;margin-top:8px" onclick="openRoleHistoryEditor('${x.id}','${x.startedAt}','${x.endedAt||""}')">Tarihi Düzenle</button>`:""}`);
   }).join("")||emptyState("Görev geçmişi yok","Bu üye için kayıtlı görev geçmişi bulunmuyor.");
   return section("Yelek Günlüğü")+rows+section("Görev Geçmişi")+roleRows;
+}
+function openRoleHistoryEditor(id,startedAt,endedAt){
+  openDetail(`${pill("Görev Geçmişi")}<h3 style="font-size:28px;margin:14px 0">Tarihi Düzenle</h3><div class="fieldGroup"><label style="display:grid;gap:8px">Başlangıç tarihi<input id="roleHistStart" class="input" type="date" value="${escapeHtml(startedAt||"")}"></label><label style="display:grid;gap:8px">Bitiş tarihi (devam ediyorsa boş bırak)<input id="roleHistEnd" class="input" type="date" value="${escapeHtml(endedAt||"")}"></label><button class="btn primary" onclick="saveRoleHistoryDate('${id}')">Kaydet</button></div>`)
+}
+function saveRoleHistoryDate(id){
+  const startedAt=document.getElementById("roleHistStart")?.value||"",endedAt=document.getElementById("roleHistEnd")?.value||"";
+  if(!startedAt){safeToast("Başlangıç tarihi zorunlu.");return}
+  if(currentUser?.backend&&typeof call==="function"){
+    call("role_history.update",{id,startedAt,endedAt:endedAt||null}).then(async()=>{if(typeof hydrate==="function")await hydrate();closeDetail();safeToast("Görev tarihi güncellendi.")}).catch(e=>safeToast(e.message));
+    return;
+  }
+  safeToast("Bu işlem yalnızca merkezi hesaplarda kullanılabilir.");
 }
 async function saveVestMilestone(nick,type){
   if(!currentUser?.backend){safeToast("Bu özellik yalnızca merkezi hesaplarda kullanılabilir.");return}
@@ -3981,7 +3993,7 @@ cancelManagedEvent=function(key){const e=managedEvent(key);if(!e||(!canUseGlobal
 syncLoginType();syncRegisterNickMode();syncChapterOptions();boot();updateHeaderNotifDot();
 </script>
 <script src="supabase-auth.js?v=87"></script>
-<script src="supabase-data.js?v=109"></script>
+<script src="supabase-data.js?v=110"></script>
 <script src="push-client.js?v=85"></script>
 <div id="detailOverlay" class="detailOverlay" onclick="closeDetail()"><div id="detailPanel" class="detailPanel" onclick="event.stopPropagation()"></div></div>
 <input id="avatarUpload" type="file" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
