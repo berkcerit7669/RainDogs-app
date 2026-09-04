@@ -1,5 +1,5 @@
-const CACHE_NAME = "raindogs-shell-v65";
-const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./supabase-config.js?v=81", "./supabase-auth.js?v=87", "./supabase-data.js?v=111", "./push-client.js?v=85"];
+const CACHE_NAME = "raindogs-shell-v66";
+const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./supabase-config.js?v=81", "./supabase-auth.js?v=87", "./supabase-data.js?v=112", "./push-client.js?v=85"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
