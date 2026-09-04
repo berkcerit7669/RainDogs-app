@@ -2772,7 +2772,7 @@ function managementContentLists(ch){
   return `${section("Yayınlanmış İçerikler")}<div class="managementList">${es.map(e=>`<div class="managementItem"><span class="requestBadge">Etkinlik · ${escapeHtml(e.status||"Aktif")}</span><h4>${escapeHtml(e.title)}</h4><p>${escapeHtml(e.date)} · ${escapeHtml(e.route||"")}</p><div class="btnRow"><button class="btn ghost" onclick="editLocalEvent('${e.id}')">Düzenle</button><button class="btn danger" onclick="cancelLocalEvent('${e.id}')">İptal Et</button></div></div>`).join("")}${ns.map(n=>`<div class="managementItem"><span class="requestBadge">Duyuru</span><h4>${escapeHtml(n.title)}</h4><div class="btnRow"><button class="btn ghost" onclick="editCharterNews('${n.id}')">Düzenle</button><button class="btn danger" onclick="deleteCharterNews('${n.id}')">Kaldır</button></div></div>`).join("")}${rs.map(r=>`<div class="managementItem"><span class="requestBadge">Rota</span><h4>${escapeHtml(r.name)}</h4><div class="btnRow"><button class="btn ghost" onclick="editCharterRoute('${r.id}')">Düzenle</button><button class="btn danger" onclick="deleteCharterRoute('${r.id}')">Kaldır</button></div></div>`).join("")||emptyState("İçerik yok","Yayınlanan yerel içerikler burada yönetilecek.")}</div>`
 }
 
-function visitDurationMinutes(v){const end=v.exitAt?new Date(v.exitAt):new Date();return Math.max(0,Math.round((end-new Date(v.entryAt))/60000))}
+function visitDurationMinutes(v){const end=v.exitAt?new Date(v.exitAt):new Date();return Math.max(0,Math.floor(end.getTime()/60000)-Math.floor(new Date(v.entryAt).getTime()/60000))}
 function formatDuration(mins){const h=Math.floor(mins/60),m=mins%60;return h?`${h} sa ${m} dk`:`${m} dk`}
 function remindVisit(id){const v=clubhouseVisits.find(x=>x.id==id);if(!v||v.exitAt)return;pushNotification("Kulüp Evi","Çıkış kaydını kontrol et",`${v.entryTime} girişin hâlâ açık. Konaklıyorsan işlem yapmana gerek yok.`,v.nick);safeToast(`${v.nick} kullanıcısına hatırlatma hazırlandı.`)}
 function closeVisitByManagement(id){if(!canUseManagement(currentUser))return;const v=clubhouseVisits.find(x=>x.id==id);if(!v||v.exitAt)return;if(!confirm(`${v.nick} için açık giriş kapatılsın mı?`))return;const now=new Date();v.exitAt=now.toISOString();v.exitTime=now.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});v.closedBy=currentUser.nick;saveV39();logAdmin("Kulüp evi çıkışı düzeltildi",v.nick);render("charterAdmin")}
@@ -3346,23 +3346,27 @@ const rdV54OpenDrawer=openDrawer;
 openDrawer=function(){rdV54OpenDrawer();const globalBtn=document.getElementById("globalAdminHomeMenu"),charterBtn=document.getElementById("charterAdminMenu");document.querySelectorAll(".drawerPendingBadge").forEach(x=>x.remove());if(globalBtn&&canUseGlobalManagement()){const g=globalPendingCounts().total;if(g)globalBtn.insertAdjacentHTML("beforeend",`<span class="drawerPendingBadge">${g}</span>`)}if(charterBtn&&canUseManagement(currentUser)){const ch=charterPendingCounts().total;if(ch)charterBtn.insertAdjacentHTML("beforeend",`<span class="drawerPendingBadge">${ch}</span>`)}}
 function appConfirm(message,onConfirm){window.__rdConfirmAction=onConfirm;detailPanel.innerHTML=`${pill("Onay")}<h3 style="font-size:28px;margin:16px 0 10px">İşlemi onayla</h3><p>${escapeHtml(message)}</p><div class="btnRow" style="margin-top:18px"><button class="btn ghost" onclick="window.__rdConfirmAction=null;closeDetail()">Vazgeç</button><button class="btn danger" onclick="const action=window.__rdConfirmAction;window.__rdConfirmAction=null;closeDetail();if(action)action()">Onayla</button></div>`;detailOverlay.classList.add("open")}
 function deleteNotification(id,returnToSheet=false){appConfirm("Bu bildirim silinsin mi?",()=>{notifications=notifications.filter(n=>String(n.id)!==String(id));saveList("rdNotifications",notifications);updateHeaderNotifDot();returnToSheet?openNotificationsSheet():render("notifications")})}
-function notificationDestination(n){if(n.actionScope==="national"||n.target==="Etkinlik Onayı")return "national";if(n.actionScope==="charter"||n.type==="Ortak Etkinlik")return "charter";const path=n.action||"";if(["adminApplications","charterApprovals","nationalPublishApprovals","approvals","events","news","routes","km","members","profile","charterHub","helpAdmin"].includes(path))return "action";return ""}
-function notificationActionLabel(n){const path=n.action||"";if(path==="adminApplications"||["charterApprovals","nationalPublishApprovals","approvals"].includes(path))return "Onay Ekranını Aç";if(path==="events")return "Etkinliği Gör";if(path==="news")return "Duyuruyu Gör";if(path==="routes")return "Rotayı Gör";if(path==="km")return "Kilometre Kaydını Gör";if(path==="helpAdmin")return "Destek Kaydını Aç";return "Aç"}
-function activateNotification(id){
+function notificationDestination(n){if(n.actionScope==="national"||n.target==="Etkinlik Onayı")return "national";if(n.actionScope==="charter"||n.type==="Ortak Etkinlik")return "charter";const path=String(n.action||"").split(":")[0];if(["adminApplications","charterApprovals","nationalPublishApprovals","approvals","events","news","routes","km","members","profile","charterHub","helpAdmin"].includes(path))return "action";return ""}
+function baseNotificationPath(n){return String(n.action||"").split(":")[0]}
+function notificationActionLabel(n){const path=baseNotificationPath(n);if(path==="adminApplications"||["charterApprovals","nationalPublishApprovals","approvals"].includes(path))return "Onay Ekranını Aç";if(path==="events")return "Etkinliği Gör";if(path==="news")return "Duyuruyu Gör";if(path==="routes")return "Rotayı Gör";if(path==="km")return "Kilometre Kaydını Gör";if(path==="helpAdmin")return "Destek Kaydını Aç";return "Aç"}
+async function activateNotification(id){
   const n=notifications.find(x=>String(x.id)===String(id));if(!n)return;
   n.read=true;saveList("rdNotifications",notifications);
-  if(n.backend&&typeof call==="function")call("notification.read",{id:n.id}).catch(()=>{});
+  if(n.backend&&typeof call==="function"){try{await call("notification.read",{id:n.id})}catch(e){safeToast(e.message)}}
   updateHeaderNotifDot();if(typeof updateBottomNavBadges==="function")updateBottomNavBadges();
   closeDetail();
   const dest=notificationDestination(n);
   if(dest==="national"&&canUseGlobalManagement()){openGeneralAdminModule("approvals");return}
   if(dest==="charter"&&canUseManagement(currentUser)){openCharterAdminModule("approvals");return}
-  const path=n.action||"";
+  const raw=n.action||"",[path,scope]=raw.split(":");
   if(path==="adminApplications"){if(canUseGlobalManagement()||canUseManagement(currentUser)){go("adminApplications");return}}
   if(["charterApprovals","nationalPublishApprovals","approvals"].includes(path)){if(canUseGlobalManagement()){openGeneralAdminModule("approvals");return}if(canUseManagement(currentUser)){openCharterAdminModule("approvals");return}}
   if(path==="helpAdmin"&&isApplicationAdmin(currentUser)){openHelpAdmin();return}
   const directScreens=new Set(["events","news","routes","km","members","profile","charterHub"]);
-  if(directScreens.has(path)){go(path);return}
+  if(directScreens.has(path)){
+    if(scope==="national"||scope==="charter"){appScope=scope;localStorage.setItem("rdAppScope",scope)}
+    go(path);return
+  }
   go("notifications")
 }
 function notificationActions(n,sheet=false){const destination=notificationDestination(n);return `<div class="notificationActions">${destination?`<button class="btn primary" onclick="activateNotification('${escapeHtml(String(n.id))}')">${notificationActionLabel(n)}</button>`:`<button class="btn ghost" onclick="activateNotification('${escapeHtml(String(n.id))}')">Okundu</button>`}<button class="notificationDelete" title="Bildirimi sil" onclick="deleteNotification('${escapeHtml(String(n.id))}',${sheet})">Sil</button></div>`}
@@ -3978,7 +3982,7 @@ syncLoginType();syncRegisterNickMode();syncChapterOptions();boot();updateHeaderN
 </script>
 <script src="supabase-auth.js?v=87"></script>
 <script src="supabase-data.js?v=108"></script>
-<script src="push-client.js?v=84"></script>
+<script src="push-client.js?v=85"></script>
 <div id="detailOverlay" class="detailOverlay" onclick="closeDetail()"><div id="detailPanel" class="detailPanel" onclick="event.stopPropagation()"></div></div>
 <input id="avatarUpload" type="file" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
 

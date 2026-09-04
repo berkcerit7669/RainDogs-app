@@ -47,10 +47,14 @@
   if (typeof oldSettings === "function") window.settingsScreen = function () { return deviceNotificationControl() + oldSettings(); };
   window.addEventListener("raindogs:authenticated", () => {
     const params = new URLSearchParams(location.search);
-    const screen = params.get("screen");
-    if (!screen || typeof go !== "function") return;
+    const raw = params.get("screen");
+    if (!raw || typeof go !== "function") return;
+    const [screen, scope] = raw.split(":");
     const known = new Set(["notifications", "events", "news", "routes", "charterHub", "help", "helpAdmin", "approvals", "charterApprovals", "nationalPublishApprovals"]);
-    if (known.has(screen)) setTimeout(() => go(["charterApprovals", "nationalPublishApprovals", "approvals"].includes(screen) ? "notifications" : screen), 0);
+    if (known.has(screen)) setTimeout(() => {
+      if ((scope === "national" || scope === "charter") && typeof appScope !== "undefined") { appScope = scope; localStorage.setItem("rdAppScope", scope); }
+      go(["charterApprovals", "nationalPublishApprovals", "approvals"].includes(screen) ? "notifications" : screen);
+    }, 0);
     params.delete("screen");
     history.replaceState({}, document.title, `${location.pathname}${params.size ? `?${params}` : ""}${location.hash}`);
   });
