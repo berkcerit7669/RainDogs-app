@@ -284,6 +284,17 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     const {error}=await ctx.supabaseAdmin.from("approval_requests").delete().eq("id",body.id);if(error)return out({error:error.message},400);
     await audit("Onay talebi silindi","approval_request",body.id,{requestType:request.request_type,kind:request.content_kind});return out({ok:true});
   }
+  if(action==="approval.update"){
+    const {data:request}=await ctx.supabaseAdmin.from("approval_requests").select("*").eq("id",body.id).eq("status","pending").maybeSingle();if(!request)return out({error:"Bekleyen talep bulunamadı."},404);
+    const own=request.submitted_by===actor.id;
+    const nationalApprover=!!actor.is_app_admin||NATIONAL_DIRECT_PUBLISH.has(actor.national_role||"");const jointApprover=request.target_charter_id===actor.charter_id&&!!actor.charter_role;
+    const canManage=request.request_type==="national_content"?nationalApprover:(fullNational||jointApprover);
+    if(!own&&!canManage)return out({error:"Yetkisiz işlem."},403);
+    const payload=cleanContent(request.content_kind,body.data);if(!(payload as any).title&&!(payload as any).name)return out({error:"İçerik başlığı zorunlu."},400);
+    (payload as any).scope=request.payload.scope;(payload as any)[request.content_kind==="event"?"owner_charter_id":"charter_id"]=request.source_charter_id;
+    const {data:item,error}=await ctx.supabaseAdmin.from("approval_requests").update({payload}).eq("id",body.id).select().single();if(error)return out({error:error.message},400);
+    await audit("Onay talebi düzenlendi","approval_request",body.id,{requestType:request.request_type,kind:request.content_kind});return out({item});
+  }
 
   if(action==="content.save"){
     const kind=String(body.kind||""),table=kind==="event"?"events":kind==="announcement"?"announcements":kind==="route"?"routes":"";if(!table)return out({error:"Geçersiz içerik."},400);
@@ -338,6 +349,15 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
   }
   if(action==="km.submit"){
     const km=Number(body.km);if(!Number.isFinite(km)||km<=0)return out({error:"Geçerli kilometre gir."},400);const {data:item,error}=await ctx.supabaseAdmin.from("km_entries").insert({member_id:actor.id,route_name:String(body.routeName||"Rota"),km,status:"pending",submitted_by:actor.id}).select().single();if(error)return out({error:error.message},400);return out({item});
+  }
+  if(action==="km.update"){
+    const {data:item}=await ctx.supabaseAdmin.from("km_entries").select("*,profiles:member_id(charter_id)").eq("id",body.id).maybeSingle();if(!item)return out({error:"Kayıt bulunamadı."},404);
+    const own=item.member_id===actor.id,manager=fullNational||item.profiles?.charter_id===actor.charter_id;
+    if(!own&&!manager)return out({error:"Yetkisiz işlem."},403);
+    if(item.status!=="pending")return out({error:"Yalnızca onay bekleyen kayıt düzenlenebilir."},400);
+    const km=Number(body.km);if(!Number.isFinite(km)||km<=0)return out({error:"Geçerli kilometre gir."},400);
+    const {data:saved,error}=await ctx.supabaseAdmin.from("km_entries").update({route_name:String(body.routeName||item.route_name),km}).eq("id",body.id).select().single();if(error)return out({error:error.message},400);
+    await audit("Kilometre talebi düzenlendi","km",body.id,{km});return out({item:saved});
   }
   if(action==="km.approve"){
     const {data:item}=await ctx.supabaseAdmin.from("km_entries").select("*,profiles:member_id(charter_id)").eq("id",body.id).maybeSingle();if(!item||(!fullNational&&item.profiles?.charter_id!==actor.charter_id))return out({error:"Yetkisiz işlem."},403);
