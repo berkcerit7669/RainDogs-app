@@ -120,6 +120,15 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     const deletionRequests=await deletionQuery;
     if(deletionRequests.error)return out({error:deletionRequests.error.message},500);
     const ownDeletionRequest=actor.is_app_admin?(deletionRequests.data||[]).find((x:any)=>x.member_id===actor.id)||null:(deletionRequests.data||[])[0]||null;
+    if(actor.national_role==="National Road Captain"){
+      const now=new Date();
+      const pendingNationalEvents=(events.data||[]).filter((e:any)=>!e.owner_charter_id&&e.status==="active"&&e.starts_at&&new Date(e.starts_at)<now&&!(attendance.data||[]).some((a:any)=>a.event_id===e.id&&a.finalized));
+      if(pendingNationalEvents.length){
+        const already=new Set((notifications.data||[]).map((n:any)=>n.action_path));
+        const toNotify=pendingNationalEvents.filter((e:any)=>!already.has(`events:national:${e.id}`));
+        if(toNotify.length)await notify(toNotify.map((e:any)=>({recipient_id:actor.id,type:"Yoklama",title:"Yoklama kapatılmayı bekliyor",body:`${e.title} etkinliğinin yoklaması hâlâ kapatılmadı.`,action_path:`events:national:${e.id}`})));
+      }
+    }
     return out({actor,charters:charters.data,events:visibleEvents,eventCharters:visibleEventCharters,announcements:announcements.data,routes:routes.data,attendance:visibleAttendance,kmEntries:visibleKm,clubhouseVisits:visits.data,memberNotes:notes.data,notifications:notifications.data,helpTickets:tickets.data,profiles:profiles.data,applications:applications.data,adminLogs:logs.data,clubhouseStates:clubhouseStates.data,announcementReads:announcementReads.data,eventResponses:visibleResponses,emergencyProfiles:emergency.data,charterFinance:finance.data,charterDiscipline:discipline.data,boardPolls:polls.data,boardPollVotes:pollVotes.data,approvalRequests:visibleApprovals,helpTicketMessages:ticketMessages.data,accountDeletionRequest:ownDeletionRequest,accountDeletionRequests:actor.is_app_admin?deletionRequests.data:[],cultureItems:cultureItems.data,milestones:milestones.data,roleHistory:roleHistory.data,memberBadges:memberBadges.data});
   }
 
