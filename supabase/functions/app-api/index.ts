@@ -242,7 +242,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
 
   if(action==="content.save"){
     const kind=String(body.kind||""),table=kind==="event"?"events":kind==="announcement"?"announcements":kind==="route"?"routes":"";if(!table)return out({error:"Geçersiz içerik."},400);
-    const cid=body.data?.owner_charter_id||body.data?.charter_id||actor.charter_id;if(!manages(kind,cid))return out({error:"Bu içerik için yetkin yok."},403);
+    let cid=body.data?.owner_charter_id||body.data?.charter_id||null;if(!cid&&body.id){const {data:existing}=await ctx.supabaseAdmin.from(table).select("owner_charter_id,charter_id").eq("id",body.id).maybeSingle();cid=existing?.owner_charter_id||existing?.charter_id||null}if(!manages(kind,cid))return out({error:"Bu içerik için yetkin yok."},403);
     if(body.data?.scope==="national"&&!actor.is_app_admin&&!NATIONAL_DIRECT_PUBLISH.has(actor.national_role||""))return out({error:"Türkiye geneli içerik Amir, NVP veya National Secretary onayı gerektirir."},403);
     const clean=cleanContent(kind,body.data);
     const contentTitle=kind==="route"?(clean as any).name:(clean as any).title;
@@ -308,7 +308,7 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
   }
   if(action==="notification.read"||action==="notification.delete"){
     const query=action.endsWith("delete")?ctx.supabaseAdmin.from("notifications").delete():ctx.supabaseAdmin.from("notifications").update({read_at:new Date().toISOString()});
-    const {error}=await query.eq("id",body.id).eq("recipient_id",actor.id);if(error)return out({error:error.message},400);return out({ok:true});
+    const {data,error}=await query.eq("id",body.id).eq("recipient_id",actor.id).select("id");if(error)return out({error:error.message},400);if(!data?.length)return out({error:"Bildirim bulunamadı."},404);return out({ok:true});
   }
   if(action==="notification.clear"){
     const {error}=await ctx.supabaseAdmin.from("notifications").delete().eq("recipient_id",actor.id);if(error)return out({error:error.message},400);return out({ok:true});
@@ -387,13 +387,17 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     if(!charter)return out({error:"Charter bulunamadı."},404);if(duplicateNick?.length||duplicateName?.length)return out({error:"Bu nick veya isimle kayıtlı bir üye var."},409);
     const {data:created,error:createError}=await ctx.supabaseAdmin.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{registration_source:"app_admin",created_by:actor.id}});if(createError||!created.user)return out({error:createError?.message||"Hesap oluşturulamadı."},409);
     const profile={id:created.user.id,nick,full_name:fullName,phone,member_level:memberLevel,account_status:"active",charter_id:charterId,charter_role:charterRole,national_role:nationalRole,is_app_admin:false,approved_by:actor.id,approved_at:new Date().toISOString()};
-    const {data:item,error}=await ctx.supabaseAdmin.from("profiles").upsert(profile,{onConflict:"id"}).select().single();if(error){await ctx.supabaseAdmin.auth.admin.deleteUser(created.user.id);return out({error:error.message},409)}await audit("Üye eklendi","profile",item.id,{nick,fullName});return out({item});
+    const {data:item,error}=await ctx.supabaseAdmin.from("profiles").upsert(profile,{onConflict:"id"}).select().single();if(error){await ctx.supabaseAdmin.auth.admin.deleteUser(created.user.id);return out({error:error.message},409)}
+    const createdToday=new Date().toISOString().slice(0,10);if(charterRole)await ctx.supabaseAdmin.from("role_history").insert({member_id:item.id,role_scope:"charter",role_name:charterRole,started_at:createdToday});if(nationalRole)await ctx.supabaseAdmin.from("role_history").insert({member_id:item.id,role_scope:"national",role_name:nationalRole,started_at:createdToday});
+    await audit("Üye eklendi","profile",item.id,{nick,fullName});return out({item});
   }
   if(action==="application.decide"){
     const {data:target}=await ctx.supabaseAdmin.from("profiles").select("*").eq("id",body.memberId).eq("account_status","pending").maybeSingle();if(!target)return out({error:"Bekleyen başvuru bulunamadı."},404);
     const reviewer=actor.is_app_admin||fullNational||(actor.charter_role==="Sgt. at Arms"&&actor.charter_id===target.charter_id);if(!reviewer)return out({error:"Başvuru onaylama yetkin yok."},403);
     const approved=body.approve!==false,patch=approved?{account_status:"active",member_level:target.requested_member_level||target.member_level,charter_role:target.requested_charter_role||target.charter_role,national_role:fullNational?(target.requested_national_role||target.national_role):target.national_role,approved_by:actor.id,approved_at:new Date().toISOString(),updated_at:new Date().toISOString()}:{account_status:"rejected",approved_by:actor.id,approved_at:new Date().toISOString(),updated_at:new Date().toISOString()};
-    const {data:item,error}=await ctx.supabaseAdmin.from("profiles").update(patch).eq("id",target.id).select().single();if(error)return out({error:error.message},400);await audit(approved?"Üyelik onaylandı":"Üyelik reddedildi","profile",target.id);await notify({recipient_id:target.id,type:"Üyelik",title:approved?"Üyeliğin onaylandı":"Başvurun reddedildi",body:approved?"Artık uygulamayı tam yetkiyle kullanabilirsin.":"Başvurun yönetim tarafından reddedildi.",action_path:"profile"});return out({item});
+    const {data:item,error}=await ctx.supabaseAdmin.from("profiles").update(patch).eq("id",target.id).select().single();if(error)return out({error:error.message},400);
+    if(approved){const today=new Date().toISOString().slice(0,10);if((patch as any).charter_role&&(patch as any).charter_role!==target.charter_role)await ctx.supabaseAdmin.from("role_history").insert({member_id:target.id,role_scope:"charter",role_name:(patch as any).charter_role,started_at:today});if((patch as any).national_role&&(patch as any).national_role!==target.national_role)await ctx.supabaseAdmin.from("role_history").insert({member_id:target.id,role_scope:"national",role_name:(patch as any).national_role,started_at:today})}
+    await audit(approved?"Üyelik onaylandı":"Üyelik reddedildi","profile",target.id);await notify({recipient_id:target.id,type:"Üyelik",title:approved?"Üyeliğin onaylandı":"Başvurun reddedildi",body:approved?"Artık uygulamayı tam yetkiyle kullanabilirsin.":"Başvurun yönetim tarafından reddedildi.",action_path:"profile"});return out({item});
   }
   if(action==="charter.create"){
     if(!actor.is_app_admin&&!fullNational)return out({error:"Charter ekleme yetkin yok."},403);const name=String(body.name||"").trim();if(!name)return out({error:"Charter adı zorunlu."},400);const {data:item,error}=await ctx.supabaseAdmin.from("charters").insert({name}).select().single();if(error)return out({error:error.message},400);await audit("Charter oluşturuldu","charter",item.id,{name});return out({item});
