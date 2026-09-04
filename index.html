@@ -166,6 +166,7 @@ main{padding:18px 18px 98px}
   border-radius:22px;
   padding:14px;
 }
+.compactItem+.compactItem{margin-top:10px}
 
 
 .noticeDot{
@@ -2074,7 +2075,7 @@ function archiveScreen(){
   }
   const canUpload=currentUser.appAdmin||["Amir","NVP","National Secretary"].includes(currentUser.nationalRole||"");
   const uploadForm=canUpload?card(`<h3>Belge Yükle (PDF)</h3><div class="fieldGroup"><input id="archiveDocTitle" class="input" placeholder="Belge başlığı"><textarea id="archiveDocDesc" placeholder="Açıklama (isteğe bağlı)"></textarea><label style="display:grid;gap:6px"><span class="scopeHint">Görünürlük</span><select id="archiveDocLevel"><option value="hangaround">Herkes görebilir</option><option value="member" selected>Member ve üzeri</option><option value="board">Sadece National Board ve Başkanlar Kurulu</option></select></label><input id="archiveDocFile" type="file" accept="application/pdf"><button class="btn primary" onclick="uploadArchiveDoc()">Yükle</button></div>`):"";
-  const list=(window.rdArchiveDocs||[]).map(d=>card(`${pill(d.board_only?"Kurul":d.min_member_level==="member"?"Member+":"Herkes")}<h3>${escapeHtml(d.title)}</h3><p>${escapeHtml(d.description||"")}<br>Yükleyen: ${escapeHtml(d.profiles?.nick||"-")} · ${new Date(d.created_at).toLocaleDateString("tr-TR")}</p><button class="btn ghost" style="width:100%;margin-top:8px" onclick="viewArchiveDoc('${escapeHtml(d.id)}')">Görüntüle</button>${canUpload?`<button class="btn danger" style="width:100%;margin-top:8px" onclick="deleteArchiveDoc('${escapeHtml(d.id)}')">Sil</button>`:""}`)).join("");
+  const list=(window.rdArchiveDocs||[]).map(d=>card(`${pill(d.board_only?"Kurul":d.min_member_level==="member"?"Member+":"Herkes")}<h3>${escapeHtml(d.title)}</h3><p>${escapeHtml(d.description||"")}<br>Yükleyen: ${escapeHtml(d.profiles?.nick||"-")} · ${new Date(d.created_at).toLocaleDateString("tr-TR")}</p><button class="btn ghost" style="width:100%;margin-top:8px" onclick="viewArchiveDoc('${escapeHtml(d.id)}')">Görüntüle</button>${canUpload?`<div class="btnRow" style="margin-top:8px"><button class="btn ghost" onclick="openArchiveDocEditor('${escapeHtml(d.id)}')">Düzenle</button><button class="btn danger" onclick="deleteArchiveDoc('${escapeHtml(d.id)}')">Sil</button></div>`:""}`)).join("");
   return section("Arşiv")+uploadForm+(list||emptyState("Belge yok","Arşive henüz belge yüklenmedi."));
 }
 async function loadArchiveDocs(){try{const d=await call("archive.list",{});window.rdArchiveDocs=d.items||[];render("archive")}catch(e){safeToast(e.message)}}
@@ -2089,6 +2090,16 @@ async function uploadArchiveDoc(){
 }
 function viewArchiveDoc(id){const d=(window.rdArchiveDocs||[]).find(x=>String(x.id)===String(id));if(!d?.url)return;openDetail(`${pill("Arşiv")}<h3 style="font-size:24px;margin:14px 0">${escapeHtml(d.title)}</h3><p>${escapeHtml(d.description||"")}</p><iframe src="${escapeHtml(d.url)}" style="width:100%;height:70vh;border:1px solid var(--line);border-radius:14px;margin-top:10px" title="${escapeHtml(d.title)}"></iframe>`)}
 function deleteArchiveDoc(id){appConfirm("Bu belge silinsin mi?",async()=>{try{await call("archive.delete",{id});safeToast("Belge silindi.");await loadArchiveDocs()}catch(e){safeToast(e.message)}})}
+function openArchiveDocEditor(id){
+  const d=(window.rdArchiveDocs||[]).find(x=>String(x.id)===String(id));if(!d)return;
+  const level=d.board_only?"board":d.min_member_level==="member"?"member":"hangaround";
+  openDetail(`${pill("Arşiv")}<h3 style="font-size:26px;margin:14px 0">Belgeyi Düzenle</h3><div class="fieldGroup"><input id="editArchiveTitle" class="input" value="${escapeHtml(d.title)}" placeholder="Belge başlığı"><textarea id="editArchiveDesc" placeholder="Açıklama (isteğe bağlı)">${escapeHtml(d.description||"")}</textarea><label style="display:grid;gap:6px"><span class="scopeHint">Görünürlük</span><select id="editArchiveLevel"><option value="hangaround" ${level==="hangaround"?"selected":""}>Herkes görebilir</option><option value="member" ${level==="member"?"selected":""}>Member ve üzeri</option><option value="board" ${level==="board"?"selected":""}>Sadece National Board ve Başkanlar Kurulu</option></select></label><button class="btn primary" onclick="saveArchiveDocEdit('${escapeHtml(id)}')">Kaydet</button></div>`);
+}
+async function saveArchiveDocEdit(id){
+  const title=document.getElementById("editArchiveTitle")?.value.trim(),description=document.getElementById("editArchiveDesc")?.value.trim(),levelValue=document.getElementById("editArchiveLevel")?.value||"member",boardOnly=levelValue==="board",minMemberLevel=boardOnly?"member":levelValue;
+  if(!title){safeToast("Belge başlığı zorunlu.");return}
+  try{await call("archive.update",{id,title,description,minMemberLevel,boardOnly});closeDetail();safeToast("Belge güncellendi.");await loadArchiveDocs()}catch(e){safeToast(e.message)}
+}
 
 
 /* v26 layout/function overrides */

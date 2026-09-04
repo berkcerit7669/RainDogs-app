@@ -218,6 +218,14 @@ export default {fetch:withSupabase({auth:"publishable"},async(req,ctx)=>{
     const {data:item,error}=await ctx.supabaseAdmin.from("archive_documents").insert({title,description:String(body.description||"").trim(),storage_path:path,min_member_level:boardOnly?"member":minLevel,board_only:boardOnly,created_by:actor.id}).select().single();if(error)return out({error:error.message},400);
     await audit("Arşiv belgesi yüklendi","archive_document",item.id,{title});return out({item});
   }
+  if(action==="archive.update"){
+    const canEdit=actor.is_app_admin||NATIONAL_DIRECT_PUBLISH.has(actor.national_role||"");if(!canEdit)return out({error:"Arşiv belgesi düzenleme yetkin yok."},403);
+    const title=String(body.title||"").trim();if(!title)return out({error:"Belge başlığı zorunlu."},400);
+    const boardOnly=!!body.boardOnly;
+    const minLevel=["hangaround","member"].includes(body.minMemberLevel)?body.minMemberLevel:"hangaround";
+    const {data:item,error}=await ctx.supabaseAdmin.from("archive_documents").update({title,description:String(body.description||"").trim(),min_member_level:boardOnly?"member":minLevel,board_only:boardOnly}).eq("id",body.id).select().single();if(error)return out({error:error.message},400);
+    await audit("Arşiv belgesi düzenlendi","archive_document",body.id,{title});return out({item});
+  }
   if(action==="archive.list"){
     const {data,error}=await ctx.supabaseAdmin.from("archive_documents").select("*,profiles:created_by(nick)").order("created_at",{ascending:false});if(error)return out({error:error.message},500);
     const myRank=LEVEL_RANK[actor.member_level||"hangaround"]??0;
